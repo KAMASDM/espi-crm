@@ -1,0 +1,455 @@
+// src/services/firestore.js
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db, auth } from './firebase';
+
+// Helper function to safely get user profile from localStorage
+const getUserProfile = () => {
+  try {
+    const profile = localStorage.getItem('userProfile');
+    return profile ? JSON.parse(profile) : null;
+  } catch (error) {
+    console.warn('Error parsing user profile from localStorage:', error);
+    return null;
+  }
+};
+
+// Generic CRUD operations
+export const firestoreService = {
+  async create(collectionName, data) {
+    try {
+      const docRef = await addDoc(collection(db, collectionName), {
+        ...data,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error(`Error creating document in ${collectionName}:`, error);
+      throw error;
+    }
+  },
+
+  async getAll(collectionName, constraints = []) {
+    try {
+      let q = collection(db, collectionName);
+      
+      // Filter out invalid constraints
+      const validConstraints = constraints.filter(constraint => 
+        constraint != null && typeof constraint === 'object'
+      );
+      
+      if (validConstraints.length > 0) {
+        q = query(q, ...validConstraints);
+      }
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(docSnapshot => ({
+        id: docSnapshot.id,
+        ...docSnapshot.data()
+      }));
+    } catch (error) {
+      console.error(`Error getting documents from ${collectionName}:`, error);
+      throw error;
+    }
+  },
+
+  async getById(collectionName, id) {
+    try {
+      if (!id) {
+        console.warn(`Attempted to get document from ${collectionName} with undefined ID.`);
+        return null;
+      }
+      const docRef = doc(db, collectionName, id);
+      const docSnap = await getDoc(docRef);
+      return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+    } catch (error) {
+      console.error(`Error getting document ${id} from ${collectionName}:`, error);
+      throw error;
+    }
+  },
+
+  async update(collectionName, id, data) {
+    try {
+      if (!id) {
+        console.warn(`Attempted to update document in ${collectionName} with undefined ID.`);
+        throw new Error("Document ID is undefined for update operation.");
+      }
+      const docRef = doc(db, collectionName, id);
+      await updateDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error(`Error updating document ${id} in ${collectionName}:`, error);
+      throw error;
+    }
+  },
+
+  async delete(collectionName, id) {
+    try {
+      if (!id) {
+        console.warn(`Attempted to delete document in ${collectionName} with undefined ID.`);
+        throw new Error("Document ID is undefined for delete operation.");
+      }
+      await deleteDoc(doc(db, collectionName, id));
+    } catch (error) {
+      console.error(`Error deleting document ${id} from ${collectionName}:`, error);
+      throw error;
+    }
+  },
+
+  subscribe(collectionName, callback, constraints = [], onErrorCallback) {
+    try {
+      let qRef = collection(db, collectionName);
+      
+      // Filter and validate constraints
+      const validConstraints = constraints.filter(constraint => 
+        constraint != null && typeof constraint === 'object'
+      );
+      
+      if (validConstraints.length > 0) {
+        qRef = query(qRef, ...validConstraints);
+      }
+      
+      return onSnapshot(qRef, 
+        (querySnapshot) => {
+          const documents = querySnapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data()
+          }));
+          callback(documents);
+        }, 
+        (error) => {
+          console.error(`Firestore Subscription Error for ${collectionName}:`, error);
+          if (onErrorCallback) {
+            onErrorCallback(error);
+          }
+        }
+      );
+    } catch (error) {
+      console.error(`Error setting up subscription for ${collectionName}:`, error);
+      if (onErrorCallback) {
+        onErrorCallback(error);
+      }
+      return () => {}; // Return empty unsubscribe function
+    }
+  }
+};
+
+// Specific service functions
+export const enquiryService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    const userProfile = getUserProfile();
+    return firestoreService.create('enquiries', { 
+      ...data, 
+      createdBy: currentUser?.uid, 
+      branchId: data.branchId || userProfile?.branchId || null 
+    });
+  },
+  getAll: (constraints = []) => firestoreService.getAll('enquiries', constraints),
+  getById: (id) => firestoreService.getById('enquiries', id),
+  update: (id, data) => firestoreService.update('enquiries', id, data),
+  delete: (id) => firestoreService.delete('enquiries', id),
+  subscribe: (callback, constraints = [], onError) => firestoreService.subscribe('enquiries', callback, constraints, onError)
+};
+
+export const universityService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    return firestoreService.create('universities', { ...data, createdBy: currentUser?.uid });
+  },
+  getAll: (constraints = []) => firestoreService.getAll('universities', constraints),
+  getById: (id) => firestoreService.getById('universities', id),
+  update: (id, data) => firestoreService.update('universities', id, data),
+  delete: (id) => firestoreService.delete('universities', id),
+  subscribe: (callback, constraints = [], onError) => firestoreService.subscribe('universities', callback, constraints, onError)
+};
+
+export const courseService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    return firestoreService.create('courses', { ...data, createdBy: currentUser?.uid });
+  },
+  getAll: (constraints = []) => firestoreService.getAll('courses', constraints),
+  getById: (id) => firestoreService.getById('courses', id),
+  update: (id, data) => firestoreService.update('courses', id, data),
+  delete: (id) => firestoreService.delete('courses', id),
+  subscribe: (callback, constraints = [], onError) => firestoreService.subscribe('courses', callback, constraints, onError)
+};
+
+export const assessmentService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    const userProfile = getUserProfile();
+    return firestoreService.create('assessments', { 
+      ...data, 
+      createdBy: currentUser?.uid, 
+      branchId: data.branchId || userProfile?.branchId || null 
+    });
+  },
+  getAll: (constraints = []) => firestoreService.getAll('assessments', constraints),
+  getById: (id) => firestoreService.getById('assessments', id),
+  update: (id, data) => firestoreService.update('assessments', id, data),
+  delete: (id) => firestoreService.delete('assessments', id),
+  subscribe: (callback, constraints = [], onError) => firestoreService.subscribe('assessments', callback, constraints, onError)
+};
+
+export const applicationService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    const userProfile = getUserProfile();
+    return firestoreService.create('applications', { 
+      ...data, 
+      createdBy: currentUser?.uid, 
+      branchId: data.branchId || userProfile?.branchId || null 
+    });
+  },
+  getAll: (constraints = []) => firestoreService.getAll('applications', constraints),
+  getById: (id) => firestoreService.getById('applications', id),
+  update: (id, data) => firestoreService.update('applications', id, data),
+  delete: (id) => firestoreService.delete('applications', id),
+  subscribe: (callback, constraints = [], onError) => firestoreService.subscribe('applications', callback, constraints, onError)
+};
+
+export const paymentService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    const userProfile = getUserProfile();
+    return firestoreService.create('payments', { 
+      ...data, 
+      createdBy: currentUser?.uid, 
+      payment_received_by: currentUser?.uid,
+      branchId: data.branchId || userProfile?.branchId || null 
+    });
+  },
+  getAll: (constraints = []) => firestoreService.getAll('payments', constraints),
+  getById: (id) => firestoreService.getById('payments', id),
+  update: (id, data) => firestoreService.update('payments', id, data),
+  delete: (id) => firestoreService.delete('payments', id),
+  subscribe: (callback, constraints = [], onError) => firestoreService.subscribe('payments', callback, constraints, onError)
+};
+
+export const userService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    return firestoreService.create('users', { ...data, createdBy: currentUser?.uid });
+  },
+  getAll: (constraints = []) => firestoreService.getAll('users', constraints),
+  getById: (id) => firestoreService.getById('users', id),
+  update: (id, data) => firestoreService.update('users', id, data),
+  delete: (id) => firestoreService.delete('users', id),
+  subscribe: (callback, constraints = [], onError) => firestoreService.subscribe('users', callback, constraints, onError)
+};
+
+export const branchService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    return firestoreService.create('branches', { ...data, createdBy: currentUser?.uid });
+  },
+  getAll: (constraints = []) => firestoreService.getAll('branches', constraints),
+  getById: (id) => firestoreService.getById('branches', id),
+  update: (id, data) => firestoreService.update('branches', id, data),
+  delete: (id) => firestoreService.delete('branches', id),
+  subscribe: (callback, constraints = [], onError) => firestoreService.subscribe('branches', callback, constraints, onError)
+};
+
+export const chatService = {
+  // Send a new message to a chat
+  async sendMessage(chatId, messageText) {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !chatId || !messageText?.trim()) {
+      throw new Error("User not authenticated, chat ID missing, or message empty.");
+    }
+
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const chatDocRef = doc(db, 'chats', chatId);
+
+    try {
+      // Add the new message
+      await addDoc(messagesRef, {
+        chatId: chatId,
+        text: messageText.trim(),
+        senderId: currentUser.uid,
+        senderName: currentUser.displayName || 'Anonymous',
+        senderPhotoURL: currentUser.photoURL || '',
+        timestamp: serverTimestamp(),
+      });
+
+      // Update the last message in the chat document
+      const chatSnap = await getDoc(chatDocRef);
+      if (chatSnap.exists()) {
+        const chatData = chatSnap.data();
+        const newUnreadCount = { ...(chatData.unreadCount || {}) };
+        
+        // Update unread counts for all members
+        if (chatData.members && Array.isArray(chatData.members)) {
+          chatData.members.forEach(memberId => {
+            if (memberId !== currentUser.uid) {
+              newUnreadCount[memberId] = (newUnreadCount[memberId] || 0) + 1;
+            } else {
+              newUnreadCount[memberId] = 0; // Sender has read it
+            }
+          });
+        }
+
+        await updateDoc(chatDocRef, {
+          lastMessageText: messageText.trim(),
+          lastMessageTimestamp: serverTimestamp(),
+          lastMessageSenderId: currentUser.uid,
+          unreadCount: newUnreadCount,
+        });
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      throw error;
+    }
+  },
+
+  // Create a new chat (direct or group)
+  async createChat(chatData) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error("User not authenticated.");
+
+    const { type, name, members, memberInfo } = chatData;
+
+    if (!type || !members || !Array.isArray(members) || members.length < (type === 'direct' ? 2 : 1)) {
+      throw new Error("Invalid chat data: type or members missing/invalid.");
+    }
+
+    // Check for existing direct chat
+    if (type === 'direct' && members.length === 2) {
+      const sortedMembers = [...members].sort();
+      try {
+        const q = query(
+          collection(db, 'chats'),
+          where('type', '==', 'direct'),
+          where('members', '==', sortedMembers)
+        );
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const existingChatDoc = querySnapshot.docs[0];
+          return { id: existingChatDoc.id, ...existingChatDoc.data(), existing: true };
+        }
+      } catch (error) {
+        console.warn('Error checking for existing direct chat:', error);
+        // Continue with creating new chat
+      }
+    }
+
+    const initialUnreadCount = {};
+    members.forEach(memberId => {
+      initialUnreadCount[memberId] = 0;
+    });
+
+    try {
+      const docRef = await addDoc(collection(db, 'chats'), {
+        name: type === 'group' ? (name || 'New Group') : '',
+        type: type,
+        members: type === 'direct' ? [...members].sort() : members,
+        memberInfo: memberInfo || {},
+        lastMessageText: type === 'group' ? 'Group created' : 'Chat started',
+        lastMessageTimestamp: serverTimestamp(),
+        lastMessageSenderId: currentUser.uid,
+        unreadCount: initialUnreadCount,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp(),
+      });
+      
+      // Fetch the newly created document to return its data along with ID
+      const newChatSnap = await getDoc(docRef);
+      return { id: newChatSnap.id, ...newChatSnap.data(), created: true };
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      throw error;
+    }
+  },
+
+  // Mark messages as read for a user in a chat
+  async markChatAsRead(chatId) {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !chatId) return;
+
+    const chatDocRef = doc(db, 'chats', chatId);
+    try {
+      const chatSnap = await getDoc(chatDocRef);
+      if (chatSnap.exists()) {
+        const chatData = chatSnap.data();
+        const newUnreadCount = { ...(chatData.unreadCount || {}) };
+        newUnreadCount[currentUser.uid] = 0;
+
+        await updateDoc(chatDocRef, {
+          unreadCount: newUnreadCount,
+        });
+      }
+    } catch (error) {
+      console.error("Error marking chat as read:", error);
+    }
+  },
+
+  // Subscribe to chats for a user
+  subscribeToUserChats(userId, callback, onError) {
+    if (!userId) {
+      if (onError) onError(new Error("User ID is required"));
+      return () => {};
+    }
+
+    try {
+      const q = query(
+        collection(db, 'chats'),
+        where('members', 'array-contains', userId),
+        orderBy('lastMessageTimestamp', 'desc')
+      );
+
+      return onSnapshot(q, callback, onError);
+    } catch (error) {
+      console.error("Error subscribing to user chats:", error);
+      if (onError) onError(error);
+      return () => {};
+    }
+  },
+
+  // Subscribe to messages in a chat
+  subscribeToMessages(chatId, callback, onError) {
+    if (!chatId) {
+      if (onError) onError(new Error("Chat ID is required"));
+      return () => {};
+    }
+
+    try {
+      const q = query(
+        collection(db, 'chats', chatId, 'messages'),
+        orderBy('timestamp', 'asc')
+      );
+
+      return onSnapshot(q, 
+        (querySnapshot) => {
+          const messages = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          callback(messages);
+        }, 
+        onError
+      );
+    } catch (error) {
+      console.error("Error subscribing to messages:", error);
+      if (onError) onError(error);
+      return () => {};
+    }
+  }
+};
