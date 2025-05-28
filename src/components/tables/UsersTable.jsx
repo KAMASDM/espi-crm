@@ -1,28 +1,30 @@
-// src/components/tables/UsersTable.jsx
-import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, Search, CheckCircle, XCircle, Shield } from 'lucide-react';
-import { USER_ROLE_LIST, USER_ROLES } from '../../utils/constants';
-import { branchService } from '../../services/firestore';
+import { useState, useEffect } from "react";
+import {
+  Edit,
+  Trash2,
+  Search,
+  CheckCircle,
+  XCircle,
+  Shield,
+} from "lucide-react";
+import { USER_ROLE_LIST, USER_ROLES } from "../../utils/constants";
+import { branchService } from "../../services/firestore";
 
 const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [branches, setBranches] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
 
-  console.log('UsersTable received users:', users); // Debug log
-
-  // Fetch branches for display names
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         setBranchesLoading(true);
         const fetchedBranches = await branchService.getAll();
-        console.log('Fetched branches:', fetchedBranches); // Debug log
         setBranches(fetchedBranches || []);
       } catch (error) {
-        console.error('Error fetching branches:', error);
+        console.error("Error fetching branches:", error);
         setBranches([]);
       } finally {
         setBranchesLoading(false);
@@ -32,39 +34,37 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
     fetchBranches();
   }, []);
 
-  // Create branch mapping for quick lookup
   const branchMap = branches.reduce((acc, branch) => {
-    acc[branch.id] = branch.branchName || branch.name || `Branch ${branch.id.slice(0, 8)}`;
+    acc[branch.id] =
+      branch.branchName || branch.name || `Branch ${branch.id.slice(0, 8)}`;
     return acc;
   }, {});
 
-  // Function to get branch name from branchId
   const getBranchName = (branchId) => {
-    if (!branchId) return 'No Branch';
-    if (branchesLoading) return 'Loading...';
+    if (!branchId) return "No Branch";
+    if (branchesLoading) return "Loading...";
     return branchMap[branchId] || `Unknown Branch (${branchId.slice(0, 8)}...)`;
   };
 
-  console.log('Branch map:', branchMap); // Debug log
-
-  // Ensure users is an array
   const safeUsers = Array.isArray(users) ? users : [];
 
-  const filteredUsers = safeUsers.filter(user => {
+  const filteredUsers = safeUsers.filter((user) => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch =
       user.displayName?.toLowerCase().includes(searchLower) ||
       user.email?.toLowerCase().includes(searchLower);
     const matchesRole = !roleFilter || user.role === roleFilter;
-    const matchesStatus = statusFilter === '' || 
-      (statusFilter === 'active' && user.isActive !== false) || 
-      (statusFilter === 'inactive' && user.isActive === false);
-    
-    // If current user is Branch Admin, filter by their branchId
-    if (currentUserProfile?.role === 'Branch Admin' && 
-        user.branchId !== currentUserProfile.branchId && 
-        user.role !== 'Superadmin') {
-        return false;
+    const matchesStatus =
+      statusFilter === "" ||
+      (statusFilter === "active" && user.isActive !== false) ||
+      (statusFilter === "inactive" && user.isActive === false);
+
+    if (
+      currentUserProfile?.role === "Branch Admin" &&
+      user.branchId !== currentUserProfile.branchId &&
+      user.role !== "Superadmin"
+    ) {
+      return false;
     }
 
     return matchesSearch && matchesRole && matchesStatus;
@@ -83,52 +83,54 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
   };
 
   const getRoleBadge = (role) => {
-    let bgColor = 'bg-gray-100';
-    let textColor = 'text-gray-800';
-    
-    if (role === 'Superadmin') {
-      bgColor = 'bg-red-100';
-      textColor = 'text-red-800';
-    } else if (role === 'Branch Admin' || role === 'Branch Manager') {
-      bgColor = 'bg-purple-100';
-      textColor = 'text-purple-800';
-    } else if (role === 'Counsellor' || role === 'Processor') {
-      bgColor = 'bg-blue-100';
-      textColor = 'text-blue-800';
-    } else if (role === 'Reception' || role === 'Accountant') {
-      bgColor = 'bg-yellow-100';
-      textColor = 'text-yellow-800';
-    } else if (role === 'Agent') {
-      bgColor = 'bg-green-100';
-      textColor = 'text-green-800';
+    let bgColor = "bg-gray-100";
+    let textColor = "text-gray-800";
+
+    if (role === "Superadmin") {
+      bgColor = "bg-red-100";
+      textColor = "text-red-800";
+    } else if (role === "Branch Admin" || role === "Branch Manager") {
+      bgColor = "bg-purple-100";
+      textColor = "text-purple-800";
+    } else if (role === "Counsellor" || role === "Processor") {
+      bgColor = "bg-blue-100";
+      textColor = "text-blue-800";
+    } else if (role === "Reception" || role === "Accountant") {
+      bgColor = "bg-yellow-100";
+      textColor = "text-yellow-800";
+    } else if (role === "Agent") {
+      bgColor = "bg-green-100";
+      textColor = "text-green-800";
     }
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
-        <Shield size={12} className="mr-1" /> {role || 'Unknown'}
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
+      >
+        <Shield size={12} className="mr-1" /> {role || "Unknown"}
       </span>
     );
   };
 
   const formatDate = (timestamp) => {
     try {
-      if (!timestamp) return 'N/A';
-      
-      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+      if (!timestamp) return "N/A";
+
+      if (timestamp.toDate && typeof timestamp.toDate === "function") {
         return new Date(timestamp.toDate()).toLocaleDateString();
       }
-      
+
       if (timestamp instanceof Date) {
         return timestamp.toLocaleDateString();
       }
-      
-      if (typeof timestamp === 'string') {
+
+      if (typeof timestamp === "string") {
         return new Date(timestamp).toLocaleDateString();
       }
-      
-      return 'N/A';
+
+      return "N/A";
     } catch (error) {
-      return 'N/A';
+      return "N/A";
     }
   };
 
@@ -137,36 +139,40 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
     return `https://ui-avatars.com/api/?name=${name}&background=random&color=fff`;
   };
 
-  console.log('Filtered users:', filteredUsers); // Debug log
+  console.log("Filtered users:", filteredUsers);
 
   return (
     <div className="space-y-4">
-      {/* Search and Filter Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input 
-            type="text" 
-            placeholder="Search users by name or email..." 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
+          <input
+            type="text"
+            placeholder="Search users by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div className="flex gap-2">
-          <select 
-            value={roleFilter} 
-            onChange={(e) => setRoleFilter(e.target.value)} 
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Roles</option>
-            {USER_ROLE_LIST.map(role => (
-              <option key={role} value={role}>{role}</option>
+            {USER_ROLE_LIST.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
             ))}
           </select>
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)} 
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Statuses</option>
@@ -180,7 +186,6 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
         Showing {filteredUsers.length} of {safeUsers.length} users
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -213,42 +218,49 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredUsers.length === 0 ? (
               <tr>
-                <td 
-                  colSpan={(onEdit || onDelete) ? 7 : 6} 
+                <td
+                  colSpan={onEdit || onDelete ? 7 : 6}
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   <div className="flex flex-col items-center">
                     <Shield className="mb-2 text-gray-300" size={48} />
                     <p>No users found</p>
-                    {searchTerm && <p className="text-sm">Try adjusting your search</p>}
+                    {searchTerm && (
+                      <p className="text-sm">Try adjusting your search</p>
+                    )}
                   </div>
                 </td>
               </tr>
             ) : (
               filteredUsers.map((user, index) => (
-                <tr key={user.id || user.uid || index} className="hover:bg-gray-50">
+                <tr
+                  key={user.id || user.uid || index}
+                  className="hover:bg-gray-50"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <img 
-                        className="h-8 w-8 rounded-full mr-3 object-cover" 
-                        src={user.photoURL || generateAvatarUrl(user.displayName)} 
-                        alt={user.displayName || 'User'}
+                      <img
+                        className="h-8 w-8 rounded-full mr-3 object-cover"
+                        src={
+                          user.photoURL || generateAvatarUrl(user.displayName)
+                        }
+                        alt={user.displayName || "User"}
                         onError={(e) => {
                           e.target.src = generateAvatarUrl(user.displayName);
                         }}
                       />
                       <div>
                         <div className="font-medium text-gray-900">
-                          {user.displayName || 'N/A'}
+                          {user.displayName || "N/A"}
                         </div>
                         <div className="text-xs text-gray-500">
-                          ID: {(user.id || user.uid || '').slice(0, 8)}...
+                          ID: {(user.id || user.uid || "").slice(0, 8)}...
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.email || 'N/A'}
+                    {user.email || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getRoleBadge(user.role)}
@@ -262,8 +274,11 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                           <span className="font-medium text-gray-900">
                             {getBranchName(user.branchId)}
                           </span>
-                          {user.branchId && user.branchId !== 'No Branch' && (
-                            <span className="text-xs text-gray-400" title={`Branch ID: ${user.branchId}`}>
+                          {user.branchId && user.branchId !== "No Branch" && (
+                            <span
+                              className="text-xs text-gray-400"
+                              title={`Branch ID: ${user.branchId}`}
+                            >
                               ID: {user.branchId.slice(0, 8)}...
                             </span>
                           )}
@@ -281,8 +296,8 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         {onEdit && (
-                          <button 
-                            onClick={() => onEdit(user)} 
+                          <button
+                            onClick={() => onEdit(user)}
                             className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
                             title="Edit User"
                           >
@@ -290,8 +305,8 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                           </button>
                         )}
                         {onDelete && user.role !== USER_ROLES.SUPERADMIN && (
-                          <button 
-                            onClick={() => onDelete(user.id || user.uid)} 
+                          <button
+                            onClick={() => onDelete(user.id || user.uid)}
                             className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
                             title="Deactivate User"
                           >

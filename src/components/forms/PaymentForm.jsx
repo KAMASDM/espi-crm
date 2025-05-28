@@ -36,7 +36,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
         createdBy: user.uid
       };
 
-      // Add uploaded document if exists
       if (uploadedDocument) {
         paymentData.payment_document = uploadedDocument;
       }
@@ -61,7 +60,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
 
   const handleFileUpload = (file) => {
     if (file) {
-      // In a real implementation, you would upload to Firebase Storage
       setUploadedDocument(file.name);
       toast.success(`${file.name} uploaded successfully!`);
     }
@@ -85,7 +83,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Payment Information */}
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">Payment Information</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,7 +219,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Services */}
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">Services</h4>
         <div className="space-y-4">
@@ -263,7 +259,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Payment Document */}
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">Payment Document</h4>
         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
@@ -302,7 +297,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Additional Information */}
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h4>
         <div>
@@ -318,7 +312,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
         <button
           type="button"

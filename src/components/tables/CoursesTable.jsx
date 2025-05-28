@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { 
-  Eye, 
-  Edit, 
-  Trash2, 
+import React, { useState } from "react";
+import {
+  Eye,
+  Edit,
+  Trash2,
   ExternalLink,
   Calendar,
   Search,
@@ -11,46 +11,48 @@ import {
   XCircle,
   BookOpen,
   DollarSign,
-  GraduationCap
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { COUNTRIES, COURSE_LEVELS } from '../../utils/constants';
+  GraduationCap,
+} from "lucide-react";
+import { format } from "date-fns";
+import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
 
-const CoursesTable = ({ 
-  courses, 
+const CoursesTable = ({
+  courses,
   universities,
-  loading, 
-  onEdit, 
-  onDelete, 
-  onView 
+  loading,
+  onEdit,
+  onDelete,
+  onView,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [countryFilter, setCountryFilter] = useState('');
-  const [levelFilter, setLevelFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [sortField, setSortField] = useState('course_name');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [countryFilter, setCountryFilter] = useState("");
+  const [levelFilter, setLevelFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sortField, setSortField] = useState("course_name");
+  const [sortDirection, setSortDirection] = useState("asc");
 
-  // Filter and sort courses
   const filteredCourses = courses
-    .filter(course => {
-      const matchesSearch = 
+    .filter((course) => {
+      const matchesSearch =
         course.course_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.specialisation_tag?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+        course.specialisation_tag
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
+
       const matchesCountry = !countryFilter || course.country === countryFilter;
       const matchesLevel = !levelFilter || course.course_levels === levelFilter;
-      const matchesStatus = statusFilter === '' || 
-        (statusFilter === 'active' && course.Active) ||
-        (statusFilter === 'inactive' && !course.Active);
-      
+      const matchesStatus =
+        statusFilter === "" ||
+        (statusFilter === "active" && course.Active) ||
+        (statusFilter === "inactive" && !course.Active);
+
       return matchesSearch && matchesCountry && matchesLevel && matchesStatus;
     })
     .sort((a, b) => {
-      const aValue = a[sortField] || '';
-      const bValue = b[sortField] || '';
-      
-      if (sortDirection === 'asc') {
+      const aValue = a[sortField] || "";
+      const bValue = b[sortField] || "";
+
+      if (sortDirection === "asc") {
         return aValue > bValue ? 1 : -1;
       } else {
         return aValue < bValue ? 1 : -1;
@@ -59,21 +61,21 @@ const CoursesTable = ({
 
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
   const getCountryName = (countryCode) => {
-    const country = COUNTRIES.find(c => c.code === countryCode);
+    const country = COUNTRIES.find((c) => c.code === countryCode);
     return country ? country.name : countryCode;
   };
 
   const getUniversityName = (universityId) => {
-    const university = universities.find(uni => uni.id === universityId);
-    return university ? university.univ_name : 'Unknown University';
+    const university = universities.find((uni) => uni.id === universityId);
+    return university ? university.univ_name : "Unknown University";
   };
 
   const getStatusBadge = (isActive) => {
@@ -92,17 +94,21 @@ const CoursesTable = ({
 
   const getLevelBadge = (level) => {
     const levelColors = {
-      'Certificate': 'bg-gray-100 text-gray-800',
-      'Diploma': 'bg-blue-100 text-blue-800',
-      'Associate Degree': 'bg-green-100 text-green-800',
-      'Bachelor\'s Degree': 'bg-purple-100 text-purple-800',
-      'Master\'s Degree': 'bg-indigo-100 text-indigo-800',
-      'Doctoral Degree': 'bg-red-100 text-red-800',
-      'Professional Degree': 'bg-yellow-100 text-yellow-800'
+      Certificate: "bg-gray-100 text-gray-800",
+      Diploma: "bg-blue-100 text-blue-800",
+      "Associate Degree": "bg-green-100 text-green-800",
+      "Bachelor's Degree": "bg-purple-100 text-purple-800",
+      "Master's Degree": "bg-indigo-100 text-indigo-800",
+      "Doctoral Degree": "bg-red-100 text-red-800",
+      "Professional Degree": "bg-yellow-100 text-yellow-800",
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${levelColors[level] || 'bg-gray-100 text-gray-800'}`}>
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          levelColors[level] || "bg-gray-100 text-gray-800"
+        }`}
+      >
         {level}
       </span>
     );
@@ -118,10 +124,12 @@ const CoursesTable = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
           <input
             type="text"
             placeholder="Search courses by name or specialization..."
@@ -130,7 +138,7 @@ const CoursesTable = ({
             className="pl-10 input-field"
           />
         </div>
-        
+
         <div className="flex gap-2">
           <select
             value={countryFilter}
@@ -138,8 +146,10 @@ const CoursesTable = ({
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Countries</option>
-            {COUNTRIES.map(country => (
-              <option key={country.code} value={country.code}>{country.name}</option>
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name}
+              </option>
             ))}
           </select>
 
@@ -149,13 +159,18 @@ const CoursesTable = ({
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Levels</option>
-            {COURSE_LEVELS.map(level => (
-              <option key={level} value={level}>{level}</option>
+            {COURSE_LEVELS.map((level) => (
+              <option key={level} value={level}>
+                {level}
+              </option>
             ))}
           </select>
 
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -169,24 +184,24 @@ const CoursesTable = ({
         </div>
       </div>
 
-      {/* Results Count */}
       <div className="text-sm text-gray-500">
         Showing {filteredCourses.length} of {courses.length} courses
       </div>
 
-      {/* Table */}
       <div className="table-container">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th 
-                onClick={() => handleSort('course_name')}
+              <th
+                onClick={() => handleSort("course_name")}
                 className="table-header cursor-pointer hover:bg-gray-100"
               >
                 <div className="flex items-center">
                   Course Name
-                  {sortField === 'course_name' && (
-                    <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  {sortField === "course_name" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
                   )}
                 </div>
               </th>
@@ -201,7 +216,10 @@ const CoursesTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredCourses.length === 0 ? (
               <tr>
-                <td colSpan="7" className="table-cell text-center text-gray-500 py-8">
+                <td
+                  colSpan="7"
+                  className="table-cell text-center text-gray-500 py-8"
+                >
                   <BookOpen className="mx-auto mb-2 text-gray-300" size={48} />
                   <p>No courses found</p>
                   {searchTerm && (
@@ -212,12 +230,14 @@ const CoursesTable = ({
             ) : (
               filteredCourses.map((course) => (
                 <tr key={course.id} className="hover:bg-gray-50">
-                  {/* Course Name */}
                   <td className="table-cell">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
                         <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                          <GraduationCap className="text-purple-600" size={20} />
+                          <GraduationCap
+                            className="text-purple-600"
+                            size={20}
+                          />
                         </div>
                       </div>
                       <div className="ml-4">
@@ -233,9 +253,9 @@ const CoursesTable = ({
                         </div>
                         {course.website_url && (
                           <div className="text-sm text-blue-600 hover:text-blue-800 mt-1">
-                            <a 
-                              href={course.website_url} 
-                              target="_blank" 
+                            <a
+                              href={course.website_url}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center"
                             >
@@ -248,7 +268,6 @@ const CoursesTable = ({
                     </div>
                   </td>
 
-                  {/* University */}
                   <td className="table-cell">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
@@ -260,18 +279,20 @@ const CoursesTable = ({
                     </div>
                   </td>
 
-                  {/* Level */}
                   <td className="table-cell">
                     {getLevelBadge(course.course_levels)}
                   </td>
 
-                  {/* Financial */}
                   <td className="table-cell">
                     <div className="space-y-1">
                       {course.Application_fee && (
                         <div className="flex items-center text-sm text-gray-900">
-                          <DollarSign size={14} className="mr-1 text-gray-400" />
-                          App Fee: {course.Application_fee_currency || '$'}{course.Application_fee}
+                          <DollarSign
+                            size={14}
+                            className="mr-1 text-gray-400"
+                          />
+                          App Fee: {course.Application_fee_currency || "$"}
+                          {course.Application_fee}
                         </div>
                       )}
                       {course.Yearly_Tuition_fee && (
@@ -282,24 +303,26 @@ const CoursesTable = ({
                     </div>
                   </td>
 
-                  {/* Deadline */}
                   <td className="table-cell">
                     {course.Application_deadline ? (
                       <div className="flex items-center text-sm text-gray-900">
                         <Calendar size={14} className="mr-2 text-gray-400" />
-                        {format(new Date(course.Application_deadline), 'MMM dd, yyyy')}
+                        {format(
+                          new Date(course.Application_deadline),
+                          "MMM dd, yyyy"
+                        )}
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-500">No deadline set</span>
+                      <span className="text-sm text-gray-500">
+                        No deadline set
+                      </span>
                     )}
                   </td>
 
-                  {/* Status */}
                   <td className="table-cell">
                     {getStatusBadge(course.Active)}
                   </td>
 
-                  {/* Actions */}
                   <td className="table-cell">
                     <div className="flex items-center space-x-2">
                       <button

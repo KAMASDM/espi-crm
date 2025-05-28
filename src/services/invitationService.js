@@ -1,63 +1,44 @@
-// src/services/invitationService.js
-import { userService } from './firestore';
-import toast from 'react-hot-toast';
+import { userService } from "./firestore";
+import toast from "react-hot-toast";
 
 export const invitationService = {
-  /**
-   * Send invitation email to a user
-   * This is a placeholder implementation - in a real app, this would integrate with:
-   * - Firebase Functions
-   * - Email service (SendGrid, SES, etc.)
-   * - Custom backend API
-   */
   async sendInvitation(userEmail, userData, invitedBy) {
     try {
-      // In a real implementation, this would:
-      // 1. Generate a secure invitation token
-      // 2. Send email with invitation link
-      // 3. Update user status to 'pending_invitation'
-      
-      console.log('Sending invitation to:', userEmail);
-      console.log('User data:', userData);
-      console.log('Invited by:', invitedBy);
-      
-      // Placeholder: Generate invitation link
+      console.log("Sending invitation to:", userEmail);
+      console.log("User data:", userData);
+      console.log("Invited by:", invitedBy);
+
       const invitationToken = generateInvitationToken();
       const invitationLink = `${window.location.origin}/accept-invitation?token=${invitationToken}`;
-      
-      // Placeholder: Log email content (in real app, this would be sent via email service)
-      const emailContent = this.generateInvitationEmail(userData, invitationLink, invitedBy);
-      
-      console.log('Email content to be sent:');
-      console.log('Subject:', emailContent.subject);
-      console.log('Body:', emailContent.body);
-      
-      // TODO: Replace with actual email sending service
-      // await emailService.send(userEmail, emailContent.subject, emailContent.body);
-      
-      // For now, just show a mock success message
+
+      const emailContent = this.generateInvitationEmail(
+        userData,
+        invitationLink,
+        invitedBy
+      );
+
+      console.log("Email content to be sent:");
+      console.log("Subject:", emailContent.subject);
+      console.log("Body:", emailContent.body);
+
       toast.success(`Invitation email would be sent to ${userEmail}`);
-      toast.info('Check console for email content (development mode)');
-      
+      toast.info("Check console for email content (development mode)");
+
       return {
         success: true,
         invitationToken,
-        invitationLink
+        invitationLink,
       };
-      
     } catch (error) {
-      console.error('Error sending invitation:', error);
-      toast.error('Failed to send invitation email');
+      console.error("Error sending invitation:", error);
+      toast.error("Failed to send invitation email");
       throw error;
     }
   },
 
-  /**
-   * Generate invitation email content
-   */
   generateInvitationEmail(userData, invitationLink, invitedBy) {
     const subject = `You've been invited to join ESPI CRM`;
-    
+
     const body = `
       <h2>Welcome to ESPI CRM!</h2>
       
@@ -82,77 +63,58 @@ export const invitationService = {
     return { subject, body };
   },
 
-  /**
-   * Resend invitation to a pending user
-   */
   async resendInvitation(userId) {
     try {
       const user = await userService.getById(userId);
-      
+
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
-      
-      if (user.status !== 'pending_invitation') {
-        throw new Error('User is not in pending invitation status');
+
+      if (user.status !== "pending_invitation") {
+        throw new Error("User is not in pending invitation status");
       }
-      
-      // Update the invitation timestamp
+
       await userService.update(userId, {
         invitedAt: new Date().toISOString(),
-        invitationResent: true
+        invitationResent: true,
       });
-      
-      // Send the invitation email again
+
       const invitedByUser = await userService.getById(user.invitedBy);
       await this.sendInvitation(user.email, user, invitedByUser);
-      
-      toast.success('Invitation resent successfully');
-      
+
+      toast.success("Invitation resent successfully");
     } catch (error) {
-      console.error('Error resending invitation:', error);
+      console.error("Error resending invitation:", error);
       toast.error(`Failed to resend invitation: ${error.message}`);
       throw error;
     }
   },
 
-  /**
-   * Cancel a pending invitation
-   */
   async cancelInvitation(userId) {
     try {
       await userService.update(userId, {
-        status: 'cancelled',
-        cancelledAt: new Date().toISOString()
+        status: "cancelled",
+        cancelledAt: new Date().toISOString(),
       });
-      
-      toast.success('Invitation cancelled successfully');
-      
+
+      toast.success("Invitation cancelled successfully");
     } catch (error) {
-      console.error('Error cancelling invitation:', error);
-      toast.error('Failed to cancel invitation');
+      console.error("Error cancelling invitation:", error);
+      toast.error("Failed to cancel invitation");
       throw error;
     }
-  }
+  },
 };
 
-/**
- * Generate a secure invitation token
- * In a real app, this would be done on the backend with proper crypto
- */
 function generateInvitationToken() {
   const timestamp = Date.now().toString(36);
   const randomPart = Math.random().toString(36).substring(2, 15);
   return `inv_${timestamp}_${randomPart}`;
 }
 
-/**
- * Validate invitation token
- * In a real app, this would verify the token against the database
- */
 export function validateInvitationToken(token) {
-  // Basic validation - in real app, this would check database
-  return token && token.startsWith('inv_') && token.length > 20;
+  return token && token.startsWith("inv_") && token.length > 20;
 }
 
 export default invitationService;

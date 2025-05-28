@@ -1,27 +1,57 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Download, Upload, AlertTriangle, CheckCircle } from 'lucide-react';
-import Modal from '../components/common/Modal';
-import EnquiryForm from '../components/forms/EnquiryForm';
-import StudentsTable from '../components/tables/StudentsTable';
-import { useEnquiries } from '../hooks/useFirestore';
-import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
-import { downloadAsCSV } from '../utils/helpers';
-import Papa from 'papaparse';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Plus,
+  Download,
+  Upload,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
+import Modal from "../components/common/Modal";
+import EnquiryForm from "../components/forms/EnquiryForm";
+import StudentsTable from "../components/tables/StudentsTable";
+import { useEnquiries } from "../hooks/useFirestore";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
+import { downloadAsCSV } from "../utils/helpers";
+import Papa from "papaparse";
 
-// --- Constants for CSV Import (adjust column names as per your CSV) ---
 const CSV_EXPECTED_HEADERS = [
-  'FirstName', 'LastName', 'Email', 'Phone', 'CurrentEducation', 
-  'CountriesInterested', // Expect comma-separated e.g., "US,CA"
-  'EnquirySource', 'Notes', 'EnquiryStatus', 'City', 'State',
-  'PassportNumber', 'AlternatePhone', 'Address', 'IntakeInterested', 'ServicesInterested'
+  "FirstName",
+  "LastName",
+  "Email",
+  "Phone",
+  "CurrentEducation",
+  "CountriesInterested",
+  "EnquirySource",
+  "Notes",
+  "EnquiryStatus",
+  "City",
+  "State",
+  "PassportNumber",
+  "AlternatePhone",
+  "Address",
+  "IntakeInterested",
+  "ServicesInterested",
 ];
-// Required fields in your Firestore model (match these to your validation)
-const REQUIRED_FIRESTORE_FIELDS = ['student_First_Name', 'student_Last_Name', 'student_email', 'student_phone', 'current_education', 'country_interested'];
+const REQUIRED_FIRESTORE_FIELDS = [
+  "student_First_Name",
+  "student_Last_Name",
+  "student_email",
+  "student_phone",
+  "current_education",
+  "country_interested",
+];
 
 const Students = () => {
-  const { data: students, loading, error, remove, update, create } = useEnquiries();
+  const {
+    data: students,
+    loading,
+    error,
+    remove,
+    update,
+    create,
+  } = useEnquiries();
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
@@ -45,63 +75,70 @@ const Students = () => {
   };
 
   const handleView = (student) => {
-    // Navigate to the detailed enquiry page using the route from App.jsx
     navigate(`/students/${student.id}/details`);
   };
 
   const handleDelete = async (studentId) => {
-    if (window.confirm('Are you sure you want to delete this student enquiry? This action cannot be undone.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this student enquiry? This action cannot be undone."
+      )
+    ) {
       try {
         await remove(studentId);
-        toast.success('Student enquiry deleted successfully!');
+        toast.success("Student enquiry deleted successfully!");
       } catch (err) {
-        console.error('Error deleting student:', err);
-        toast.error('Failed to delete student enquiry. Please try again.');
+        console.error("Error deleting student:", err);
+        toast.error("Failed to delete student enquiry. Please try again.");
       }
     }
   };
 
-  const handleFormSuccess = () => {
-    // Modals are closed explicitly by their respective onSuccess/onClose handlers
-  };
+  const handleFormSuccess = () => {};
 
   const handleUpdateStudentStatus = async (studentId, newStatus) => {
     try {
-      await update(studentId, { enquiry_status: newStatus, updatedAt: new Date() });
-      toast.success('Status updated successfully!');
+      await update(studentId, {
+        enquiry_status: newStatus,
+        updatedAt: new Date(),
+      });
+      toast.success("Status updated successfully!");
     } catch (err) {
       console.error("Error updating status:", err);
-      toast.error('Failed to update status.');
+      toast.error("Failed to update status.");
     }
   };
 
   const handleUpdateStudentNote = async (studentId, newNote) => {
     try {
       await update(studentId, { notes: newNote, updatedAt: new Date() });
-      toast.success('Note updated successfully!');
+      toast.success("Note updated successfully!");
     } catch (err) {
       console.error("Error updating note:", err);
-      toast.error('Failed to update note.');
+      toast.error("Failed to update note.");
     }
   };
 
-  const handleUpdateStudentAssignment = async (studentId, newAssignedUserId) => {
+  const handleUpdateStudentAssignment = async (
+    studentId,
+    newAssignedUserId
+  ) => {
     try {
-      await update(studentId, { 
+      await update(studentId, {
         assignedUserId: newAssignedUserId,
-        assigned_users: newAssignedUserId, // Legacy field for backward compatibility
-        updatedAt: new Date() 
+        assigned_users: newAssignedUserId,
+        updatedAt: new Date(),
       });
-      toast.success('Assignment updated successfully!');
+      toast.success("Assignment updated successfully!");
     } catch (err) {
       console.error("Error updating assignment:", err);
-      toast.error('Failed to update assignment.');
+      toast.error("Failed to update assignment.");
     }
   };
 
   const handleExport = () => {
     if (students && students.length > 0) {
-      const dataToExport = students.map(student => ({
+      const dataToExport = students.map((student) => ({
         ID: student.id,
         FirstName: student.student_First_Name,
         LastName: student.student_Last_Name,
@@ -112,7 +149,9 @@ const Students = () => {
         State: student.student_state,
         Branch: student.branchId,
         AssignedTo: student.assignedUserId,
-        CountriesInterested: Array.isArray(student.country_interested) ? student.country_interested.join(' | ') : student.country_interested,
+        CountriesInterested: Array.isArray(student.country_interested)
+          ? student.country_interested.join(" | ")
+          : student.country_interested,
         CurrentEducation: student.current_education,
         Notes: student.notes,
         EnquirySource: student.Source_Enquiry,
@@ -120,13 +159,17 @@ const Students = () => {
         AlternatePhone: student.alternate_phone,
         Address: student.student_address,
         IntakeInterested: student.intake_interested,
-        ServicesInterested: Array.isArray(student.Interested_Services) ? student.Interested_Services.join(' | ') : student.Interested_Services,
-        CreatedAt: student.createdAt?.toDate ? student.createdAt.toDate().toISOString() : 'N/A',
+        ServicesInterested: Array.isArray(student.Interested_Services)
+          ? student.Interested_Services.join(" | ")
+          : student.Interested_Services,
+        CreatedAt: student.createdAt?.toDate
+          ? student.createdAt.toDate().toISOString()
+          : "N/A",
       }));
-      downloadAsCSV(dataToExport, 'students_export.csv');
-      toast.success('Students data exported successfully!');
+      downloadAsCSV(dataToExport, "students_export.csv");
+      toast.success("Students data exported successfully!");
     } else {
-      toast.error('No data available to export.');
+      toast.error("No data available to export.");
     }
   };
 
@@ -140,27 +183,40 @@ const Students = () => {
         skipEmptyLines: true,
         complete: async (results) => {
           const csvHeaders = results.meta.fields;
-          const essentialCsvHeaders = ['FirstName', 'LastName', 'Email', 'Phone', 'CurrentEducation', 'CountriesInterested'];
-          const missingEssentialHeaders = essentialCsvHeaders.filter(h => !csvHeaders.includes(h));
+          const essentialCsvHeaders = [
+            "FirstName",
+            "LastName",
+            "Email",
+            "Phone",
+            "CurrentEducation",
+            "CountriesInterested",
+          ];
+          const missingEssentialHeaders = essentialCsvHeaders.filter(
+            (h) => !csvHeaders.includes(h)
+          );
 
           if (missingEssentialHeaders.length > 0) {
-            toast.error(`CSV is missing essential headers: ${missingEssentialHeaders.join(', ')}.`);
+            toast.error(
+              `CSV is missing essential headers: ${missingEssentialHeaders.join(
+                ", "
+              )}.`
+            );
             setIsImporting(false);
-            if(fileInputRef.current) fileInputRef.current.value = "";
+            if (fileInputRef.current) fileInputRef.current.value = "";
             return;
           }
           await processImportedData(results.data);
-          if(fileInputRef.current) fileInputRef.current.value = "";
+          if (fileInputRef.current) fileInputRef.current.value = "";
         },
         error: (error) => {
           toast.error(`Error parsing CSV: ${error.message}`);
           setIsImporting(false);
-          if(fileInputRef.current) fileInputRef.current.value = "";
-        }
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        },
       });
     }
   };
-  
+
   const processImportedData = async (data) => {
     let successCount = 0;
     let errorCount = 0;
@@ -176,58 +232,74 @@ const Students = () => {
       const row = data[i];
       try {
         const studentData = {
-          student_First_Name: row.FirstName?.trim() || '',
-          student_Last_Name: row.LastName?.trim() || '',
-          student_email: row.Email?.trim().toLowerCase() || '',
-          student_phone: row.Phone?.replace(/\D/g, '') || '',
-          current_education: row.CurrentEducation?.trim() || '',
-          country_interested: row.CountriesInterested?.split(',').map(c => c.trim()).filter(c => c) || [],
-          Source_Enquiry: row.EnquirySource?.trim() || 'CSV Import',
-          notes: row.Notes?.trim() || '',
-          enquiry_status: row.EnquiryStatus?.trim() || 'New',
-          student_city: row.City?.trim() || '',
-          student_state: row.State?.trim() || '',
-          student_passport: row.PassportNumber?.trim() || '',
-          alternate_phone: row.AlternatePhone?.replace(/\D/g, '') || '',
-          student_address: row.Address?.trim() || '',
-          intake_interested: row.IntakeInterested?.trim() || '',
-          Interested_Services: row.ServicesInterested?.split(',').map(s => s.trim()).filter(s => s) || [],
-          // Auto-assign branch and user based on current user's profile
+          student_First_Name: row.FirstName?.trim() || "",
+          student_Last_Name: row.LastName?.trim() || "",
+          student_email: row.Email?.trim().toLowerCase() || "",
+          student_phone: row.Phone?.replace(/\D/g, "") || "",
+          current_education: row.CurrentEducation?.trim() || "",
+          country_interested:
+            row.CountriesInterested?.split(",")
+              .map((c) => c.trim())
+              .filter((c) => c) || [],
+          Source_Enquiry: row.EnquirySource?.trim() || "CSV Import",
+          notes: row.Notes?.trim() || "",
+          enquiry_status: row.EnquiryStatus?.trim() || "New",
+          student_city: row.City?.trim() || "",
+          student_state: row.State?.trim() || "",
+          student_passport: row.PassportNumber?.trim() || "",
+          alternate_phone: row.AlternatePhone?.replace(/\D/g, "") || "",
+          student_address: row.Address?.trim() || "",
+          intake_interested: row.IntakeInterested?.trim() || "",
+          Interested_Services:
+            row.ServicesInterested?.split(",")
+              .map((s) => s.trim())
+              .filter((s) => s) || [],
           branchId: userProfile?.branchId || null,
           assignedUserId: userProfile?.uid || null,
-          assigned_users: userProfile?.uid || null, // Legacy field
+          assigned_users: userProfile?.uid || null,
           createdBy: user.uid,
         };
 
         let missingField = false;
         for (const field of REQUIRED_FIRESTORE_FIELDS) {
-            if (!studentData[field] || (Array.isArray(studentData[field]) && studentData[field].length === 0) ) {
-                errors.push(`Row ${i + 2}: Missing required field '${field}' for student ${studentData.student_First_Name || 'N/A'}.`);
-                missingField = true;
-                break; 
-            }
+          if (
+            !studentData[field] ||
+            (Array.isArray(studentData[field]) &&
+              studentData[field].length === 0)
+          ) {
+            errors.push(
+              `Row ${i + 2}: Missing required field '${field}' for student ${
+                studentData.student_First_Name || "N/A"
+              }.`
+            );
+            missingField = true;
+            break;
+          }
         }
-        if(missingField){
-            errorCount++;
-            continue;
+        if (missingField) {
+          errorCount++;
+          continue;
         }
-        
+
         await create(studentData);
         successCount++;
       } catch (err) {
         console.error(`Error importing row ${i + 2}:`, err, row);
-        errors.push(`Row ${i + 2}: ${err.message || 'Failed to import.'}`);
+        errors.push(`Row ${i + 2}: ${err.message || "Failed to import."}`);
         errorCount++;
       }
     }
 
     setImportResults({ successCount, errorCount, errors });
     if (errorCount > 0) {
-        toast.error(`${errorCount} record(s) failed to import. ${successCount} imported.`, { duration: 5000 });
+      toast.error(
+        `${errorCount} record(s) failed to import. ${successCount} imported.`,
+        { duration: 5000 }
+      );
     } else if (successCount > 0) {
-        toast.success(`${successCount} student(s) imported successfully!`);
+      toast.success(`${successCount} student(s) imported successfully!`);
     } else {
-        toast.info("No new students were imported.");
+      toast.info("No new students were imported.");
     }
     setIsImporting(false);
   };
@@ -237,23 +309,26 @@ const Students = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-          <p className="text-gray-600">Manage student enquiries and track their progress</p>
+          <p className="text-gray-600">
+            Manage student enquiries and track their progress
+          </p>
           {userProfile && (
             <div className="text-sm text-gray-500 mt-1">
-              {userProfile.role === 'Superadmin' 
-                ? 'Viewing all enquiries across all branches' 
-                : `Viewing enquiries from ${userProfile.branchId ? 'your branch' : 'all branches'}`
-              }
+              {userProfile.role === "Superadmin"
+                ? "Viewing all enquiries across all branches"
+                : `Viewing enquiries from ${
+                    userProfile.branchId ? "your branch" : "all branches"
+                  }`}
             </div>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <input 
-            type="file" 
-            accept=".csv" 
-            onChange={handleFileImport} 
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleFileImport}
             ref={fileInputRef}
-            style={{ display: 'none' }} 
+            style={{ display: "none" }}
             id="csvFileInput"
           />
           <button
@@ -263,19 +338,21 @@ const Students = () => {
             disabled={isImporting}
           >
             <Upload size={20} className="mr-2" />
-            {isImporting ? 'Importing...' : 'Import'}
+            {isImporting ? "Importing..." : "Import"}
           </button>
-          <button 
-            onClick={handleExport} 
-            className="btn-secondary flex items-center" 
-            title="Export Students to CSV" 
-            disabled={isImporting || loading || !students || students.length === 0}
+          <button
+            onClick={handleExport}
+            className="btn-secondary flex items-center"
+            title="Export Students to CSV"
+            disabled={
+              isImporting || loading || !students || students.length === 0
+            }
           >
             <Download size={20} className="mr-2" /> Export
           </button>
-          <button 
-            onClick={() => setShowAddModal(true)} 
-            className="btn-primary flex items-center" 
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary flex items-center"
             disabled={isImporting}
           >
             <Plus size={20} className="mr-2" /> Add Student
@@ -284,30 +361,65 @@ const Students = () => {
       </div>
 
       {importResults && (
-        <div className={`p-4 rounded-md ${importResults.errorCount > 0 ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'} border`}>
+        <div
+          className={`p-4 rounded-md ${
+            importResults.errorCount > 0
+              ? "bg-red-50 border-red-300"
+              : "bg-green-50 border-green-300"
+          } border`}
+        >
           <div className="flex">
             <div className="flex-shrink-0">
-              {importResults.errorCount > 0 ? 
-                <AlertTriangle className="h-5 w-5 text-red-400" aria-hidden="true" /> :
-                <CheckCircle className="h-5 w-5 text-green-400" aria-hidden="true" />}
+              {importResults.errorCount > 0 ? (
+                <AlertTriangle
+                  className="h-5 w-5 text-red-400"
+                  aria-hidden="true"
+                />
+              ) : (
+                <CheckCircle
+                  className="h-5 w-5 text-green-400"
+                  aria-hidden="true"
+                />
+              )}
             </div>
             <div className="ml-3">
-              <h3 className={`text-sm font-medium ${importResults.errorCount > 0 ? 'text-red-800' : 'text-green-800'}`}>
+              <h3
+                className={`text-sm font-medium ${
+                  importResults.errorCount > 0
+                    ? "text-red-800"
+                    : "text-green-800"
+                }`}
+              >
                 Import Complete
               </h3>
-              <div className={`text-sm ${importResults.errorCount > 0 ? 'text-red-700' : 'text-green-700'}`}>
-                <p>{importResults.successCount} student(s) imported successfully.</p>
-                {importResults.errorCount > 0 && <p>{importResults.errorCount} record(s) failed.</p>}
+              <div
+                className={`text-sm ${
+                  importResults.errorCount > 0
+                    ? "text-red-700"
+                    : "text-green-700"
+                }`}
+              >
+                <p>
+                  {importResults.successCount} student(s) imported successfully.
+                </p>
+                {importResults.errorCount > 0 && (
+                  <p>{importResults.errorCount} record(s) failed.</p>
+                )}
               </div>
-              {importResults.errorCount > 0 && importResults.errors.length > 0 && (
-                <div className="mt-2 text-xs text-red-700 max-h-20 overflow-y-auto">
-                  <strong>Errors:</strong>
-                  <ul className="list-disc pl-5">
-                    {importResults.errors.slice(0, 5).map((err, idx) => <li key={idx}>{err}</li>)}
-                    {importResults.errors.length > 5 && <li>And {importResults.errors.length - 5} more...</li>}
-                  </ul>
-                </div>
-              )}
+              {importResults.errorCount > 0 &&
+                importResults.errors.length > 0 && (
+                  <div className="mt-2 text-xs text-red-700 max-h-20 overflow-y-auto">
+                    <strong>Errors:</strong>
+                    <ul className="list-disc pl-5">
+                      {importResults.errors.slice(0, 5).map((err, idx) => (
+                        <li key={idx}>{err}</li>
+                      ))}
+                      {importResults.errors.length > 5 && (
+                        <li>And {importResults.errors.length - 5} more...</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -317,10 +429,14 @@ const Students = () => {
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <div className="text-blue-600 text-2xl font-bold">{students?.length || 0}</div>
+              <div className="text-blue-600 text-2xl font-bold">
+                {students?.length || 0}
+              </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Students</p>
+              <p className="text-sm font-medium text-gray-600">
+                Total Students
+              </p>
               <p className="text-xs text-gray-500">All enquiries</p>
             </div>
           </div>
@@ -329,7 +445,8 @@ const Students = () => {
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
               <div className="text-green-600 text-2xl font-bold">
-                {students?.filter(s => s.enquiry_status === 'New').length || 0}
+                {students?.filter((s) => s.enquiry_status === "New").length ||
+                  0}
               </div>
             </div>
             <div className="ml-3">
@@ -342,7 +459,8 @@ const Students = () => {
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
               <div className="text-yellow-600 text-2xl font-bold">
-                {students?.filter(s => s.enquiry_status === 'In Progress').length || 0}
+                {students?.filter((s) => s.enquiry_status === "In Progress")
+                  .length || 0}
               </div>
             </div>
             <div className="ml-3">
@@ -355,7 +473,8 @@ const Students = () => {
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
               <div className="text-purple-600 text-2xl font-bold">
-                {students?.filter(s => s.enquiry_status === 'Admitted').length || 0}
+                {students?.filter((s) => s.enquiry_status === "Admitted")
+                  .length || 0}
               </div>
             </div>
             <div className="ml-3">
@@ -365,7 +484,7 @@ const Students = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="card">
         <StudentsTable
           students={students || []}
@@ -380,11 +499,34 @@ const Students = () => {
         />
       </div>
 
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Student" size="large">
-        <EnquiryForm onClose={() => setShowAddModal(false)} onSuccess={() => { handleFormSuccess(); setShowAddModal(false); }} />
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Add New Student"
+        size="large"
+      >
+        <EnquiryForm
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            handleFormSuccess();
+            setShowAddModal(false);
+          }}
+        />
       </Modal>
-      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Student" size="large">
-        <EnquiryForm editData={selectedStudent} onClose={() => setShowEditModal(false)} onSuccess={() => { handleFormSuccess(); setShowEditModal(false); }} />
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Student"
+        size="large"
+      >
+        <EnquiryForm
+          editData={selectedStudent}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={() => {
+            handleFormSuccess();
+            setShowEditModal(false);
+          }}
+        />
       </Modal>
     </div>
   );

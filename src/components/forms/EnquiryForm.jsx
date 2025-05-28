@@ -1,22 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { 
-  COUNTRIES, 
-  EDUCATION_LEVELS, 
-  ENQUIRY_SOURCES, 
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import {
+  COUNTRIES,
+  EDUCATION_LEVELS,
+  ENQUIRY_SOURCES,
   ENQUIRY_STATUS,
   INDIAN_STATES,
   AVAILABLE_SERVICES,
-  INTAKES
-} from '../../utils/constants';
-import { useUniversities } from '../../hooks/useFirestore';
-import { enquiryService, branchService, userService } from '../../services/firestore';
-import { useAuth } from '../../context/AuthContext';
-import toast from 'react-hot-toast';
+  INTAKES,
+} from "../../utils/constants";
+import { useUniversities } from "../../hooks/useFirestore";
+import {
+  enquiryService,
+  branchService,
+  userService,
+} from "../../services/firestore";
+import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
 
 const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-    defaultValues: editData || {}
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    defaultValues: editData || {},
   });
   const { user, userProfile } = useAuth();
   const { data: universities } = useUniversities();
@@ -27,25 +37,22 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
   const [branchesLoading, setBranchesLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(true);
 
-  const selectedCountries = watch('country_interested');
-  const selectedBranchId = watch('branchId');
+  const selectedCountries = watch("country_interested");
+  const selectedBranchId = watch("branchId");
 
-  // Fetch branches and users
   useEffect(() => {
     const fetchReferenceData = async () => {
       try {
-        // Fetch branches
         setBranchesLoading(true);
         const fetchedBranches = await branchService.getAll();
         setBranches(fetchedBranches || []);
-        
-        // Fetch users
+
         setUsersLoading(true);
         const fetchedUsers = await userService.getAll();
         setUsers(fetchedUsers || []);
       } catch (error) {
-        console.error('Error fetching reference data:', error);
-        toast.error('Failed to load branches and users');
+        console.error("Error fetching reference data:", error);
+        toast.error("Failed to load branches and users");
       } finally {
         setBranchesLoading(false);
         setUsersLoading(false);
@@ -55,27 +62,22 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
     fetchReferenceData();
   }, []);
 
-  // Set default values based on user profile and edit data
   useEffect(() => {
     if (userProfile && !editData) {
-      // For new enquiries, set defaults based on user profile
-      if (userProfile.branchId && userProfile.role !== 'Superadmin') {
-        setValue('branchId', userProfile.branchId);
+      if (userProfile.branchId && userProfile.role !== "Superadmin") {
+        setValue("branchId", userProfile.branchId);
       }
-      // Set current user as default assignee
-      setValue('assignedUserId', userProfile.uid);
+      setValue("assignedUserId", userProfile.uid);
     } else if (editData) {
-      // For editing, set all form values
-      Object.keys(editData).forEach(key => {
+      Object.keys(editData).forEach((key) => {
         setValue(key, editData[key]);
       });
     }
   }, [userProfile, editData, setValue]);
 
-  // Filter universities based on selected countries
   useEffect(() => {
     if (selectedCountries && selectedCountries.length > 0) {
-      const filtered = universities.filter(uni => 
+      const filtered = universities.filter((uni) =>
         selectedCountries.includes(uni.country)
       );
       setFilteredUniversities(filtered);
@@ -84,33 +86,29 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
     }
   }, [selectedCountries, universities]);
 
-  // Get available users based on selected branch and current user's role
   const getAvailableUsers = () => {
-    if (userProfile?.role === 'Superadmin') {
-      // Superadmin can assign to any user
+    if (userProfile?.role === "Superadmin") {
       if (selectedBranchId) {
-        // If a branch is selected, show users from that branch + superadmins
-        return users.filter(user => 
-          user.branchId === selectedBranchId || user.role === 'Superadmin'
+        return users.filter(
+          (user) =>
+            user.branchId === selectedBranchId || user.role === "Superadmin"
         );
       }
-      return users; // Show all users if no branch selected
+      return users;
     } else if (userProfile?.branchId) {
-      // Branch users can only assign within their branch
-      return users.filter(user => 
-        user.branchId === userProfile.branchId || user.role === 'Superadmin'
+      return users.filter(
+        (user) =>
+          user.branchId === userProfile.branchId || user.role === "Superadmin"
       );
     }
     return users;
   };
 
-  // Get available branches based on user role
   const getAvailableBranches = () => {
-    if (userProfile?.role === 'Superadmin') {
-      return branches; // Superadmin can select any branch
+    if (userProfile?.role === "Superadmin") {
+      return branches;
     } else if (userProfile?.branchId) {
-      // Other users can only see their own branch
-      return branches.filter(branch => branch.id === userProfile.branchId);
+      return branches.filter((branch) => branch.id === userProfile.branchId);
     }
     return [];
   };
@@ -118,39 +116,35 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      
+
       const enquiryData = {
         ...data,
-        // Ensure branch is set correctly
         branchId: data.branchId || userProfile?.branchId || null,
-        // Ensure assignment is set
         assignedUserId: data.assignedUserId || userProfile?.uid || null,
-        // Legacy field for backward compatibility
         assigned_users: data.assignedUserId || userProfile?.uid || null,
         createdBy: user.uid,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
-      // Additional validation
-      if (!enquiryData.branchId && userProfile?.role !== 'Superadmin') {
-        toast.error('Branch is required for this enquiry');
+      if (!enquiryData.branchId && userProfile?.role !== "Superadmin") {
+        toast.error("Branch is required for this enquiry");
         setLoading(false);
         return;
       }
 
       if (editData) {
         await enquiryService.update(editData.id, enquiryData);
-        toast.success('Enquiry updated successfully!');
+        toast.success("Enquiry updated successfully!");
       } else {
         await enquiryService.create(enquiryData);
-        toast.success('Enquiry created successfully!');
+        toast.success("Enquiry created successfully!");
       }
-      
+
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error('Error saving enquiry:', error);
-      toast.error('Failed to save enquiry. Please try again.');
+      console.error("Error saving enquiry:", error);
+      toast.error("Failed to save enquiry. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -158,61 +152,73 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Branch and Assignment Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Assignment Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Assignment Information
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Branch Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Branch {userProfile?.role !== 'Superadmin' ? '*' : ''}
+              Branch {userProfile?.role !== "Superadmin" ? "*" : ""}
             </label>
-            <select 
-              {...register('branchId', { 
-                required: userProfile?.role !== 'Superadmin' ? 'Branch is required' : false 
-              })} 
+            <select
+              {...register("branchId", {
+                required:
+                  userProfile?.role !== "Superadmin"
+                    ? "Branch is required"
+                    : false,
+              })}
               className="input-field"
-              disabled={userProfile?.role !== 'Superadmin' || branchesLoading}
+              disabled={userProfile?.role !== "Superadmin" || branchesLoading}
             >
               <option value="">
-                {userProfile?.role === 'Superadmin' ? 'Select Branch (Optional)' : 'Loading...'}
+                {userProfile?.role === "Superadmin"
+                  ? "Select Branch (Optional)"
+                  : "Loading..."}
               </option>
-              {getAvailableBranches().map(branch => (
+              {getAvailableBranches().map((branch) => (
                 <option key={branch.id} value={branch.id}>
-                  {branch.branchName || branch.name || `Branch ${branch.id.slice(0, 8)}`}
+                  {branch.branchName ||
+                    branch.name ||
+                    `Branch ${branch.id.slice(0, 8)}`}
                 </option>
               ))}
             </select>
             {errors.branchId && (
-              <p className="text-red-600 text-sm mt-1">{errors.branchId.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.branchId.message}
+              </p>
             )}
-            {userProfile?.role !== 'Superadmin' && (
+            {userProfile?.role !== "Superadmin" && (
               <p className="text-xs text-gray-500 mt-1">
                 Enquiry will be assigned to your branch
               </p>
             )}
           </div>
 
-          {/* User Assignment */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Assign To *
             </label>
-            <select 
-              {...register('assignedUserId', { required: 'Please assign this enquiry to someone' })} 
+            <select
+              {...register("assignedUserId", {
+                required: "Please assign this enquiry to someone",
+              })}
               className="input-field"
               disabled={usersLoading}
             >
               <option value="">Select User</option>
-              {getAvailableUsers().map(user => (
+              {getAvailableUsers().map((user) => (
                 <option key={user.id || user.uid} value={user.id || user.uid}>
-                  {user.displayName || user.email || 'Unknown User'} 
+                  {user.displayName || user.email || "Unknown User"}
                   {user.role && ` (${user.role})`}
                 </option>
               ))}
             </select>
             {errors.assignedUserId && (
-              <p className="text-red-600 text-sm mt-1">{errors.assignedUserId.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.assignedUserId.message}
+              </p>
             )}
             <p className="text-xs text-gray-500 mt-1">
               Only assigned user and admins can view this enquiry
@@ -221,9 +227,10 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Personal Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Personal Information
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -231,11 +238,15 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="text"
-              {...register('student_First_Name', { required: 'First name is required' })}
+              {...register("student_First_Name", {
+                required: "First name is required",
+              })}
               className="input-field"
             />
             {errors.student_First_Name && (
-              <p className="text-red-600 text-sm mt-1">{errors.student_First_Name.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.student_First_Name.message}
+              </p>
             )}
           </div>
 
@@ -245,11 +256,15 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="text"
-              {...register('student_Last_Name', { required: 'Last name is required' })}
+              {...register("student_Last_Name", {
+                required: "Last name is required",
+              })}
               className="input-field"
             />
             {errors.student_Last_Name && (
-              <p className="text-red-600 text-sm mt-1">{errors.student_Last_Name.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.student_Last_Name.message}
+              </p>
             )}
           </div>
 
@@ -259,7 +274,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="text"
-              {...register('student_passport')}
+              {...register("student_passport")}
               className="input-field"
               placeholder="Optional"
             />
@@ -269,18 +284,21 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Enquiry Source
             </label>
-            <select {...register('Source_Enquiry')} className="input-field">
-              {ENQUIRY_SOURCES.map(source => (
-                <option key={source} value={source}>{source}</option>
+            <select {...register("Source_Enquiry")} className="input-field">
+              {ENQUIRY_SOURCES.map((source) => (
+                <option key={source} value={source}>
+                  {source}
+                </option>
               ))}
             </select>
           </div>
         </div>
       </div>
 
-      {/* Contact Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Contact Information
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -288,17 +306,19 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="tel"
-              {...register('student_phone', { 
-                required: 'Phone number is required',
+              {...register("student_phone", {
+                required: "Phone number is required",
                 pattern: {
                   value: /^[0-9]{10}$/,
-                  message: 'Please enter a valid 10-digit phone number'
-                }
+                  message: "Please enter a valid 10-digit phone number",
+                },
               })}
               className="input-field"
             />
             {errors.student_phone && (
-              <p className="text-red-600 text-sm mt-1">{errors.student_phone.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.student_phone.message}
+              </p>
             )}
           </div>
 
@@ -308,7 +328,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="tel"
-              {...register('alternate_phone')}
+              {...register("alternate_phone")}
               className="input-field"
             />
           </div>
@@ -319,17 +339,19 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="email"
-              {...register('student_email', { 
-                required: 'Email is required',
+              {...register("student_email", {
+                required: "Email is required",
                 pattern: {
                   value: /^\S+@\S+$/i,
-                  message: 'Please enter a valid email address'
-                }
+                  message: "Please enter a valid email address",
+                },
               })}
               className="input-field"
             />
             {errors.student_email && (
-              <p className="text-red-600 text-sm mt-1">{errors.student_email.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.student_email.message}
+              </p>
             )}
           </div>
 
@@ -337,8 +359,8 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Country
             </label>
-            <select {...register('student_country')} className="input-field">
-              {COUNTRIES.map(country => (
+            <select {...register("student_country")} className="input-field">
+              {COUNTRIES.map((country) => (
                 <option key={country.code} value={country.code}>
                   {country.name}
                 </option>
@@ -350,10 +372,12 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               State
             </label>
-            <select {...register('student_state')} className="input-field">
+            <select {...register("student_state")} className="input-field">
               <option value="">Select State</option>
-              {INDIAN_STATES.map(state => (
-                <option key={state} value={state}>{state}</option>
+              {INDIAN_STATES.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
               ))}
             </select>
           </div>
@@ -364,7 +388,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="text"
-              {...register('student_city')}
+              {...register("student_city")}
               className="input-field"
             />
           </div>
@@ -374,7 +398,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               Address
             </label>
             <textarea
-              {...register('student_address')}
+              {...register("student_address")}
               rows={3}
               className="input-field"
             />
@@ -382,25 +406,32 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Education & Interest Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Education & Interest</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Education & Interest
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Current Education *
             </label>
-            <select 
-              {...register('current_education', { required: 'Current education is required' })} 
+            <select
+              {...register("current_education", {
+                required: "Current education is required",
+              })}
               className="input-field"
             >
               <option value="">Select Education Level</option>
-              {EDUCATION_LEVELS.map(level => (
-                <option key={level} value={level}>{level}</option>
+              {EDUCATION_LEVELS.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
               ))}
             </select>
             {errors.current_education && (
-              <p className="text-red-600 text-sm mt-1">{errors.current_education.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.current_education.message}
+              </p>
             )}
           </div>
 
@@ -408,10 +439,12 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Intake Interested
             </label>
-            <select {...register('intake_interested')} className="input-field">
+            <select {...register("intake_interested")} className="input-field">
               <option value="">Select Intake</option>
-              {INTAKES.map(intake => (
-                <option key={intake.name} value={intake.name}>{intake.name}</option>
+              {INTAKES.map((intake) => (
+                <option key={intake.name} value={intake.name}>
+                  {intake.name}
+                </option>
               ))}
             </select>
           </div>
@@ -421,12 +454,14 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               Countries Interested *
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border border-gray-300 rounded-lg">
-              {COUNTRIES.map(country => (
+              {COUNTRIES.map((country) => (
                 <label key={country.code} className="flex items-center">
                   <input
                     type="checkbox"
                     value={country.code}
-                    {...register('country_interested', { required: 'Please select at least one country' })}
+                    {...register("country_interested", {
+                      required: "Please select at least one country",
+                    })}
                     className="mr-2"
                   />
                   <span className="text-sm">{country.name}</span>
@@ -434,7 +469,9 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               ))}
             </div>
             {errors.country_interested && (
-              <p className="text-red-600 text-sm mt-1">{errors.country_interested.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.country_interested.message}
+              </p>
             )}
           </div>
 
@@ -443,10 +480,15 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 University Interested
               </label>
-              <select {...register('university_interested')} className="input-field">
+              <select
+                {...register("university_interested")}
+                className="input-field"
+              >
                 <option value="">Select University</option>
-                {filteredUniversities.map(uni => (
-                  <option key={uni.id} value={uni.id}>{uni.univ_name}</option>
+                {filteredUniversities.map((uni) => (
+                  <option key={uni.id} value={uni.id}>
+                    {uni.univ_name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -457,12 +499,12 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               Services Interested
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border border-gray-300 rounded-lg">
-              {AVAILABLE_SERVICES.map(service => (
+              {AVAILABLE_SERVICES.map((service) => (
                 <label key={service.name} className="flex items-center">
                   <input
                     type="checkbox"
                     value={service.name}
-                    {...register('Interested_Services')}
+                    {...register("Interested_Services")}
                     className="mr-2"
                   />
                   <span className="text-sm">{service.name}</span>
@@ -473,17 +515,20 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Counsellor Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Status Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Status Information
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Enquiry Status
             </label>
-            <select {...register('enquiry_status')} className="input-field">
-              {ENQUIRY_STATUS.map(status => (
-                <option key={status} value={status}>{status}</option>
+            <select {...register("enquiry_status")} className="input-field">
+              {ENQUIRY_STATUS.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
               ))}
             </select>
           </div>
@@ -493,7 +538,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               Notes
             </label>
             <textarea
-              {...register('notes')}
+              {...register("notes")}
               rows={4}
               className="input-field"
               placeholder="Add any additional notes about the enquiry..."
@@ -502,7 +547,6 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
         <button
           type="button"
@@ -512,12 +556,12 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          className="btn-primary"
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : editData ? 'Update Enquiry' : 'Create Enquiry'}
+        <button type="submit" className="btn-primary" disabled={loading}>
+          {loading
+            ? "Saving..."
+            : editData
+            ? "Update Enquiry"
+            : "Create Enquiry"}
         </button>
       </div>
     </form>

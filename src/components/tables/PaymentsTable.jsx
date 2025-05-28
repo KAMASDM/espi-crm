@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { 
-  Eye, 
-  Edit, 
-  Trash2, 
+import { useState } from "react";
+import {
+  Eye,
+  Edit,
+  Trash2,
   Download,
   Calendar,
   Search,
@@ -12,57 +12,62 @@ import {
   XCircle,
   CreditCard,
   User,
-  DollarSign
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { PAYMENT_STATUS, PAYMENT_MODES, PAYMENT_TYPES } from '../../utils/constants';
+  DollarSign,
+} from "lucide-react";
+import { format } from "date-fns";
+import {
+  PAYMENT_STATUS,
+  PAYMENT_MODES,
+  PAYMENT_TYPES,
+} from "../../utils/constants";
 
-const PaymentsTable = ({ 
-  payments, 
+const PaymentsTable = ({
+  payments,
   enquiries,
-  loading, 
-  onEdit, 
-  onDelete, 
+  loading,
+  onEdit,
+  onDelete,
   onView,
-  onDownload
+  onDownload,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [modeFilter, setModeFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [sortField, setSortField] = useState('payment_date');
-  const [sortDirection, setSortDirection] = useState('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [modeFilter, setModeFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [sortField, setSortField] = useState("payment_date");
+  const [sortDirection, setSortDirection] = useState("desc");
 
-  // Filter and sort payments
   const filteredPayments = payments
-    .filter(payment => {
+    .filter((payment) => {
       const studentName = getStudentName(payment.Memo_For);
-      
-      const matchesSearch = 
+
+      const matchesSearch =
         studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.payment_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        payment.payment_reference?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = !statusFilter || payment.payment_status === statusFilter;
+        payment.payment_reference
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        !statusFilter || payment.payment_status === statusFilter;
       const matchesMode = !modeFilter || payment.payment_mode === modeFilter;
       const matchesType = !typeFilter || payment.Payment_Type === typeFilter;
-      
+
       return matchesSearch && matchesStatus && matchesMode && matchesType;
     })
     .sort((a, b) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
-      
-      // Handle special cases for sorting
-      if (sortField === 'student') {
+
+      if (sortField === "student") {
         aValue = getStudentName(a.Memo_For);
         bValue = getStudentName(b.Memo_For);
-      } else if (sortField === 'payment_date') {
+      } else if (sortField === "payment_date") {
         aValue = new Date(a.payment_date);
         bValue = new Date(b.payment_date);
       }
-      
-      if (sortDirection === 'asc') {
+
+      if (sortDirection === "asc") {
         return aValue > bValue ? 1 : -1;
       } else {
         return aValue < bValue ? 1 : -1;
@@ -71,38 +76,42 @@ const PaymentsTable = ({
 
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
   const getStudentName = (enquiryId) => {
-    const enquiry = enquiries.find(enq => enq.id === enquiryId);
-    return enquiry ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}` : 'Unknown Student';
+    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
+    return enquiry
+      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
+      : "Unknown Student";
   };
 
   const getStudentEmail = (enquiryId) => {
-    const enquiry = enquiries.find(enq => enq.id === enquiryId);
-    return enquiry ? enquiry.student_email : 'Unknown';
+    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
+    return enquiry ? enquiry.student_email : "Unknown";
   };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      'Pending': { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      'Paid': { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      'Partially Paid': { color: 'bg-blue-100 text-blue-800', icon: Clock },
-      'Refunded': { color: 'bg-purple-100 text-purple-800', icon: CreditCard },
-      'Failed': { color: 'bg-red-100 text-red-800', icon: XCircle },
-      'Cancelled': { color: 'bg-gray-100 text-gray-800', icon: XCircle }
+      Pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
+      Paid: { color: "bg-green-100 text-green-800", icon: CheckCircle },
+      "Partially Paid": { color: "bg-blue-100 text-blue-800", icon: Clock },
+      Refunded: { color: "bg-purple-100 text-purple-800", icon: CreditCard },
+      Failed: { color: "bg-red-100 text-red-800", icon: XCircle },
+      Cancelled: { color: "bg-gray-100 text-gray-800", icon: XCircle },
     };
 
-    const config = statusConfig[status] || statusConfig['Pending'];
+    const config = statusConfig[status] || statusConfig["Pending"];
     const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
+      >
         <Icon size={12} className="mr-1" />
         {status}
       </span>
@@ -111,16 +120,16 @@ const PaymentsTable = ({
 
   const getModeIcon = (mode) => {
     const modeIcons = {
-      'Cash': DollarSign,
-      'Credit Card': CreditCard,
-      'Debit Card': CreditCard,
-      'Bank Transfer': CreditCard,
-      'Cheque': CreditCard,
-      'Online Payment': CreditCard,
-      'UPI': CreditCard,
-      'Other': CreditCard
+      Cash: DollarSign,
+      "Credit Card": CreditCard,
+      "Debit Card": CreditCard,
+      "Bank Transfer": CreditCard,
+      Cheque: CreditCard,
+      "Online Payment": CreditCard,
+      UPI: CreditCard,
+      Other: CreditCard,
     };
-    
+
     return modeIcons[mode] || CreditCard;
   };
 
@@ -134,10 +143,12 @@ const PaymentsTable = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
           <input
             type="text"
             placeholder="Search by student name, payment ID, or reference..."
@@ -146,7 +157,7 @@ const PaymentsTable = ({
             className="pl-10 input-field"
           />
         </div>
-        
+
         <div className="flex gap-2">
           <select
             value={statusFilter}
@@ -154,8 +165,10 @@ const PaymentsTable = ({
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Status</option>
-            {PAYMENT_STATUS.map(status => (
-              <option key={status} value={status}>{status}</option>
+            {PAYMENT_STATUS.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
             ))}
           </select>
 
@@ -165,8 +178,10 @@ const PaymentsTable = ({
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Modes</option>
-            {PAYMENT_MODES.map(mode => (
-              <option key={mode} value={mode}>{mode}</option>
+            {PAYMENT_MODES.map((mode) => (
+              <option key={mode} value={mode}>
+                {mode}
+              </option>
             ))}
           </select>
 
@@ -176,66 +191,74 @@ const PaymentsTable = ({
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Types</option>
-            {PAYMENT_TYPES.map(type => (
-              <option key={type} value={type}>{type}</option>
+            {PAYMENT_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Results Count */}
       <div className="text-sm text-gray-500">
         Showing {filteredPayments.length} of {payments.length} payments
       </div>
 
-      {/* Table */}
       <div className="table-container">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="table-header">Payment ID</th>
-              <th 
-                onClick={() => handleSort('student')}
+              <th
+                onClick={() => handleSort("student")}
                 className="table-header cursor-pointer hover:bg-gray-100"
               >
                 <div className="flex items-center">
                   Student
-                  {sortField === 'student' && (
-                    <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  {sortField === "student" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
                   )}
                 </div>
               </th>
-              <th 
-                onClick={() => handleSort('payment_amount')}
+              <th
+                onClick={() => handleSort("payment_amount")}
                 className="table-header cursor-pointer hover:bg-gray-100"
               >
                 <div className="flex items-center">
                   Amount
-                  {sortField === 'payment_amount' && (
-                    <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  {sortField === "payment_amount" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
                   )}
                 </div>
               </th>
               <th className="table-header">Payment Details</th>
-              <th 
-                onClick={() => handleSort('payment_status')}
+              <th
+                onClick={() => handleSort("payment_status")}
                 className="table-header cursor-pointer hover:bg-gray-100"
               >
                 <div className="flex items-center">
                   Status
-                  {sortField === 'payment_status' && (
-                    <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  {sortField === "payment_status" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
                   )}
                 </div>
               </th>
-              <th 
-                onClick={() => handleSort('payment_date')}
+              <th
+                onClick={() => handleSort("payment_date")}
                 className="table-header cursor-pointer hover:bg-gray-100"
               >
                 <div className="flex items-center">
                   Date
-                  {sortField === 'payment_date' && (
-                    <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  {sortField === "payment_date" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
                   )}
                 </div>
               </th>
@@ -245,8 +268,14 @@ const PaymentsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredPayments.length === 0 ? (
               <tr>
-                <td colSpan="7" className="table-cell text-center text-gray-500 py-8">
-                  <CreditCard className="mx-auto mb-2 text-gray-300" size={48} />
+                <td
+                  colSpan="7"
+                  className="table-cell text-center text-gray-500 py-8"
+                >
+                  <CreditCard
+                    className="mx-auto mb-2 text-gray-300"
+                    size={48}
+                  />
                   <p>No payments found</p>
                   {searchTerm && (
                     <p className="text-sm">Try adjusting your search terms</p>
@@ -256,10 +285,9 @@ const PaymentsTable = ({
             ) : (
               filteredPayments.map((payment) => {
                 const ModeIcon = getModeIcon(payment.payment_mode);
-                
+
                 return (
                   <tr key={payment.id} className="hover:bg-gray-50">
-                    {/* Payment ID */}
                     <td className="table-cell">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -269,16 +297,17 @@ const PaymentsTable = ({
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {payment.payment_id || `PAY-${payment.id.slice(-8)}`}
+                            {payment.payment_id ||
+                              `PAY-${payment.id.slice(-8)}`}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {payment.payment_reference && `Ref: ${payment.payment_reference}`}
+                            {payment.payment_reference &&
+                              `Ref: ${payment.payment_reference}`}
                           </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Student */}
                     <td className="table-cell">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
@@ -297,45 +326,48 @@ const PaymentsTable = ({
                       </div>
                     </td>
 
-                    {/* Amount */}
                     <td className="table-cell">
                       <div className="text-lg font-semibold text-gray-900">
-                        ₹{parseFloat(payment.payment_amount || 0).toLocaleString()}
+                        ₹
+                        {parseFloat(
+                          payment.payment_amount || 0
+                        ).toLocaleString()}
                       </div>
                       <div className="text-sm text-gray-500">
                         {payment.Payment_Type}
                       </div>
                     </td>
 
-                    {/* Payment Details */}
                     <td className="table-cell">
                       <div className="space-y-1">
                         <div className="flex items-center text-sm text-gray-900">
                           <ModeIcon size={14} className="mr-2 text-gray-400" />
                           {payment.payment_mode}
                         </div>
-                        {payment.Payment_For && Array.isArray(payment.Payment_For) && (
-                          <div className="text-sm text-gray-500">
-                            Services: {payment.Payment_For.join(', ')}
-                          </div>
-                        )}
+                        {payment.Payment_For &&
+                          Array.isArray(payment.Payment_For) && (
+                            <div className="text-sm text-gray-500">
+                              Services: {payment.Payment_For.join(", ")}
+                            </div>
+                          )}
                       </div>
                     </td>
 
-                    {/* Status */}
                     <td className="table-cell">
                       {getStatusBadge(payment.payment_status)}
                     </td>
 
-                    {/* Date */}
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar size={14} className="mr-2 text-gray-400" />
-                        {payment.payment_date && format(new Date(payment.payment_date), 'MMM dd, yyyy')}
+                        {payment.payment_date &&
+                          format(
+                            new Date(payment.payment_date),
+                            "MMM dd, yyyy"
+                          )}
                       </div>
                     </td>
 
-                    {/* Actions */}
                     <td className="table-cell">
                       <div className="flex items-center space-x-2">
                         <button
