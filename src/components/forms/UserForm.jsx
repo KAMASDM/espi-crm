@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { USER_ROLE_LIST, USER_ROLES } from '../../utils/constants';
 import { userService, branchService } from '../../services/firestore';
-import { invitationService } from '../../services/invitationService';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 
@@ -114,28 +113,23 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
         await userService.update(userId, userData);
         toast.success('User updated successfully!');
       } else {
-        // Create new user profile with invitation
-        const pendingUserData = {
+        // Create new user profile
+        // Note: This creates a user profile document in Firestore
+        // The actual Firebase Auth user should be created separately or this could be for invited users
+        
+        // Generate a temporary UID for new users (in a real app, this would come from Firebase Auth)
+        const tempUid = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        await userService.create({
           ...userData,
-          uid: null, // Will be set when user completes auth
-          status: 'pending_invitation',
-          invitedBy: currentUserProfile.uid,
-          invitedAt: new Date().toISOString(),
+          uid: tempUid,
           createdBy: currentUserProfile.uid,
-        };
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
         
-        // Create the user profile document
-        const docId = await userService.create(pendingUserData);
-        
-        // Send invitation email
-        try {
-          await invitationService.sendInvitation(userData.email, userData, currentUserProfile);
-          toast.success('User invitation created and email sent successfully!');
-        } catch (emailError) {
-          console.error('Failed to send invitation email:', emailError);
-          toast.success('User invitation created successfully!');
-          toast.warning('Email invitation could not be sent - please send manually.');
-        }
+        toast.success('User profile created successfully!');
+        toast.info('Note: User will need to complete authentication setup separately.');
       }
 
       onSuccess();
