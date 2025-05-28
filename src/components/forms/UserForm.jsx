@@ -1,35 +1,39 @@
-// src/components/forms/UserForm.jsx
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { USER_ROLE_LIST, USER_ROLES } from '../../utils/constants';
-import { userService, branchService } from '../../services/firestore';
-import toast from 'react-hot-toast';
-import { Save, X } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { USER_ROLE_LIST, USER_ROLES } from "../../utils/constants";
+import { userService, branchService } from "../../services/firestore";
+import toast from "react-hot-toast";
+import { Save, X } from "lucide-react";
 
-const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) => {
-  const { 
-    register, 
-    handleSubmit, 
-    watch, 
-    setValue, 
-    formState: { errors } 
+const UserForm = ({
+  onClose,
+  onSuccess,
+  editData = null,
+  currentUserProfile,
+}) => {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
   } = useForm({
     defaultValues: {
-      displayName: '',
-      email: '',
+      displayName: "",
+      email: "",
       role: USER_ROLES.COUNSELLOR,
-      branchId: currentUserProfile?.branchId || '',
+      branchId: currentUserProfile?.branchId || "",
       isActive: true,
-      ...editData
-    }
+      ...editData,
+    },
   });
 
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  
+
   const isSuperAdmin = currentUserProfile?.role === USER_ROLES.SUPERADMIN;
   const isBranchAdmin = currentUserProfile?.role === USER_ROLES.BRANCH_ADMIN;
-  const watchedRole = watch('role');
+  const watchedRole = watch("role");
 
   // Get available roles based on current user's permissions
   const getAvailableRoles = () => {
@@ -37,8 +41,9 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
       return USER_ROLE_LIST; // Superadmin can assign any role
     } else if (isBranchAdmin) {
       // Branch Admin cannot create Superadmin or other Branch Admin users
-      return USER_ROLE_LIST.filter(role => 
-        role !== USER_ROLES.SUPERADMIN && role !== USER_ROLES.BRANCH_ADMIN
+      return USER_ROLE_LIST.filter(
+        (role) =>
+          role !== USER_ROLES.SUPERADMIN && role !== USER_ROLES.BRANCH_ADMIN
       );
     }
     return []; // Other roles shouldn't be creating users
@@ -63,11 +68,11 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
 
     // Set form values for editing
     if (editData) {
-      setValue('displayName', editData.displayName || '');
-      setValue('email', editData.email || '');
-      setValue('role', editData.role || USER_ROLES.COUNSELLOR);
-      setValue('branchId', editData.branchId || '');
-      setValue('isActive', editData.isActive !== false);
+      setValue("displayName", editData.displayName || "");
+      setValue("email", editData.email || "");
+      setValue("role", editData.role || USER_ROLES.COUNSELLOR);
+      setValue("branchId", editData.branchId || "");
+      setValue("isActive", editData.isActive !== false);
     }
   }, [editData, setValue, isSuperAdmin]);
 
@@ -111,15 +116,17 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
         }
 
         await userService.update(userId, userData);
-        toast.success('User updated successfully!');
+        toast.success("User updated successfully!");
       } else {
         // Create new user profile
         // Note: This creates a user profile document in Firestore
         // The actual Firebase Auth user should be created separately or this could be for invited users
-        
+
         // Generate a temporary UID for new users (in a real app, this would come from Firebase Auth)
-        const tempUid = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+        const tempUid = `user_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
+
         await userService.create({
           ...userData,
           uid: tempUid,
@@ -127,14 +134,16 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
-        
-        toast.success('User profile created successfully!');
-        toast.info('Note: User will need to complete authentication setup separately.');
+
+        toast.success("User profile created successfully!");
+        toast.info(
+          "Note: User will need to complete authentication setup separately."
+        );
       }
 
       onSuccess();
     } catch (error) {
-      console.error('Error saving user:', error);
+      console.error("Error saving user:", error);
       toast.error(`Failed to save user: ${error.message}`);
     } finally {
       setLoading(false);
@@ -143,7 +152,9 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
 
   const shouldShowBranchSelection = () => {
     // Show branch selection for Superadmin or when role is not Superadmin
-    return isSuperAdmin || (watchedRole && watchedRole !== USER_ROLES.SUPERADMIN);
+    return (
+      isSuperAdmin || (watchedRole && watchedRole !== USER_ROLES.SUPERADMIN)
+    );
   };
 
   return (
@@ -151,29 +162,31 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <h4 className="text-lg font-semibold text-gray-900 mb-4">
-            {editData ? 'Edit User' : 'Add New User'}
+            {editData ? "Edit User" : "Add New User"}
           </h4>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Display Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Display Name *
               </label>
-              <input 
-                type="text" 
-                {...register('displayName', { 
-                  required: 'Display name is required',
+              <input
+                type="text"
+                {...register("displayName", {
+                  required: "Display name is required",
                   minLength: {
                     value: 2,
-                    message: 'Display name must be at least 2 characters'
-                  }
-                })} 
+                    message: "Display name must be at least 2 characters",
+                  },
+                })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter full name"
               />
               {errors.displayName && (
-                <p className="text-red-600 text-sm mt-1">{errors.displayName.message}</p>
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.displayName.message}
+                </p>
               )}
             </div>
 
@@ -182,24 +195,28 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email *
               </label>
-              <input 
-                type="email" 
-                {...register('email', { 
-                  required: 'Email is required', 
-                  pattern: { 
-                    value: /^\S+@\S+\.\S+$/i, 
-                    message: 'Invalid email address' 
-                  }
+              <input
+                type="email"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^\S+@\S+\.\S+$/i,
+                    message: "Invalid email address",
+                  },
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter email address"
                 readOnly={!!editData} // Email usually not editable after creation
               />
               {errors.email && (
-                <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.email.message}
+                </p>
               )}
               {editData && (
-                <p className="text-xs text-gray-500 mt-1">Email cannot be changed after user creation</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Email cannot be changed after user creation
+                </p>
               )}
             </div>
 
@@ -208,17 +225,21 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Role *
               </label>
-              <select 
-                {...register('role', { required: 'Role is required' })} 
+              <select
+                {...register("role", { required: "Role is required" })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Role</option>
-                {availableRoles.map(role => (
-                  <option key={role} value={role}>{role}</option>
+                {availableRoles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
                 ))}
               </select>
               {errors.role && (
-                <p className="text-red-600 text-sm mt-1">{errors.role.message}</p>
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.role.message}
+                </p>
               )}
             </div>
 
@@ -226,40 +247,46 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
             {shouldShowBranchSelection() && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Branch {watchedRole === USER_ROLES.SUPERADMIN ? '' : '*'}
+                  Branch {watchedRole === USER_ROLES.SUPERADMIN ? "" : "*"}
                 </label>
-                <select 
-                  {...register('branchId', { 
-                    required: watchedRole !== USER_ROLES.SUPERADMIN ? 'Branch is required' : false 
-                  })} 
+                <select
+                  {...register("branchId", {
+                    required:
+                      watchedRole !== USER_ROLES.SUPERADMIN
+                        ? "Branch is required"
+                        : false,
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={isBranchAdmin && !isSuperAdmin}
                 >
                   <option value="">
-                    {isSuperAdmin ? 'No specific branch (for Superadmin)' : 'Select Branch'}
+                    {isSuperAdmin
+                      ? "No specific branch (for Superadmin)"
+                      : "Select Branch"}
                   </option>
-                  {isSuperAdmin ? (
-                    branches.map(branch => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.branchName || `Branch ${branch.id.slice(0, 8)}`}
-                      </option>
-                    ))
-                  ) : (
-                    currentUserProfile?.branchId && (
-                      <option value={currentUserProfile.branchId}>
-                        Your Branch ({currentUserProfile.branchId.slice(0, 8)}...)
-                      </option>
-                    )
-                  )}
+                  {isSuperAdmin
+                    ? branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.branchName ||
+                            `Branch ${branch.id.slice(0, 8)}`}
+                        </option>
+                      ))
+                    : currentUserProfile?.branchId && (
+                        <option value={currentUserProfile.branchId}>
+                          Your Branch ({currentUserProfile.branchId.slice(0, 8)}
+                          ...)
+                        </option>
+                      )}
                 </select>
                 {errors.branchId && (
-                  <p className="text-red-600 text-sm mt-1">{errors.branchId.message}</p>
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.branchId.message}
+                  </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  {isSuperAdmin 
+                  {isSuperAdmin
                     ? "Superadmin users don't need a specific branch assignment"
-                    : "User will be assigned to your branch"
-                  }
+                    : "User will be assigned to your branch"}
                 </p>
               </div>
             )}
@@ -267,12 +294,14 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
             {/* Active Status */}
             <div className="md:col-span-2">
               <label className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  {...register('isActive')} 
+                <input
+                  type="checkbox"
+                  {...register("isActive")}
                   className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-gray-700">User is Active</span>
+                <span className="text-sm font-medium text-gray-700">
+                  User is Active
+                </span>
               </label>
               <p className="text-xs text-gray-500 mt-1">
                 Inactive users cannot log in to the system
@@ -283,22 +312,22 @@ const UserForm = ({ onClose, onSuccess, editData = null, currentUserProfile }) =
 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-          <button 
-            type="button" 
-            onClick={onClose} 
+          <button
+            type="button"
+            onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             disabled={loading}
           >
             <X size={16} className="inline mr-1" />
             Cancel
           </button>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             disabled={loading}
           >
             <Save size={16} className="inline mr-1" />
-            {loading ? 'Saving...' : editData ? 'Update User' : 'Create User'}
+            {loading ? "Saving..." : editData ? "Update User" : "Create User"}
           </button>
         </div>
       </form>

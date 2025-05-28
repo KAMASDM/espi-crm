@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { APPLICATION_STATUS } from '../../utils/constants';
-import { useAssessments } from '../../hooks/useFirestore';
-import { applicationService } from '../../services/firestore';
-import { useAuth } from '../../context/AuthContext';
-import { Upload, FileText, X } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { APPLICATION_STATUS } from "../../utils/constants";
+import { useAssessments } from "../../hooks/useFirestore";
+import { applicationService } from "../../services/firestore";
+import { useAuth } from "../../context/AuthContext";
+import { Upload, FileText, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-    defaultValues: editData || {}
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: editData || {},
   });
   const { user } = useAuth();
   const { data: assessments } = useAssessments();
@@ -19,26 +23,26 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      
+
       const applicationData = {
         ...data,
         ...uploadedFiles,
-        createdBy: user.uid
+        createdBy: user.uid,
       };
 
       if (editData) {
         await applicationService.update(editData.id, applicationData);
-        toast.success('Application updated successfully!');
+        toast.success("Application updated successfully!");
       } else {
         await applicationService.create(applicationData);
-        toast.success('Application created successfully!');
+        toast.success("Application created successfully!");
       }
-      
+
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error('Error saving application:', error);
-      toast.error('Failed to save application. Please try again.');
+      console.error("Error saving application:", error);
+      toast.error("Failed to save application. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -46,18 +50,16 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
 
   const handleFileUpload = (fieldName, file) => {
     if (file) {
-      // In a real implementation, you would upload to Firebase Storage
-      // For now, we'll just store the file reference
-      setUploadedFiles(prev => ({
+      setUploadedFiles((prev) => ({
         ...prev,
-        [fieldName]: file.name
+        [fieldName]: file.name,
       }));
       toast.success(`${file.name} uploaded successfully!`);
     }
   };
 
   const removeFile = (fieldName) => {
-    setUploadedFiles(prev => {
+    setUploadedFiles((prev) => {
       const updated = { ...prev };
       delete updated[fieldName];
       return updated;
@@ -74,7 +76,9 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           {uploadedFiles[name] ? (
             <div className="flex items-center justify-center space-x-2">
               <FileText className="text-green-600" size={24} />
-              <span className="text-sm text-green-600">{uploadedFiles[name]}</span>
+              <span className="text-sm text-green-600">
+                {uploadedFiles[name]}
+              </span>
               <button
                 type="button"
                 onClick={() => removeFile(name)}
@@ -106,32 +110,40 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
   );
 
   const getAssessmentDisplayName = (assessment) => {
-    return `${assessment.student_name || 'Student'} - ${assessment.university_name || 'University'} - ${assessment.course_name || 'Course'}`;
+    return `${assessment.student_name || "Student"} - ${
+      assessment.university_name || "University"
+    } - ${assessment.course_name || "Course"}`;
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Basic Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Basic Information
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Assessment *
             </label>
-            <select 
-              {...register('application', { required: 'Assessment selection is required' })} 
+            <select
+              {...register("application", {
+                required: "Assessment selection is required",
+              })}
               className="input-field"
             >
               <option value="">Select Assessment</option>
-              {assessments.map(assessment => (
+              {assessments.map((assessment) => (
                 <option key={assessment.id} value={assessment.id}>
-                  Assessment #{assessment.id.slice(-8)} - {assessment.specialisation || 'General Assessment'}
+                  Assessment #{assessment.id.slice(-8)} -{" "}
+                  {assessment.specialisation || "General Assessment"}
                 </option>
               ))}
             </select>
             {errors.application && (
-              <p className="text-red-600 text-sm mt-1">{errors.application.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.application.message}
+              </p>
             )}
           </div>
 
@@ -139,109 +151,113 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Application Status
             </label>
-            <select {...register('application_status')} className="input-field">
+            <select {...register("application_status")} className="input-field">
               <option value="">Select Status</option>
-              {APPLICATION_STATUS.map(status => (
-                <option key={status} value={status}>{status}</option>
+              {APPLICATION_STATUS.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
               ))}
             </select>
           </div>
         </div>
       </div>
 
-      {/* Document Upload Section */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Document Upload</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Document Upload
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Academic Documents */}
           <div className="space-y-4">
             <h5 className="font-medium text-gray-900">Academic Documents</h5>
-            
-            <FileUploadField 
-              name="passport" 
+
+            <FileUploadField
+              name="passport"
               label="Passport"
               accept=".pdf,.jpg,.jpeg,.png"
             />
-            
-            <FileUploadField 
-              name="diploma_marksheet" 
+
+            <FileUploadField
+              name="diploma_marksheet"
               label="Diploma Marksheet"
               accept=".pdf,.jpg,.jpeg,.png"
             />
-            
-            <FileUploadField 
-              name="bachelor_marksheet" 
+
+            <FileUploadField
+              name="bachelor_marksheet"
               label="Bachelor's Marksheet"
               accept=".pdf,.jpg,.jpeg,.png"
             />
-            
-            <FileUploadField 
-              name="master_marksheet" 
+
+            <FileUploadField
+              name="master_marksheet"
               label="Master's Marksheet"
               accept=".pdf,.jpg,.jpeg,.png"
             />
           </div>
 
-          {/* Test Scores & Professional Documents */}
           <div className="space-y-4">
-            <h5 className="font-medium text-gray-900">Test Scores & Professional Documents</h5>
-            
-            <FileUploadField 
-              name="ielts" 
+            <h5 className="font-medium text-gray-900">
+              Test Scores & Professional Documents
+            </h5>
+
+            <FileUploadField
+              name="ielts"
               label="IELTS Score Report"
               accept=".pdf,.jpg,.jpeg,.png"
             />
-            
-            <FileUploadField 
-              name="toefl" 
+
+            <FileUploadField
+              name="toefl"
               label="TOEFL Score Report"
               accept=".pdf,.jpg,.jpeg,.png"
             />
-            
-            <FileUploadField 
-              name="gre" 
+
+            <FileUploadField
+              name="gre"
               label="GRE Score Report"
               accept=".pdf,.jpg,.jpeg,.png"
             />
-            
-            <FileUploadField 
-              name="gmat" 
+
+            <FileUploadField
+              name="gmat"
               label="GMAT Score Report"
               accept=".pdf,.jpg,.jpeg,.png"
             />
-            
-            <FileUploadField 
-              name="pte" 
+
+            <FileUploadField
+              name="pte"
               label="PTE Score Report"
               accept=".pdf,.jpg,.jpeg,.png"
             />
           </div>
         </div>
 
-        {/* Application Documents */}
         <div className="mt-6">
-          <h5 className="font-medium text-gray-900 mb-4">Application Documents</h5>
+          <h5 className="font-medium text-gray-900 mb-4">
+            Application Documents
+          </h5>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FileUploadField 
-              name="sop" 
+            <FileUploadField
+              name="sop"
               label="Statement of Purpose (SOP)"
               accept=".pdf,.doc,.docx"
             />
-            
-            <FileUploadField 
-              name="cv" 
+
+            <FileUploadField
+              name="cv"
               label="CV/Resume"
               accept=".pdf,.doc,.docx"
             />
-            
-            <FileUploadField 
-              name="work_experience" 
+
+            <FileUploadField
+              name="work_experience"
               label="Work Experience Letter"
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
             />
-            
-            <FileUploadField 
-              name="other_documents" 
+
+            <FileUploadField
+              name="other_documents"
               label="Other Documents"
               accept="*/*"
             />
@@ -249,16 +265,17 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Additional Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Additional Information
+        </h4>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Application Notes
             </label>
             <textarea
-              {...register('notes')}
+              {...register("notes")}
               rows={4}
               className="input-field"
               placeholder="Add any additional notes about the application process, deadlines, special requirements, etc..."
@@ -267,7 +284,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
         <button
           type="button"
@@ -277,12 +293,12 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          className="btn-primary"
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : editData ? 'Update Application' : 'Create Application'}
+        <button type="submit" className="btn-primary" disabled={loading}>
+          {loading
+            ? "Saving..."
+            : editData
+            ? "Update Application"
+            : "Create Application"}
         </button>
       </div>
     </form>

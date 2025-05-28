@@ -1,14 +1,13 @@
-// src/pages/BranchManagement.jsx
-import React, { useState, useEffect } from 'react';
-import { Plus, Home } from 'lucide-react';
-import Modal from '../components/common/Modal'; //
-import BranchForm from '../components/forms/BranchForm'; // We'll create this next
-import BranchesTable from '../components/tables/BranchesTable'; // We'll create this next
-import { branchService } from '../services/firestore'; //
-import { useAuth } from '../context/AuthContext'; //
-import { USER_ROLES } from '../utils/constants'; //
-import toast from 'react-hot-toast';
-import LoadingSpinner from '../components/common/LoadingSpinner'; //
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import Modal from "../components/common/Modal";
+import BranchForm from "../components/forms/BranchForm";
+import BranchesTable from "../components/tables/BranchesTable";
+import { branchService } from "../services/firestore";
+import { useAuth } from "../context/AuthContext";
+import { USER_ROLES } from "../utils/constants";
+import toast from "react-hot-toast";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const BranchManagement = () => {
   const { userProfile } = useAuth();
@@ -44,14 +43,18 @@ const BranchManagement = () => {
   };
 
   const handleDelete = async (branchId) => {
-    if (window.confirm('Are you sure you want to delete this branch? This action might affect associated users and data.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this branch? This action might affect associated users and data."
+      )
+    ) {
       try {
         await branchService.delete(branchId);
-        toast.success('Branch deleted successfully!');
-        fetchBranches(); // Refresh list
+        toast.success("Branch deleted successfully!");
+        fetchBranches();
       } catch (err) {
-        console.error('Error deleting branch:', err);
-        toast.error('Failed to delete branch.');
+        console.error("Error deleting branch:", err);
+        toast.error("Failed to delete branch.");
       }
     }
   };
@@ -59,18 +62,24 @@ const BranchManagement = () => {
   const handleFormSuccess = () => {
     setShowAddModal(false);
     setShowEditModal(false);
-    fetchBranches(); // Refresh list
+    fetchBranches(); 
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="text-red-500">Error loading branches: {error.message}</div>;
+  if (error)
+    return (
+      <div className="text-red-500">
+        Error loading branches: {error.message}
+      </div>
+    );
 
-  // Only Superadmin can manage branches
   if (userProfile?.role !== USER_ROLES.SUPERADMIN) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-gray-900">Branch Management</h1>
-        <p className="text-red-600">You do not have permission to manage branches.</p>
+        <p className="text-red-600">
+          You do not have permission to manage branches.
+        </p>
       </div>
     );
   }
@@ -79,14 +88,21 @@ const BranchManagement = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Branch Management</h1>
-          <p className="text-gray-600">Oversee and manage all company branches</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Branch Management
+          </h1>
+          <p className="text-gray-600">
+            Oversee and manage all company branches
+          </p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="btn-primary flex items-center">
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="btn-primary flex items-center"
+        >
           <Plus size={20} className="mr-2" /> Add Branch
         </button>
       </div>
-      
+
       <div className="card">
         <BranchesTable
           branches={branches}
@@ -95,11 +111,28 @@ const BranchManagement = () => {
         />
       </div>
 
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Branch" size="large">
-        <BranchForm onClose={() => setShowAddModal(false)} onSuccess={handleFormSuccess} />
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Add New Branch"
+        size="large"
+      >
+        <BranchForm
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleFormSuccess}
+        />
       </Modal>
-      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Branch" size="large">
-        <BranchForm editData={selectedBranch} onClose={() => setShowEditModal(false)} onSuccess={handleFormSuccess} />
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Branch"
+        size="large"
+      >
+        <BranchForm
+          editData={selectedBranch}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={handleFormSuccess}
+        />
       </Modal>
     </div>
   );

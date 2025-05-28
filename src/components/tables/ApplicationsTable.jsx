@@ -30,7 +30,6 @@ const ApplicationsTable = ({
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
 
-  // Filter and sort applications
   const filteredApplications = applications
     .filter(application => {
       const assessment = getAssessment(application.application);
@@ -104,7 +103,7 @@ const ApplicationsTable = ({
   };
 
   const getCompletionPercentage = (application) => {
-    const totalFields = 13; // Total document fields
+    const totalFields = 13; 
     const completedFields = getDocumentCount(application);
     return Math.round((completedFields / totalFields) * 100);
   };
@@ -119,7 +118,6 @@ const ApplicationsTable = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -149,12 +147,10 @@ const ApplicationsTable = ({
         </div>
       </div>
 
-      {/* Results Count */}
       <div className="text-sm text-gray-500">
         Showing {filteredApplications.length} of {applications.length} applications
       </div>
 
-      {/* Table */}
       <div className="table-container">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -206,7 +202,6 @@ const ApplicationsTable = ({
                 
                 return (
                   <tr key={application.id} className="hover:bg-gray-50">
-                    {/* Application ID */}
                     <td className="table-cell">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -225,7 +220,6 @@ const ApplicationsTable = ({
                       </div>
                     </td>
 
-                    {/* Assessment Details */}
                     <td className="table-cell">
                       <div className="space-y-1">
                         <div className="text-sm font-medium text-gray-900">
@@ -237,7 +231,6 @@ const ApplicationsTable = ({
                       </div>
                     </td>
 
-                    {/* Documents */}
                     <td className="table-cell">
                       <div className="flex items-center space-x-2">
                         <div className="text-sm text-gray-900">
@@ -255,12 +248,10 @@ const ApplicationsTable = ({
                       </div>
                     </td>
 
-                    {/* Status */}
                     <td className="table-cell">
                       {getStatusBadge(application.application_status)}
                     </td>
 
-                    {/* Progress */}
                     <td className="table-cell">
                       <div className="flex items-center">
                         <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
@@ -280,7 +271,6 @@ const ApplicationsTable = ({
                       </div>
                     </td>
 
-                    {/* Created Date */}
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar size={14} className="mr-2 text-gray-400" />
@@ -288,7 +278,6 @@ const ApplicationsTable = ({
                       </div>
                     </td>
 
-                    {/* Actions */}
                     <td className="table-cell">
                       <div className="flex items-center space-x-2">
                         <button

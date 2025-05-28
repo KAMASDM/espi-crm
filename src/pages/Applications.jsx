@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
-import { Plus, Download, Upload, FileText } from 'lucide-react';
-import Modal from '../components/common/Modal';
-import ApplicationForm from '../components/forms/ApplicationForm';
-import ApplicationsTable from '../components/tables/ApplicationsTable';
-import { useApplications, useAssessments } from '../hooks/useFirestore';
-import { applicationService } from '../services/firestore';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { Plus, Download, Upload } from "lucide-react";
+import Modal from "../components/common/Modal";
+import ApplicationForm from "../components/forms/ApplicationForm";
+import ApplicationsTable from "../components/tables/ApplicationsTable";
+import { useApplications, useAssessments } from "../hooks/useFirestore";
+import toast from "react-hot-toast";
 
+const documents = [
+  { key: "sop", label: "Statement of Purpose" },
+  { key: "cv", label: "CV/Resume" },
+  { key: "passport", label: "Passport" },
+  { key: "ielts", label: "IELTS Score Report" },
+  { key: "toefl", label: "TOEFL Score Report" },
+  { key: "gre", label: "GRE Score Report" },
+  { key: "gmat", label: "GMAT Score Report" },
+  { key: "pte", label: "PTE Score Report" },
+  { key: "work_experience", label: "Work Experience Letter" },
+  { key: "diploma_marksheet", label: "Diploma Marksheet" },
+  { key: "bachelor_marksheet", label: "Bachelor's Marksheet" },
+  { key: "master_marksheet", label: "Master's Marksheet" },
+  { key: "other_documents", label: "Other Documents" },
+];
 const Applications = () => {
   const { data: applications, loading, remove } = useApplications();
   const { data: assessments } = useAssessments();
@@ -26,20 +40,23 @@ const Applications = () => {
   };
 
   const handleDelete = async (applicationId) => {
-    if (window.confirm('Are you sure you want to delete this application? This action cannot be undone.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this application? This action cannot be undone."
+      )
+    ) {
       try {
         await remove(applicationId);
-        toast.success('Application deleted successfully!');
+        toast.success("Application deleted successfully!");
       } catch (error) {
-        console.error('Error deleting application:', error);
-        toast.error('Failed to delete application. Please try again.');
+        console.error("Error deleting application:", error);
+        toast.error("Failed to delete application. Please try again.");
       }
     }
   };
 
-  const handleDownload = (application) => {
-    // TODO: Implement document download functionality
-    toast.info('Document download functionality will be implemented soon!');
+  const handleDownload = () => {
+    toast.info("Document download functionality will be implemented soon!");
   };
 
   const handleFormSuccess = () => {
@@ -47,28 +64,36 @@ const Applications = () => {
   };
 
   const handleExport = () => {
-    toast.info('Export functionality will be implemented soon!');
+    toast.info("Export functionality will be implemented soon!");
   };
 
   const handleImport = () => {
-    toast.info('Import functionality will be implemented soon!');
+    toast.info("Import functionality will be implemented soon!");
   };
 
-  // Calculate stats
-  const draftApplications = applications.filter(app => app.application_status === 'Draft').length;
-  const submittedApplications = applications.filter(app => app.application_status === 'Submitted').length;
-  const acceptedApplications = applications.filter(app => app.application_status === 'Accepted').length;
-  const underReviewApplications = applications.filter(app => app.application_status === 'Under Review').length;
+  const draftApplications = applications.filter(
+    (app) => app.application_status === "Draft"
+  ).length;
+  const submittedApplications = applications.filter(
+    (app) => app.application_status === "Submitted"
+  ).length;
+  const acceptedApplications = applications.filter(
+    (app) => app.application_status === "Accepted"
+  ).length;
+  const underReviewApplications = applications.filter(
+    (app) => app.application_status === "Under Review"
+  ).length;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
-          <p className="text-gray-600">Manage university applications and track submission status</p>
+          <p className="text-gray-600">
+            Manage university applications and track submission status
+          </p>
         </div>
-        
+
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleImport}
@@ -94,7 +119,6 @@ const Applications = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <div className="flex items-center">
@@ -104,7 +128,9 @@ const Applications = () => {
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Applications</p>
+              <p className="text-sm font-medium text-gray-600">
+                Total Applications
+              </p>
               <p className="text-xs text-gray-500">All submissions</p>
             </div>
           </div>
@@ -153,7 +179,6 @@ const Applications = () => {
         </div>
       </div>
 
-      {/* Applications Table */}
       <div className="card">
         <ApplicationsTable
           applications={applications}
@@ -166,7 +191,6 @@ const Applications = () => {
         />
       </div>
 
-      {/* Add Application Modal */}
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -179,7 +203,6 @@ const Applications = () => {
         />
       </Modal>
 
-      {/* Edit Application Modal */}
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -193,7 +216,6 @@ const Applications = () => {
         />
       </Modal>
 
-      {/* View Application Modal */}
       <Modal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
@@ -201,8 +223,8 @@ const Applications = () => {
         size="large"
       >
         {selectedApplication && (
-          <ApplicationDetails 
-            application={selectedApplication} 
+          <ApplicationDetails
+            application={selectedApplication}
             assessments={assessments}
           />
         )}
@@ -211,121 +233,146 @@ const Applications = () => {
   );
 };
 
-// Application Details Component for View Modal
 const ApplicationDetails = ({ application, assessments }) => {
   const getAssessment = (assessmentId) => {
-    return assessments.find(assessment => assessment.id === assessmentId);
+    return assessments.find((assessment) => assessment.id === assessmentId);
   };
 
   const assessment = getAssessment(application.application);
 
-  const documents = [
-    { key: 'sop', label: 'Statement of Purpose' },
-    { key: 'cv', label: 'CV/Resume' },
-    { key: 'passport', label: 'Passport' },
-    { key: 'ielts', label: 'IELTS Score Report' },
-    { key: 'toefl', label: 'TOEFL Score Report' },
-    { key: 'gre', label: 'GRE Score Report' },
-    { key: 'gmat', label: 'GMAT Score Report' },
-    { key: 'pte', label: 'PTE Score Report' },
-    { key: 'work_experience', label: 'Work Experience Letter' },
-    { key: 'diploma_marksheet', label: 'Diploma Marksheet' },
-    { key: 'bachelor_marksheet', label: 'Bachelor\'s Marksheet' },
-    { key: 'master_marksheet', label: 'Master\'s Marksheet' },
-    { key: 'other_documents', label: 'Other Documents' }
-  ];
-
   return (
     <div className="space-y-6">
-      {/* Basic Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-3">
+          Basic Information
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Application ID</label>
-            <p className="text-sm text-gray-900">APP-{application.id.slice(-8)}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Assessment ID</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Application ID
+            </label>
             <p className="text-sm text-gray-900">
-              {assessment ? `ASS-${assessment.id.slice(-8)}` : 'Not found'}
+              APP-{application.id.slice(-8)}
             </p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Application Status</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Assessment ID
+            </label>
+            <p className="text-sm text-gray-900">
+              {assessment ? `ASS-${assessment.id.slice(-8)}` : "Not found"}
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Application Status
+            </label>
             <p className="text-sm text-gray-900">
               {application.application_status ? (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  application.application_status === 'Accepted' ? 'bg-green-100 text-green-800' :
-                  application.application_status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                  application.application_status === 'Under Review' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    application.application_status === "Accepted"
+                      ? "bg-green-100 text-green-800"
+                      : application.application_status === "Rejected"
+                      ? "bg-red-100 text-red-800"
+                      : application.application_status === "Under Review"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
                   {application.application_status}
                 </span>
-              ) : 'No status set'}
+              ) : (
+                "No status set"
+              )}
             </p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Created Date</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Created Date
+            </label>
             <p className="text-sm text-gray-900">
-              {application.createdAt 
+              {application.createdAt
                 ? new Date(application.createdAt.toDate()).toLocaleDateString()
-                : 'Unknown'}
+                : "Unknown"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Assessment Details */}
       {assessment && (
         <div>
-          <h4 className="text-lg font-semibold text-gray-900 mb-3">Assessment Details</h4>
+          <h4 className="text-lg font-semibold text-gray-900 mb-3">
+            Assessment Details
+          </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Specialization</label>
-              <p className="text-sm text-gray-900">{assessment.specialisation || 'Not specified'}</p>
+              <label className="block text-sm font-medium text-gray-700">
+                Specialization
+              </label>
+              <p className="text-sm text-gray-900">
+                {assessment.specialisation || "Not specified"}
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Duration</label>
-              <p className="text-sm text-gray-900">{assessment.duration || 'Not specified'}</p>
+              <label className="block text-sm font-medium text-gray-700">
+                Duration
+              </label>
+              <p className="text-sm text-gray-900">
+                {assessment.duration || "Not specified"}
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Application Fee</label>
-              <p className="text-sm text-gray-900">{assessment.application_fee || 'Not specified'}</p>
+              <label className="block text-sm font-medium text-gray-700">
+                Application Fee
+              </label>
+              <p className="text-sm text-gray-900">
+                {assessment.application_fee || "Not specified"}
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Tuition Fee</label>
-              <p className="text-sm text-gray-900">{assessment.tution_fee || 'Not specified'}</p>
+              <label className="block text-sm font-medium text-gray-700">
+                Tuition Fee
+              </label>
+              <p className="text-sm text-gray-900">
+                {assessment.tution_fee || "Not specified"}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Documents Status */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">Documents Status</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-3">
+          Documents Status
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {documents.map(doc => (
-            <div key={doc.key} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+          {documents.map((doc) => (
+            <div
+              key={doc.key}
+              className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+            >
               <span className="text-sm text-gray-700">{doc.label}</span>
-              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                application[doc.key] 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {application[doc.key] ? 'Uploaded' : 'Missing'}
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                  application[doc.key]
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {application[doc.key] ? "Uploaded" : "Missing"}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Additional Information */}
       {application.notes && (
         <div>
           <h4 className="text-lg font-semibold text-gray-900 mb-3">Notes</h4>
-          <p className="text-sm text-gray-900 whitespace-pre-wrap">{application.notes}</p>
+          <p className="text-sm text-gray-900 whitespace-pre-wrap">
+            {application.notes}
+          </p>
         </div>
       )}
     </div>

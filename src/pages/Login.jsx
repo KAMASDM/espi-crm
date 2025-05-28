@@ -1,19 +1,22 @@
-import React, { useState } from 'react';
-import { GraduationCap } from 'lucide-react';
-import { signInWithGoogle } from '../services/auth';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { GraduationCap } from "lucide-react";
+import { signInWithGoogle } from "../services/auth";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
       await signInWithGoogle();
-      toast.success('Successfully signed in!');
+      toast.success("Successfully signed in!");
+      navigate("/");
     } catch (error) {
-      console.error('Sign in error:', error);
-      toast.error('Failed to sign in. Please try again.');
+      console.error("Sign in error:", error);
+      toast.error("Failed to sign in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -22,7 +25,6 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
-        {/* Header */}
         <div className="text-center">
           <div className="flex justify-center">
             <div className="flex items-center justify-center w-20 h-20 bg-primary-600 rounded-full">
@@ -37,7 +39,6 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Login Card */}
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="space-y-6">
             <div className="text-center">
@@ -49,7 +50,6 @@ const Login = () => {
               </p>
             </div>
 
-            {/* Google Sign In Button */}
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
@@ -77,12 +77,13 @@ const Login = () => {
                   />
                 </svg>
               )}
-              {loading ? 'Signing in...' : 'Continue with Google'}
+              {loading ? "Signing in..." : "Continue with Google"}
             </button>
 
-            {/* Features */}
             <div className="mt-8 border-t border-gray-200 pt-6">
-              <h4 className="text-sm font-medium text-gray-900 mb-4">What you can do:</h4>
+              <h4 className="text-sm font-medium text-gray-900 mb-4">
+                What you can do:
+              </h4>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-center">
                   <div className="w-1.5 h-1.5 bg-primary-500 rounded-full mr-3"></div>
@@ -105,7 +106,6 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="text-center text-sm text-gray-500">
           Secure authentication powered by Google
         </div>

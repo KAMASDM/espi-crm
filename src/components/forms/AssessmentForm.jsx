@@ -1,20 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { 
-  COUNTRIES, 
-  COURSE_LEVELS, 
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import {
+  COUNTRIES,
+  COURSE_LEVELS,
   ASSESSMENT_STATUS,
   INTAKES,
-  CURRENCIES
-} from '../../utils/constants';
-import { useEnquiries, useUniversities, useCourses } from '../../hooks/useFirestore';
-import { assessmentService } from '../../services/firestore';
-import { useAuth } from '../../context/AuthContext';
-import toast from 'react-hot-toast';
+  CURRENCIES,
+} from "../../utils/constants";
+import {
+  useEnquiries,
+  useUniversities,
+  useCourses,
+} from "../../hooks/useFirestore";
+import { assessmentService } from "../../services/firestore";
+import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
 
 const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-    defaultValues: editData || {}
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    defaultValues: editData || {},
   });
   const { user } = useAuth();
   const { data: enquiries } = useEnquiries();
@@ -24,91 +33,103 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
   const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
 
-  const selectedCountry = watch('student_country');
-  const selectedUniversity = watch('university');
-  const selectedLevel = watch('level_applying_for');
+  const selectedCountry = watch("student_country");
+  const selectedUniversity = watch("university");
+  const selectedLevel = watch("level_applying_for");
 
-  // Filter universities based on selected country
   useEffect(() => {
     if (selectedCountry) {
-      const filtered = universities.filter(uni => uni.country === selectedCountry);
+      const filtered = universities.filter(
+        (uni) => uni.country === selectedCountry
+      );
       setFilteredUniversities(filtered);
     } else {
       setFilteredUniversities(universities);
     }
   }, [selectedCountry, universities]);
 
-  // Filter courses based on selected university and level
   useEffect(() => {
     let filtered = courses;
-    
+
     if (selectedUniversity) {
-      filtered = filtered.filter(course => course.university === selectedUniversity);
+      filtered = filtered.filter(
+        (course) => course.university === selectedUniversity
+      );
     }
-    
+
     if (selectedLevel) {
-      filtered = filtered.filter(course => course.course_levels === selectedLevel);
+      filtered = filtered.filter(
+        (course) => course.course_levels === selectedLevel
+      );
     }
-    
+
     setFilteredCourses(filtered);
   }, [selectedUniversity, selectedLevel, courses]);
 
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      
+
       const assessmentData = {
         ...data,
         assigned_users: user.uid,
-        createdBy: user.uid
+        createdBy: user.uid,
       };
 
       if (editData) {
         await assessmentService.update(editData.id, assessmentData);
-        toast.success('Assessment updated successfully!');
+        toast.success("Assessment updated successfully!");
       } else {
         await assessmentService.create(assessmentData);
-        toast.success('Assessment created successfully!');
+        toast.success("Assessment created successfully!");
       }
-      
+
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error('Error saving assessment:', error);
-      toast.error('Failed to save assessment. Please try again.');
+      console.error("Error saving assessment:", error);
+      toast.error("Failed to save assessment. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const getStudentName = (enquiryId) => {
-    const enquiry = enquiries.find(enq => enq.id === enquiryId);
-    return enquiry ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}` : 'Unknown Student';
+    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
+    return enquiry
+      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
+      : "Unknown Student";
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Student & Basic Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Student & Basic Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Student & Basic Information
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Student *
             </label>
-            <select 
-              {...register('enquiry', { required: 'Student selection is required' })} 
+            <select
+              {...register("enquiry", {
+                required: "Student selection is required",
+              })}
               className="input-field"
             >
               <option value="">Select Student</option>
-              {enquiries.map(enquiry => (
+              {enquiries.map((enquiry) => (
                 <option key={enquiry.id} value={enquiry.id}>
-                  {enquiry.student_First_Name} {enquiry.student_Last_Name} - {enquiry.student_email}
+                  {enquiry.student_First_Name} {enquiry.student_Last_Name} -{" "}
+                  {enquiry.student_email}
                 </option>
               ))}
             </select>
             {errors.enquiry && (
-              <p className="text-red-600 text-sm mt-1">{errors.enquiry.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.enquiry.message}
+              </p>
             )}
           </div>
 
@@ -116,19 +137,23 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Country of Interest *
             </label>
-            <select 
-              {...register('student_country', { required: 'Country is required' })} 
+            <select
+              {...register("student_country", {
+                required: "Country is required",
+              })}
               className="input-field"
             >
               <option value="">Select Country</option>
-              {COUNTRIES.map(country => (
+              {COUNTRIES.map((country) => (
                 <option key={country.code} value={country.code}>
                   {country.name}
                 </option>
               ))}
             </select>
             {errors.student_country && (
-              <p className="text-red-600 text-sm mt-1">{errors.student_country.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.student_country.message}
+              </p>
             )}
           </div>
 
@@ -136,19 +161,23 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               University *
             </label>
-            <select 
-              {...register('university', { required: 'University is required' })} 
+            <select
+              {...register("university", {
+                required: "University is required",
+              })}
               className="input-field"
             >
               <option value="">Select University</option>
-              {filteredUniversities.map(uni => (
+              {filteredUniversities.map((uni) => (
                 <option key={uni.id} value={uni.id}>
                   {uni.univ_name}
                 </option>
               ))}
             </select>
             {errors.university && (
-              <p className="text-red-600 text-sm mt-1">{errors.university.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.university.message}
+              </p>
             )}
           </div>
 
@@ -156,17 +185,23 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Level Applying For *
             </label>
-            <select 
-              {...register('level_applying_for', { required: 'Level is required' })} 
+            <select
+              {...register("level_applying_for", {
+                required: "Level is required",
+              })}
               className="input-field"
             >
               <option value="">Select Level</option>
-              {COURSE_LEVELS.map(level => (
-                <option key={level} value={level}>{level}</option>
+              {COURSE_LEVELS.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
               ))}
             </select>
             {errors.level_applying_for && (
-              <p className="text-red-600 text-sm mt-1">{errors.level_applying_for.message}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.level_applying_for.message}
+              </p>
             )}
           </div>
 
@@ -174,9 +209,9 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Course Interested
             </label>
-            <select {...register('course_interested')} className="input-field">
+            <select {...register("course_interested")} className="input-field">
               <option value="">Select Course</option>
-              {filteredCourses.map(course => (
+              {filteredCourses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.course_name}
                 </option>
@@ -188,19 +223,22 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Intake Interested
             </label>
-            <select {...register('intake_interested')} className="input-field">
+            <select {...register("intake_interested")} className="input-field">
               <option value="">Select Intake</option>
-              {INTAKES.map(intake => (
-                <option key={intake.name} value={intake.name}>{intake.name}</option>
+              {INTAKES.map((intake) => (
+                <option key={intake.name} value={intake.name}>
+                  {intake.name}
+                </option>
               ))}
             </select>
           </div>
         </div>
       </div>
 
-      {/* Course Details */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Course Details</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Course Details
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -208,7 +246,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="text"
-              {...register('specialisation')}
+              {...register("specialisation")}
               className="input-field"
               placeholder="e.g., Computer Science, Data Analytics"
             />
@@ -220,7 +258,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="text"
-              {...register('duration')}
+              {...register("duration")}
               className="input-field"
               placeholder="e.g., 2 years, 18 months"
             />
@@ -232,7 +270,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="url"
-              {...register('course_link')}
+              {...register("course_link")}
               className="input-field"
               placeholder="https://university.edu/course"
             />
@@ -240,9 +278,10 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Financial Information */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Financial Information</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Financial Information
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -250,7 +289,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="text"
-              {...register('application_fee')}
+              {...register("application_fee")}
               className="input-field"
               placeholder="e.g., $100, €75"
             />
@@ -262,7 +301,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </label>
             <input
               type="text"
-              {...register('tution_fee')}
+              {...register("tution_fee")}
               className="input-field"
               placeholder="e.g., $25,000/year"
             />
@@ -272,9 +311,9 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Fee Currency
             </label>
-            <select {...register('fee_currency')} className="input-field">
+            <select {...register("fee_currency")} className="input-field">
               <option value="">Select Currency</option>
-              {CURRENCIES.map(currency => (
+              {CURRENCIES.map((currency) => (
                 <option key={currency.code} value={currency.code}>
                   {currency.code} - {currency.name}
                 </option>
@@ -284,18 +323,21 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Assessment Status & Notes */}
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Assessment Status & Notes</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Assessment Status & Notes
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Assessment Status
             </label>
-            <select {...register('ass_status')} className="input-field">
+            <select {...register("ass_status")} className="input-field">
               <option value="">Select Status</option>
-              {ASSESSMENT_STATUS.map(status => (
-                <option key={status} value={status}>{status}</option>
+              {ASSESSMENT_STATUS.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
               ))}
             </select>
           </div>
@@ -305,7 +347,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               Assessment Notes
             </label>
             <textarea
-              {...register('notes')}
+              {...register("notes")}
               rows={4}
               className="input-field"
               placeholder="Add detailed assessment notes, recommendations, eligibility analysis, etc..."
@@ -314,7 +356,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
         <button
           type="button"
@@ -324,12 +365,12 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          className="btn-primary"
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : editData ? 'Update Assessment' : 'Create Assessment'}
+        <button type="submit" className="btn-primary" disabled={loading}>
+          {loading
+            ? "Saving..."
+            : editData
+            ? "Update Assessment"
+            : "Create Assessment"}
         </button>
       </div>
     </form>

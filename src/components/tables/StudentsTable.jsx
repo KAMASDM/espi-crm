@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Eye,
   Edit,
@@ -14,15 +14,19 @@ import {
   MessageSquare,
   X,
   Building2,
-  UserCheck
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { ENQUIRY_STATUS } from '../../utils/constants';
-import { branchService, userService } from '../../services/firestore';
-import toast from 'react-hot-toast';
+  UserCheck,
+} from "lucide-react";
+import { format } from "date-fns";
+import { ENQUIRY_STATUS } from "../../utils/constants";
+import { branchService, userService } from "../../services/firestore";
+import toast from "react-hot-toast";
 
-// InlineNoteEditor Component
-const InlineNoteEditor = ({ initialNote = '', studentId, onSaveNote, onCancel }) => {
+const InlineNoteEditor = ({
+  initialNote = "",
+  studentId,
+  onSaveNote,
+  onCancel,
+}) => {
   const [note, setNote] = useState(initialNote);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -42,21 +46,25 @@ const InlineNoteEditor = ({ initialNote = '', studentId, onSaveNote, onCancel })
         placeholder="Add a note..."
       />
       <div className="flex justify-end space-x-2 mt-2">
-        <button 
-            onClick={onCancel} 
-            className="p-1 text-gray-500 hover:text-gray-700"
-            title="Cancel"
-            disabled={isSaving}
+        <button
+          onClick={onCancel}
+          className="p-1 text-gray-500 hover:text-gray-700"
+          title="Cancel"
+          disabled={isSaving}
         >
-          <X size={16}/>
+          <X size={16} />
         </button>
-        <button 
-            onClick={handleSave} 
-            className="p-1 text-primary-600 hover:text-primary-800 disabled:opacity-50"
-            title="Save Note"
-            disabled={isSaving}
+        <button
+          onClick={handleSave}
+          className="p-1 text-primary-600 hover:text-primary-800 disabled:opacity-50"
+          title="Save Note"
+          disabled={isSaving}
         >
-          {isSaving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div> : <Save size={16}/>}
+          {isSaving ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+          ) : (
+            <Save size={16} />
+          )}
         </button>
       </div>
     </div>
@@ -72,37 +80,33 @@ const StudentsTable = ({
   onUpdateStatus,
   onUpdateNote,
   onUpdateAssignment,
-  currentUserProfile
+  currentUserProfile,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [branchFilter, setBranchFilter] = useState('');
-  const [assignmentFilter, setAssignmentFilter] = useState('');
-  const [sortField, setSortField] = useState('createdAt');
-  const [sortDirection, setSortDirection] = useState('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [branchFilter, setBranchFilter] = useState("");
+  const [assignmentFilter, setAssignmentFilter] = useState("");
+  const [sortField, setSortField] = useState("createdAt");
+  const [sortDirection, setSortDirection] = useState("desc");
   const [editingNoteForStudentId, setEditingNoteForStudentId] = useState(null);
-  
-  // Data for dropdowns
+
   const [branches, setBranches] = useState([]);
   const [users, setUsers] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(true);
 
-  // Fetch branches and users for display names and filters
   useEffect(() => {
     const fetchReferenceData = async () => {
       try {
-        // Fetch branches
         setBranchesLoading(true);
         const fetchedBranches = await branchService.getAll();
         setBranches(fetchedBranches || []);
-        
-        // Fetch users (for assignment dropdown and display)
+
         setUsersLoading(true);
         const fetchedUsers = await userService.getAll();
         setUsers(fetchedUsers || []);
       } catch (error) {
-        console.error('Error fetching reference data:', error);
+        console.error("Error fetching reference data:", error);
       } finally {
         setBranchesLoading(false);
         setUsersLoading(false);
@@ -112,86 +116,96 @@ const StudentsTable = ({
     fetchReferenceData();
   }, []);
 
-  // Create mappings for quick lookup
   const branchMap = branches.reduce((acc, branch) => {
-    acc[branch.id] = branch.branchName || branch.name || `Branch ${branch.id.slice(0, 8)}`;
+    acc[branch.id] =
+      branch.branchName || branch.name || `Branch ${branch.id.slice(0, 8)}`;
     return acc;
   }, {});
 
   const userMap = users.reduce((acc, user) => {
-    acc[user.id || user.uid] = user.displayName || user.email || 'Unknown User';
+    acc[user.id || user.uid] = user.displayName || user.email || "Unknown User";
     return acc;
   }, {});
 
-  // Helper functions
   const getBranchName = (branchId) => {
-    if (!branchId) return 'No Branch';
-    if (branchesLoading) return 'Loading...';
+    if (!branchId) return "No Branch";
+    if (branchesLoading) return "Loading...";
     return branchMap[branchId] || `Unknown Branch (${branchId.slice(0, 8)}...)`;
   };
 
   const getUserName = (userId) => {
-    if (!userId) return 'Unassigned';
-    if (usersLoading) return 'Loading...';
+    if (!userId) return "Unassigned";
+    if (usersLoading) return "Loading...";
     return userMap[userId] || `Unknown User (${userId.slice(0, 8)}...)`;
   };
 
   const getAvailableUsers = () => {
-    // Filter users based on current user's role and branch
-    if (currentUserProfile?.role === 'Superadmin') {
-      return users; // Superadmin sees all users
+    if (currentUserProfile?.role === "Superadmin") {
+      return users;
     } else if (currentUserProfile?.branchId) {
-      // Branch users see only users from their branch
-      return users.filter(user => 
-        user.branchId === currentUserProfile.branchId ||
-        user.role === 'Superadmin'
+      return users.filter(
+        (user) =>
+          user.branchId === currentUserProfile.branchId ||
+          user.role === "Superadmin"
       );
     }
     return users;
   };
 
   const filteredStudents = students
-    .filter(student => {
+    .filter((student) => {
       const searchTermLower = searchTerm.toLowerCase();
       const matchesSearch =
         student.student_First_Name?.toLowerCase().includes(searchTermLower) ||
         student.student_Last_Name?.toLowerCase().includes(searchTermLower) ||
         student.student_email?.toLowerCase().includes(searchTermLower) ||
         student.student_phone?.includes(searchTerm);
-      const matchesStatus = !statusFilter || student.enquiry_status === statusFilter;
+      const matchesStatus =
+        !statusFilter || student.enquiry_status === statusFilter;
       const matchesBranch = !branchFilter || student.branchId === branchFilter;
-      const matchesAssignment = !assignmentFilter || 
-        (assignmentFilter === 'unassigned' && !student.assignedUserId) ||
-        (assignmentFilter === 'assigned' && student.assignedUserId) ||
+      const matchesAssignment =
+        !assignmentFilter ||
+        (assignmentFilter === "unassigned" && !student.assignedUserId) ||
+        (assignmentFilter === "assigned" && student.assignedUserId) ||
         student.assignedUserId === assignmentFilter;
-      
-      return matchesSearch && matchesStatus && matchesBranch && matchesAssignment;
+
+      return (
+        matchesSearch && matchesStatus && matchesBranch && matchesAssignment
+      );
     })
     .sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
-      if (sortField === 'createdAt') {
+      if (sortField === "createdAt") {
         const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
         const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+        return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
       }
       if (aValue === undefined || aValue === null) return 1;
       if (bValue === undefined || bValue === null) return -1;
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortDirection === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
-      return sortDirection === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+      return sortDirection === "asc"
+        ? aValue > bValue
+          ? 1
+          : -1
+        : aValue < bValue
+        ? 1
+        : -1;
     });
 
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
-  
+
   const handleSaveNoteWithClose = async (studentId, newNote) => {
     try {
       if (onUpdateNote) {
@@ -199,8 +213,8 @@ const StudentsTable = ({
         setEditingNoteForStudentId(null);
       }
     } catch (error) {
-      console.error('Error updating note:', error);
-      toast.error('Failed to update note');
+      console.error("Error updating note:", error);
+      toast.error("Failed to update note");
     }
   };
 
@@ -210,8 +224,8 @@ const StudentsTable = ({
         await onUpdateAssignment(studentId, newAssignedUserId);
       }
     } catch (error) {
-      console.error('Error updating assignment:', error);
-      toast.error('Failed to update assignment');
+      console.error("Error updating assignment:", error);
+      toast.error("Failed to update assignment");
     }
   };
 
@@ -221,8 +235,8 @@ const StudentsTable = ({
         await onUpdateStatus(studentId, newStatus);
       }
     } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update status');
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -236,66 +250,78 @@ const StudentsTable = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and Filter Controls */}
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input 
-            type="text" 
-            placeholder="Search students..." 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
+          <input
+            type="text"
+            placeholder="Search students..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 input-field"
           />
         </div>
-        
+
         <div className="flex flex-wrap gap-2">
-          {/* Status Filter */}
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <select 
-              value={statusFilter} 
-              onChange={(e) => setStatusFilter(e.target.value)} 
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Status</option>
-              {ENQUIRY_STATUS.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Branch Filter */}
-          <div className="relative">
-            <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <select 
-              value={branchFilter} 
-              onChange={(e) => setBranchFilter(e.target.value)} 
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">All Branches</option>
-              {branches.map(branch => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.branchName || branch.name || `Branch ${branch.id.slice(0, 8)}`}
+              {ENQUIRY_STATUS.map((status) => (
+                <option key={status} value={status}>
+                  {status}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Assignment Filter */}
           <div className="relative">
-            <UserCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <select 
-              value={assignmentFilter} 
-              onChange={(e) => setAssignmentFilter(e.target.value)} 
+            <Building2
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">All Branches</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.branchName ||
+                    branch.name ||
+                    `Branch ${branch.id.slice(0, 8)}`}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="relative">
+            <UserCheck
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={assignmentFilter}
+              onChange={(e) => setAssignmentFilter(e.target.value)}
               className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Assignments</option>
               <option value="unassigned">Unassigned</option>
               <option value="assigned">Assigned</option>
-              {getAvailableUsers().map(user => (
+              {getAvailableUsers().map((user) => (
                 <option key={user.id || user.uid} value={user.id || user.uid}>
-                  {user.displayName || user.email || 'Unknown User'}
+                  {user.displayName || user.email || "Unknown User"}
                 </option>
               ))}
             </select>
@@ -307,16 +333,20 @@ const StudentsTable = ({
         Showing {filteredStudents.length} of {students.length} students
       </div>
 
-      {/* Table */}
       <div className="table-container">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th onClick={() => handleSort('student_First_Name')} className="table-header cursor-pointer hover:bg-gray-100">
+              <th
+                onClick={() => handleSort("student_First_Name")}
+                className="table-header cursor-pointer hover:bg-gray-100"
+              >
                 <div className="flex items-center">
                   Student Name
-                  {sortField === 'student_First_Name' && (
-                    <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  {sortField === "student_First_Name" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
                   )}
                 </div>
               </th>
@@ -325,20 +355,30 @@ const StudentsTable = ({
               <th className="table-header">Branch</th>
               <th className="table-header">Assigned To</th>
               <th className="table-header">Education</th>
-              <th onClick={() => handleSort('enquiry_status')} className="table-header cursor-pointer hover:bg-gray-100">
+              <th
+                onClick={() => handleSort("enquiry_status")}
+                className="table-header cursor-pointer hover:bg-gray-100"
+              >
                 <div className="flex items-center">
                   Status
-                  {sortField === 'enquiry_status' && (
-                    <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  {sortField === "enquiry_status" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
                   )}
                 </div>
               </th>
               <th className="table-header w-48">Notes</th>
-              <th onClick={() => handleSort('createdAt')} className="table-header cursor-pointer hover:bg-gray-100">
+              <th
+                onClick={() => handleSort("createdAt")}
+                className="table-header cursor-pointer hover:bg-gray-100"
+              >
                 <div className="flex items-center">
                   Created
-                  {sortField === 'createdAt' && (
-                    <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  {sortField === "createdAt" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
                   )}
                 </div>
               </th>
@@ -348,92 +388,108 @@ const StudentsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan="10" className="table-cell text-center text-gray-500 py-8">
+                <td
+                  colSpan="10"
+                  className="table-cell text-center text-gray-500 py-8"
+                >
                   <User className="mx-auto mb-2 text-gray-300" size={48} />
                   <p>No students found</p>
                   {searchTerm && (
-                    <p className="text-sm">Try adjusting your search terms or filters.</p>
+                    <p className="text-sm">
+                      Try adjusting your search terms or filters.
+                    </p>
                   )}
                 </td>
               </tr>
             ) : (
               filteredStudents.map((student) => {
-                let formattedDate = 'N/A';
-                if (student.createdAt && typeof student.createdAt.toDate === 'function') {
+                let formattedDate = "N/A";
+                if (
+                  student.createdAt &&
+                  typeof student.createdAt.toDate === "function"
+                ) {
                   try {
-                    formattedDate = format(student.createdAt.toDate(), 'MMM dd, yyyy');
+                    formattedDate = format(
+                      student.createdAt.toDate(),
+                      "MMM dd, yyyy"
+                    );
                   } catch (e) {
-                    formattedDate = 'Invalid Date';
+                    formattedDate = "Invalid Date";
                   }
                 } else if (student.createdAt) {
                   try {
                     const parsedDate = new Date(student.createdAt);
                     if (!isNaN(parsedDate)) {
-                      formattedDate = format(parsedDate, 'MMM dd, yyyy');
+                      formattedDate = format(parsedDate, "MMM dd, yyyy");
                     } else {
-                      formattedDate = 'Invalid Date';
+                      formattedDate = "Invalid Date";
                     }
-                  } catch(e) {
-                    formattedDate = 'Error Parsing Date';
+                  } catch (e) {
+                    formattedDate = "Error Parsing Date";
                   }
                 }
 
                 return (
                   <tr key={student.id} className="hover:bg-gray-50">
-                    {/* Student Name */}
                     <td className="table-cell">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
                             <span className="text-sm font-medium text-primary-700">
-                              {student.student_First_Name?.[0] || ''}{student.student_Last_Name?.[0] || ''}
+                              {student.student_First_Name?.[0] || ""}
+                              {student.student_Last_Name?.[0] || ""}
                             </span>
                           </div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {student.student_First_Name || 'N/A'} {student.student_Last_Name || ''}
+                            {student.student_First_Name || "N/A"}{" "}
+                            {student.student_Last_Name || ""}
                           </div>
                           <div className="text-sm text-gray-500">
-                            ID: {student.id ? student.id.slice(-8) : 'N/A'}
+                            ID: {student.id ? student.id.slice(-8) : "N/A"}
                           </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Contact */}
                     <td className="table-cell">
                       <div className="space-y-1">
                         <div className="flex items-center text-sm text-gray-900">
                           <Phone size={14} className="mr-2 text-gray-400" />
-                          {student.student_phone || 'N/A'}
+                          {student.student_phone || "N/A"}
                         </div>
                         <div className="flex items-center text-sm text-gray-500">
                           <Mail size={14} className="mr-2 text-gray-400" />
-                          {student.student_email || 'N/A'}
+                          {student.student_email || "N/A"}
                         </div>
                       </div>
                     </td>
 
-                    {/* Location */}
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-900">
                         <MapPin size={14} className="mr-2 text-gray-400" />
                         <div>
-                          <div>{student.student_city || 'N/A'}</div>
-                          <div className="text-gray-500">{student.student_state || 'N/A'}</div>
+                          <div>{student.student_city || "N/A"}</div>
+                          <div className="text-gray-500">
+                            {student.student_state || "N/A"}
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Branch */}
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-900">
                         <Building2 size={14} className="mr-2 text-gray-400" />
                         <div>
-                          <div className="font-medium">{getBranchName(student.branchId)}</div>
+                          <div className="font-medium">
+                            {getBranchName(student.branchId)}
+                          </div>
                           {student.branchId && (
-                            <div className="text-xs text-gray-400" title={student.branchId}>
+                            <div
+                              className="text-xs text-gray-400"
+                              title={student.branchId}
+                            >
                               ID: {student.branchId.slice(0, 8)}...
                             </div>
                           )}
@@ -441,77 +497,97 @@ const StudentsTable = ({
                       </div>
                     </td>
 
-                    {/* Assigned To */}
                     <td className="table-cell">
                       <select
-                        value={student.assignedUserId || ''}
-                        onChange={(e) => handleAssignmentChange(student.id, e.target.value || null)}
+                        value={student.assignedUserId || ""}
+                        onChange={(e) =>
+                          handleAssignmentChange(
+                            student.id,
+                            e.target.value || null
+                          )
+                        }
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <option value="">Unassigned</option>
-                        {getAvailableUsers().map(user => (
-                          <option key={user.id || user.uid} value={user.id || user.uid}>
-                            {user.displayName || user.email || 'Unknown User'}
+                        {getAvailableUsers().map((user) => (
+                          <option
+                            key={user.id || user.uid}
+                            value={user.id || user.uid}
+                          >
+                            {user.displayName || user.email || "Unknown User"}
                           </option>
                         ))}
                       </select>
                     </td>
 
-                    {/* Education */}
                     <td className="table-cell">
                       <div className="text-sm text-gray-900">
-                        {student.current_education || 'N/A'}
+                        {student.current_education || "N/A"}
                       </div>
                     </td>
 
-                    {/* Status */}
                     <td className="table-cell">
-                      <select 
-                        value={student.enquiry_status || ''} 
-                        onChange={(e) => handleStatusChange(student.id, e.target.value)} 
-                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500" 
+                      <select
+                        value={student.enquiry_status || ""}
+                        onChange={(e) =>
+                          handleStatusChange(student.id, e.target.value)
+                        }
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <option value="" disabled>Select Status</option>
-                        {ENQUIRY_STATUS.map(status => (
-                          <option key={status} value={status}>{status}</option>
+                        <option value="" disabled>
+                          Select Status
+                        </option>
+                        {ENQUIRY_STATUS.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
                         ))}
                       </select>
                     </td>
 
-                    {/* Notes */}
                     <td className="table-cell relative">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-600 truncate w-3/4" title={student.notes || "No note"}>
+                        <p
+                          className="text-xs text-gray-600 truncate w-3/4"
+                          title={student.notes || "No note"}
+                        >
                           {student.notes ? (
-                            student.notes.length > 30 ? student.notes.substring(0, 30) + "..." : student.notes
+                            student.notes.length > 30 ? (
+                              student.notes.substring(0, 30) + "..."
+                            ) : (
+                              student.notes
+                            )
                           ) : (
                             <span className="italic">No note</span>
                           )}
                         </p>
-                        <button 
+                        <button
                           onClick={(e) => {
-                            e.stopPropagation(); 
-                            setEditingNoteForStudentId(editingNoteForStudentId === student.id ? null : student.id);
-                          }} 
-                          className="p-1 text-gray-400 hover:text-primary-600" 
+                            e.stopPropagation();
+                            setEditingNoteForStudentId(
+                              editingNoteForStudentId === student.id
+                                ? null
+                                : student.id
+                            );
+                          }}
+                          className="p-1 text-gray-400 hover:text-primary-600"
                           title="Edit Note"
                         >
                           <MessageSquare size={14} />
                         </button>
                       </div>
                       {editingNoteForStudentId === student.id && (
-                        <InlineNoteEditor 
-                          initialNote={student.notes || ''} 
-                          studentId={student.id} 
-                          onSaveNote={handleSaveNoteWithClose} 
-                          onCancel={() => setEditingNoteForStudentId(null)} 
+                        <InlineNoteEditor
+                          initialNote={student.notes || ""}
+                          studentId={student.id}
+                          onSaveNote={handleSaveNoteWithClose}
+                          onCancel={() => setEditingNoteForStudentId(null)}
                         />
                       )}
                     </td>
 
-                    {/* Created Date */}
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar size={14} className="mr-2 text-gray-400" />
@@ -519,26 +595,25 @@ const StudentsTable = ({
                       </div>
                     </td>
 
-                    {/* Actions */}
                     <td className="table-cell">
                       <div className="flex items-center space-x-1">
-                        <button 
-                          onClick={() => onView(student)} 
-                          className="p-1 text-blue-600 hover:text-blue-900" 
+                        <button
+                          onClick={() => onView(student)}
+                          className="p-1 text-blue-600 hover:text-blue-900"
                           title="View Details"
                         >
                           <Eye size={16} />
                         </button>
-                        <button 
-                          onClick={() => onEdit(student)} 
-                          className="p-1 text-yellow-600 hover:text-yellow-900" 
+                        <button
+                          onClick={() => onEdit(student)}
+                          className="p-1 text-yellow-600 hover:text-yellow-900"
                           title="Edit"
                         >
                           <Edit size={16} />
                         </button>
-                        <button 
-                          onClick={() => onDelete(student.id)} 
-                          className="p-1 text-red-600 hover:text-red-900" 
+                        <button
+                          onClick={() => onDelete(student.id)}
+                          className="p-1 text-red-600 hover:text-red-900"
                           title="Delete"
                         >
                           <Trash2 size={16} />

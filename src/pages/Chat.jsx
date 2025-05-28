@@ -1,69 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import ChatWindow from '../components/chat/ChatWindow'; // [cite: uploaded:src/components/chat/ChatWindow.jsx]
-import NewChatModal from '../components/chat/NewChatModal'; // Import the new modal
-import { useChats } from '../hooks/useChat'; // Use the new hook
-import { useAuth } from '../context/AuthContext'; // [cite: uploaded:src/context/AuthContext.jsx]
-import { formatDistanceToNowStrict } from 'date-fns';
-import { Search, Plus, Users, MessageSquare, Hash, MoreVertical, Bell } from 'lucide-react';
-import LoadingSpinner from '../components/common/LoadingSpinner'; // [cite: uploaded:src/components/common/LoadingSpinner.jsx]
+import { useState } from "react";
+import ChatWindow from "../components/chat/ChatWindow";
+import NewChatModal from "../components/chat/NewChatModal";
+import { useChats } from "../hooks/useChat";
+import { useAuth } from "../context/AuthContext";
+import { formatDistanceToNowStrict } from "date-fns";
+import {
+  Search,
+  Plus,
+  Users,
+  MessageSquare,
+  Hash,
+  MoreVertical,
+  Bell,
+} from "lucide-react";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const Chat = () => {
   const { user: currentUser } = useAuth();
   const { chats, loading: chatsLoading, error: chatsError } = useChats();
   const [selectedChat, setSelectedChat] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showNewChatModal, setShowNewChatModal] = useState(false);
 
-  const filteredChats = chats.filter(chat => {
-    if (chat.type === 'direct') {
-        const otherMemberId = chat.members.find(id => id !== currentUser?.uid);
-        const otherMemberInfo = chat.memberInfo?.[otherMemberId];
-        return otherMemberInfo?.displayName?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredChats = chats.filter((chat) => {
+    if (chat.type === "direct") {
+      const otherMemberId = chat.members.find((id) => id !== currentUser?.uid);
+      const otherMemberInfo = chat.memberInfo?.[otherMemberId];
+      return otherMemberInfo?.displayName
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
     }
     return chat.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const formatTime = (timestamp) => {
-    if (!timestamp) return '';
+    if (!timestamp) return "";
     return formatDistanceToNowStrict(timestamp.toDate(), { addSuffix: true });
   };
-  
+
   const handleChatCreated = (newChatData) => {
-    // If a new chat is created or an existing one is returned, select it.
-    // The useChats hook will update the list, so we find it from there or use the returned ID.
-    const chatToSelect = chats.find(c => c.id === newChatData.id) || {id: newChatData.id, ...newChatData};
+    const chatToSelect = chats.find((c) => c.id === newChatData.id) || {
+      id: newChatData.id,
+      ...newChatData,
+    };
     setSelectedChat(chatToSelect);
     setShowNewChatModal(false);
   };
 
-
   if (chatsLoading) {
-    return <div className="flex items-center justify-center h-[calc(100vh-120px)]"><LoadingSpinner /></div>;
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+        <LoadingSpinner />
+      </div>
+    );
   }
   if (chatsError) {
-    return <div className="p-4 text-red-600">Error loading chats: {chatsError.message}</div>;
+    return (
+      <div className="p-4 text-red-600">
+        Error loading chats: {chatsError.message}
+      </div>
+    );
   }
 
   return (
     <div className="flex h-[calc(100vh-120px)] bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      {/* Chat Sidebar */}
-      <div className={`flex flex-col w-full md:w-80 border-r border-gray-200 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+      <div
+        className={`flex flex-col w-full md:w-80 border-r border-gray-200 ${
+          selectedChat ? "hidden md:flex" : "flex"
+        }`}
+      >
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
             <div className="flex items-center space-x-1">
-              <button onClick={() => setShowNewChatModal(true)} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg" title="New chat">
+              <button
+                onClick={() => setShowNewChatModal(true)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                title="New chat"
+              >
                 <Plus size={20} />
               </button>
-              {/* <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg" title="More options">
-                <MoreVertical size={20} />
-              </button> */}
             </div>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input type="text" placeholder="Search conversations..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"/>
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
           </div>
         </div>
 
@@ -72,7 +102,10 @@ const Chat = () => {
             <div className="p-4 text-center text-gray-500 mt-10">
               <MessageSquare className="mx-auto mb-2 text-gray-300" size={48} />
               <p className="text-sm">No conversations found.</p>
-              <button onClick={() => setShowNewChatModal(true)} className="mt-4 text-sm text-primary-600 hover:underline">
+              <button
+                onClick={() => setShowNewChatModal(true)}
+                className="mt-4 text-sm text-primary-600 hover:underline"
+              >
                 Start a new chat
               </button>
             </div>
@@ -81,38 +114,68 @@ const Chat = () => {
               {filteredChats.map((chat) => {
                 const unreadCount = chat.unreadCount?.[currentUser?.uid] || 0;
                 let chatName = chat.name;
-                let chatAvatarInitial = chat.name?.[0]?.toUpperCase() || '?';
+                let chatAvatarInitial = chat.name?.[0]?.toUpperCase() || "?";
                 let AvatarIcon = Hash;
-                let avatarBg = 'bg-purple-100';
-                let avatarText = 'text-purple-600';
+                let avatarBg = "bg-purple-100";
+                let avatarText = "text-purple-600";
 
-                if (chat.type === 'direct') {
-                    const otherMemberId = chat.members.find(id => id !== currentUser?.uid);
-                    const otherMemberInfo = chat.memberInfo?.[otherMemberId];
-                    chatName = otherMemberInfo?.displayName || 'Unknown User';
-                    chatAvatarInitial = otherMemberInfo?.displayName?.[0]?.toUpperCase() || 'U';
-                    AvatarIcon = Users; // Use Users icon for direct messages
-                    avatarBg = 'bg-blue-100';
-                    avatarText = 'text-blue-600';
+                if (chat.type === "direct") {
+                  const otherMemberId = chat.members.find(
+                    (id) => id !== currentUser?.uid
+                  );
+                  const otherMemberInfo = chat.memberInfo?.[otherMemberId];
+                  chatName = otherMemberInfo?.displayName || "Unknown User";
+                  chatAvatarInitial =
+                    otherMemberInfo?.displayName?.[0]?.toUpperCase() || "U";
+                  AvatarIcon = Users;
+                  avatarBg = "bg-blue-100";
+                  avatarText = "text-blue-600";
                 }
 
                 return (
-                  <button key={chat.id} onClick={() => setSelectedChat(chat)}
-                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors ${selectedChat?.id === chat.id ? 'bg-primary-50 border-r-2 border-primary-600' : ''}`}>
+                  <button
+                    key={chat.id}
+                    onClick={() => setSelectedChat(chat)}
+                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors ${
+                      selectedChat?.id === chat.id
+                        ? "bg-primary-50 border-r-2 border-primary-600"
+                        : ""
+                    }`}
+                  >
                     <div className="flex items-center space-x-3">
                       <div className="relative">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${avatarBg}`}>
-                          {chat.type === 'direct' && chat.memberInfo?.[chat.members.find(id => id !== currentUser?.uid)]?.photoURL ? (
-                            <img src={chat.memberInfo[chat.members.find(id => id !== currentUser?.uid)].photoURL} alt={chatName} className="w-full h-full rounded-full object-cover" />
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${avatarBg}`}
+                        >
+                          {chat.type === "direct" &&
+                          chat.memberInfo?.[
+                            chat.members.find((id) => id !== currentUser?.uid)
+                          ]?.photoURL ? (
+                            <img
+                              src={
+                                chat.memberInfo[
+                                  chat.members.find(
+                                    (id) => id !== currentUser?.uid
+                                  )
+                                ].photoURL
+                              }
+                              alt={chatName}
+                              className="w-full h-full rounded-full object-cover"
+                            />
                           ) : (
                             <AvatarIcon className={`${avatarText}`} size={18} />
                           )}
                         </div>
-                        {/* Add online indicator if implementing presence */}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className={`text-sm font-medium truncate ${unreadCount > 0 ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                          <h3
+                            className={`text-sm font-medium truncate ${
+                              unreadCount > 0
+                                ? "text-gray-900 font-semibold"
+                                : "text-gray-700"
+                            }`}
+                          >
                             {chatName}
                           </h3>
                           {chat.lastMessageTimestamp && (
@@ -122,8 +185,14 @@ const Chat = () => {
                           )}
                         </div>
                         <div className="flex items-center justify-between mt-0.5">
-                          <p className={`text-xs truncate ${unreadCount > 0 ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
-                            {chat.lastMessageText || 'No messages yet'}
+                          <p
+                            className={`text-xs truncate ${
+                              unreadCount > 0
+                                ? "text-gray-700 font-medium"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {chat.lastMessageText || "No messages yet"}
                           </p>
                           {unreadCount > 0 && (
                             <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
@@ -141,15 +210,15 @@ const Chat = () => {
         </div>
       </div>
 
-      <div className={`flex-1 ${selectedChat ? 'flex' : 'hidden md:flex'}`}>
-        <ChatWindow 
-          selectedChat={selectedChat} 
-          onClose={() => setSelectedChat(null)} 
+      <div className={`flex-1 ${selectedChat ? "flex" : "hidden md:flex"}`}>
+        <ChatWindow
+          selectedChat={selectedChat}
+          onClose={() => setSelectedChat(null)}
         />
       </div>
 
       {showNewChatModal && (
-        <NewChatModal 
+        <NewChatModal
           onClose={() => setShowNewChatModal(false)}
           onChatCreated={handleChatCreated}
         />

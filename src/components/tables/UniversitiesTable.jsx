@@ -15,13 +15,9 @@ import {
   XCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { COUNTRIES, CURRENCIES } from '../../utils/constants'; // Import CURRENCIES
+import { COUNTRIES, CURRENCIES } from '../../utils/constants'; 
 
-// Helper function to get currency symbol based on country code
 const getCurrencySymbolForCountry = (countryCode) => {
-  // Simplified mapping: Assumes a primary currency for each country code.
-  // This might need to be more robust if countries can have multiple common currencies
-  // or if the university data itself could specify a fee currency.
   const countryToCurrencyCodeMap = {
     'US': 'USD',
     'CA': 'CAD',
@@ -32,7 +28,6 @@ const getCurrencySymbolForCountry = (countryCode) => {
     'NL': 'EUR',
     'SG': 'SGD',
     'IN': 'INR'
-    // Add other mappings as needed from your COUNTRIES list
   };
 
   const targetCurrencyCode = countryToCurrencyCodeMap[countryCode];
@@ -42,8 +37,6 @@ const getCurrencySymbolForCountry = (countryCode) => {
       return currency.symbol;
     }
   }
-  // Fallback or if university has Application_fee_currency field (which it currently doesn't from the form)
-  // For now, default to '$' if no specific mapping found or if fee is from an unmapped country.
   return '$'; 
 };
 
@@ -124,7 +117,6 @@ const UniversitiesTable = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -167,12 +159,10 @@ const UniversitiesTable = ({
         </div>
       </div>
 
-      {/* Results Count */}
       <div className="text-sm text-gray-500">
         Showing {filteredUniversities.length} of {universities.length} universities
       </div>
 
-      {/* Table */}
       <div className="table-container">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -215,21 +205,17 @@ const UniversitiesTable = ({
                   } catch(e) {formattedDate = 'Error Parsing Date';}
                 }
                 
-                // Get dynamic currency symbol for application fee
                 const appFeeSymbol = getCurrencySymbolForCountry(university.country);
 
                 return (
                   <tr key={university.id} className="hover:bg-gray-50">
-                    {/* University Name */}
                     <td className="table-cell">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10"><div className="h-10 w-10 rounded-lg bg-primary-100 flex items-center justify-center"><Building2 className="text-primary-600" size={20} /></div></div>
                         <div className="ml-4"><div className="text-sm font-medium text-gray-900">{university.univ_name}</div><div className="text-sm text-gray-500">ID: {university.id.slice(-8)}</div></div>
                       </div>
                     </td>
-                    {/* Country */}
                     <td className="table-cell"><div className="flex items-center text-sm text-gray-900"><MapPin size={14} className="mr-2 text-gray-400" />{getCountryName(university.country)}</div></td>
-                    {/* Contact */}
                     <td className="table-cell">
                       <div className="space-y-1">
                         {university.univ_phone && (<div className="flex items-center text-sm text-gray-900"><Phone size={14} className="mr-2 text-gray-400" />{university.univ_phone}</div>)}
@@ -237,10 +223,9 @@ const UniversitiesTable = ({
                         {university.univ_website && (<div className="flex items-center text-sm text-gray-500"><Globe size={14} className="mr-2 text-gray-400" /><a href={university.univ_website} target="_blank" rel="noopener noreferrer" className="hover:text-primary-600">Website</a></div>)}
                       </div>
                     </td>
-                    {/* Application Info */}
                     <td className="table-cell">
                       <div className="space-y-1">
-                        {university.Application_fee != null && university.Application_fee !== '' && ( // Check if fee exists and is not empty
+                        {university.Application_fee != null && university.Application_fee !== '' && (
                           <div className="text-sm text-gray-900">
                             Fee: {appFeeSymbol}{university.Application_fee}
                           </div>
@@ -248,11 +233,8 @@ const UniversitiesTable = ({
                         {university.deadline && (<div className="text-sm text-gray-500">Deadline: {format(new Date(university.deadline), 'MMM dd, yyyy')}</div>)}
                       </div>
                     </td>
-                    {/* Status */}
                     <td className="table-cell">{getStatusBadge(university.Active)}</td>
-                    {/* Created Date */}
                     <td className="table-cell"><div className="flex items-center text-sm text-gray-500"><Calendar size={14} className="mr-2 text-gray-400" />{formattedDate}</div></td>
-                    {/* Actions */}
                     <td className="table-cell"><div className="flex items-center space-x-2"><button onClick={() => onView(university)} className="text-blue-600 hover:text-blue-900" title="View Details"><Eye size={16} /></button><button onClick={() => onEdit(university)} className="text-yellow-600 hover:text-yellow-900" title="Edit"><Edit size={16} /></button><button onClick={() => onDelete(university.id)} className="text-red-600 hover:text-red-900" title="Delete"><Trash2 size={16} /></button></div></td>
                   </tr>
                 );
