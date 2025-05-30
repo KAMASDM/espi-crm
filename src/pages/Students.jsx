@@ -8,8 +8,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Modal from "../components/common/Modal";
-import EnquiryForm from "../components/forms/EnquiryForm";
-import StudentsTable from "../components/tables/StudentsTable";
+import EnquiryForm from "../components/Students/EnquiryForm";
+import StudentsTable from "../components/Students/StudentsTable";
 import { useEnquiries } from "../hooks/useFirestore";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";

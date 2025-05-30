@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Plus, Download, Upload } from "lucide-react";
 import Modal from "../components/common/Modal";
-import AssessmentForm from "../components/forms/AssessmentForm";
-import AssessmentsTable from "../components/tables/AssessmentsTable";
+import AssessmentForm from "../components/Assessment/AssessmentForm";
+import AssessmentsTable from "../components/Assessment/AssessmentsTable";
 import {
   useAssessments,
   useEnquiries,

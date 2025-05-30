@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Plus, Download, Upload } from "lucide-react";
 import Modal from "../components/common/Modal";
-import PaymentForm from "../components/forms/PaymentForm";
-import PaymentsTable from "../components/tables/PaymentsTable";
+import PaymentForm from "../components/Payment/PaymentForm";
+import PaymentsTable from "../components/Payment/PaymentsTable";
 import { usePayments, useEnquiries } from "../hooks/useFirestore";
 import toast from "react-hot-toast";
 

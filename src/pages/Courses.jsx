@@ -8,8 +8,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Modal from "../components/common/Modal";
-import CourseForm from "../components/forms/CourseForm";
-import CoursesTable from "../components/tables/CoursesTable";
+import CourseForm from "../components/Courses/CourseForm";
+import CoursesTable from "../components/Courses/CoursesTable";
 import { useCourses, useUniversities } from "../hooks/useFirestore";
 import { useAuth } from "../context/AuthContext";
 import { firestoreService } from "../services/firestore";

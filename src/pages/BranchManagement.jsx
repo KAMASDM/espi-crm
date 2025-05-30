@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import Modal from "../components/common/Modal";
-import BranchForm from "../components/forms/BranchForm";
-import BranchesTable from "../components/tables/BranchesTable";
+import BranchForm from "../components/Branch/BranchForm";
+import BranchesTable from "../components/Branch/BranchesTable";
 import { branchService } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
