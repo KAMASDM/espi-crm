@@ -14,7 +14,7 @@ export const signInWithGoogle = async () => {
     let userProfile;
 
     if (!userSnap.exists()) {
-      let initialRole = USER_ROLES.COUNSELLOR;
+      let initialRole = USER_ROLES.BRANCH_ADMIN;
       let initialBranchId = "";
 
       if (user.email === "anantsoftcomputing@gmail.com") {
@@ -61,7 +61,7 @@ export const signInWithGoogle = async () => {
         updates.role =
           user.email === "anantsoftcomputing@gmail.com"
             ? USER_ROLES.SUPERADMIN
-            : USER_ROLES.COUNSELLOR;
+            : USER_ROLES.BRANCH_ADMIN;
         needsUpdate = true;
       }
 

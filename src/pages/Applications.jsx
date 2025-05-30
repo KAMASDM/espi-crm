@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Plus, Download, Upload } from "lucide-react";
 import Modal from "../components/common/Modal";
-import ApplicationForm from "../components/forms/ApplicationForm";
-import ApplicationsTable from "../components/tables/ApplicationsTable";
+import ApplicationForm from "../components/Application/ApplicationForm";
+import ApplicationsTable from "../components/Application/ApplicationsTable";
 import { useApplications, useAssessments } from "../hooks/useFirestore";
 import toast from "react-hot-toast";
 

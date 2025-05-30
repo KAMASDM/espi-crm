@@ -7,8 +7,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Modal from "../components/common/Modal";
-import UniversityForm from "../components/forms/UniversityForm";
-import UniversitiesTable from "../components/tables/UniversitiesTable";
+import UniversityForm from "../components/University/UniversityForm";
+import UniversitiesTable from "../components/University/UniversitiesTable";
 import { useUniversities } from "../hooks/useFirestore";
 import { useAuth } from "../context/AuthContext";
 import { COUNTRIES, COURSE_LEVELS } from "../utils/constants";

@@ -33,6 +33,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
   const [loading, setLoading] = useState(false);
   const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [branches, setBranches] = useState([]);
+  console.log("Branches:", branches);
   const [users, setUsers] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(true);

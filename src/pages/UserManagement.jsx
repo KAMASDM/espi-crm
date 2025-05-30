@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Plus, Users as UsersIcon, UserCheck, UserX } from "lucide-react";
 import Modal from "../components/common/Modal";
-import UserForm from "../components/forms/UserForm";
-import UsersTable from "../components/tables/UsersTable";
+import UserForm from "../components/Users/UserForm";
+import UsersTable from "../components/Users/UsersTable";
 import { userService } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
