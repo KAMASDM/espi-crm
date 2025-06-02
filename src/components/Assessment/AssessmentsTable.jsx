@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Eye,
   Edit,
@@ -30,6 +30,17 @@ const AssessmentsTable = ({
   const [countryFilter, setCountryFilter] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
+
+  const getStudentName = (enquiryId) => {
+    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
+    return enquiry
+      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
+      : "Unknown Student";
+  };
+  const getUniversityName = (universityId) => {
+    const university = universities.find((uni) => uni.id === universityId);
+    return university ? university.univ_name : "Unknown University";
+  };
 
   const filteredAssessments = assessments
     .filter((assessment) => {
@@ -76,18 +87,6 @@ const AssessmentsTable = ({
       setSortField(field);
       setSortDirection("asc");
     }
-  };
-
-  const getStudentName = (enquiryId) => {
-    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return enquiry
-      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
-      : "Unknown Student";
-  };
-
-  const getUniversityName = (universityId) => {
-    const university = universities.find((uni) => uni.id === universityId);
-    return university ? university.univ_name : "Unknown University";
   };
 
   const getCourseName = (courseId) => {

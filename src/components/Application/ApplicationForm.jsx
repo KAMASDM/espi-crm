@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { APPLICATION_STATUS } from "../../utils/constants";
 import { useAssessments } from "../../hooks/useFirestore";
@@ -108,12 +108,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
       </div>
     </div>
   );
-
-  const getAssessmentDisplayName = (assessment) => {
-    return `${assessment.student_name || "Student"} - ${
-      assessment.university_name || "University"
-    } - ${assessment.course_name || "Course"}`;
-  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
