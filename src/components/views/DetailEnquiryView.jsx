@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  User,
   GraduationCap,
   Briefcase,
   FileText,
@@ -24,7 +23,6 @@ import {
   Badge,
   Shield,
   Eye,
-  ExternalLink,
 } from "lucide-react";
 
 const formatDate = (date) => {
@@ -472,404 +470,359 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
   } = data;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Student Profile Overview
-                </h1>
-                <p className="text-gray-600">
-                  Comprehensive academic and professional profile
-                </p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <StatusBadge status={enquiry_status} />
-                <button
-                  onClick={onEdit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center transition-colors"
-                >
-                  <Edit size={18} className="mr-2" />
-                  Edit Profile
-                </button>
+    <div className="min-h-screen  from-blue-50 via-white to-purple-50">
+      <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Student Profile Overview
+            </h1>
+            <p className="text-gray-600">
+              Comprehensive academic and professional profile
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <StatusBadge status={enquiry_status} />
+          </div>
+        </div>
+
+        {updatedAt && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center text-sm text-gray-500">
+              <Clock size={16} className="mr-2" />
+              Last updated:{" "}
+              {formatDate(
+                updatedAt.toDate ? updatedAt.toDate() : updatedAt,
+                "PP pp"
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-8">
+        <ModernSection
+          title="Current Education"
+          icon={GraduationCap}
+          accentColor="blue"
+          badge={current_education_details.level}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <InfoCard
+              label="Education Level"
+              value={current_education_details.level}
+              icon={Badge}
+              highlight
+            />
+            <InfoCard
+              label="Stream/Specialization"
+              value={current_education_details.stream}
+              icon={BookOpen}
+            />
+            <InfoCard
+              label="Percentage/CGPA"
+              value={current_education_details.percentage}
+              icon={TrendingUp}
+            />
+            <InfoCard
+              label="Year of Passing"
+              value={current_education_details.year}
+              icon={Calendar}
+            />
+            <InfoCard
+              label="Institute"
+              value={current_education_details.institute}
+              icon={Building}
+            />
+            <InfoCard
+              label="Medium"
+              value={current_education_details.medium}
+              icon={Info}
+            />
+          </div>
+        </ModernSection>
+
+        <ModernSection
+          title="Academic History"
+          icon={BookOpen}
+          accentColor="green"
+          defaultExpanded={false}
+        >
+          <div className="space-y-6">
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">10th Grade</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <InfoCard
+                  label="Percentage"
+                  value={tenth_education_details.percentage}
+                />
+                <InfoCard label="Year" value={tenth_education_details.year} />
+                <InfoCard
+                  label="School"
+                  value={tenth_education_details.institute}
+                />
+                <InfoCard label="Board" value={tenth_education_details.board} />
               </div>
             </div>
 
-            {updatedAt && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="flex items-center text-sm text-gray-500">
-                  <Clock size={16} className="mr-2" />
-                  Last updated:{" "}
-                  {formatDate(
-                    updatedAt.toDate ? updatedAt.toDate() : updatedAt,
-                    "PP pp"
-                  )}
-                </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">12th Grade</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <InfoCard
+                  label="Stream"
+                  value={twelveth_education_details.stream}
+                />
+                <InfoCard
+                  label="Percentage"
+                  value={twelveth_education_details.percentage}
+                />
+                <InfoCard
+                  label="Year"
+                  value={twelveth_education_details.year}
+                />
+                <InfoCard
+                  label="School"
+                  value={twelveth_education_details.institute}
+                />
               </div>
-            )}
+            </div>
           </div>
+        </ModernSection>
 
-          <div className="space-y-8">
-            <ModernSection
-              title="Current Education"
-              icon={GraduationCap}
-              accentColor="blue"
-              badge={current_education_details.level}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ModernSection
+          title="Test Scores"
+          icon={Award}
+          accentColor="purple"
+          badge={
+            ielts_exam.overall ? `IELTS ${ielts_exam.overall}` : "Various Tests"
+          }
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ScoreCard title="IELTS" scores={ielts_exam} colorScheme="green" />
+            <ScoreCard title="TOEFL" scores={toefl_exam} colorScheme="blue" />
+            <ScoreCard title="PTE" scores={pte_exam} colorScheme="purple" />
+            <ScoreCard
+              title="Duolingo"
+              scores={duolingo_exam}
+              colorScheme="orange"
+            />
+            <ScoreCard title="GRE" scores={gre_exam} colorScheme="blue" />
+            <ScoreCard title="GMAT" scores={gmat_exam} colorScheme="green" />
+          </div>
+        </ModernSection>
+
+        <ModernSection
+          title="Work Experience"
+          icon={Briefcase}
+          accentColor="orange"
+          badge={`${workExperiences.length} ${
+            workExperiences.length === 1 ? "Role" : "Roles"
+          }`}
+        >
+          <ExperienceTimeline experiences={workExperiences} />
+        </ModernSection>
+
+        <ModernSection
+          title="Family Information"
+          icon={Users}
+          accentColor="blue"
+          defaultExpanded={false}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InfoCard
+              label="Father's Occupation"
+              value={father_Occupation}
+              icon={Briefcase}
+            />
+            <InfoCard
+              label="Father's Annual Income"
+              value={father_Annual_Income}
+              icon={DollarSign}
+              isCurrency={true}
+              highlight
+            />
+          </div>
+        </ModernSection>
+
+        {(refusal_details.country || refusal_details.reason) && (
+          <ModernSection
+            title="Visa Refusal History"
+            icon={AlertTriangle}
+            accentColor="red"
+          >
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <InfoCard
-                  label="Education Level"
-                  value={current_education_details.level}
-                  icon={Badge}
-                  highlight
+                  label="Country"
+                  value={getCountryName(refusal_details.country)}
+                  icon={MapPin}
                 />
                 <InfoCard
-                  label="Stream/Specialization"
-                  value={current_education_details.stream}
-                  icon={BookOpen}
-                />
-                <InfoCard
-                  label="Percentage/CGPA"
-                  value={current_education_details.percentage}
-                  icon={TrendingUp}
-                />
-                <InfoCard
-                  label="Year of Passing"
-                  value={current_education_details.year}
+                  label="Date"
+                  value={
+                    refusal_details.date ? formatDate(refusal_details.date) : ""
+                  }
                   icon={Calendar}
                 />
                 <InfoCard
-                  label="Institute"
-                  value={current_education_details.institute}
-                  icon={Building}
-                />
-                <InfoCard
-                  label="Medium"
-                  value={current_education_details.medium}
-                  icon={Info}
+                  label="Visa Category"
+                  value={refusal_details.visa_category}
+                  icon={Shield}
                 />
               </div>
-            </ModernSection>
-
-            <ModernSection
-              title="Academic History"
-              icon={BookOpen}
-              accentColor="green"
-              defaultExpanded={false}
-            >
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-4">
-                    10th Grade
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <InfoCard
-                      label="Percentage"
-                      value={tenth_education_details.percentage}
-                    />
-                    <InfoCard
-                      label="Year"
-                      value={tenth_education_details.year}
-                    />
-                    <InfoCard
-                      label="School"
-                      value={tenth_education_details.institute}
-                    />
-                    <InfoCard
-                      label="Board"
-                      value={tenth_education_details.board}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-4">
-                    12th Grade
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <InfoCard
-                      label="Stream"
-                      value={twelveth_education_details.stream}
-                    />
-                    <InfoCard
-                      label="Percentage"
-                      value={twelveth_education_details.percentage}
-                    />
-                    <InfoCard
-                      label="Year"
-                      value={twelveth_education_details.year}
-                    />
-                    <InfoCard
-                      label="School"
-                      value={twelveth_education_details.institute}
-                    />
-                  </div>
-                </div>
-              </div>
-            </ModernSection>
-
-            <ModernSection
-              title="Test Scores"
-              icon={Award}
-              accentColor="purple"
-              badge={
-                ielts_exam.overall
-                  ? `IELTS ${ielts_exam.overall}`
-                  : "Various Tests"
-              }
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <ScoreCard
-                  title="IELTS"
-                  scores={ielts_exam}
-                  colorScheme="green"
-                />
-                <ScoreCard
-                  title="TOEFL"
-                  scores={toefl_exam}
-                  colorScheme="blue"
-                />
-                <ScoreCard title="PTE" scores={pte_exam} colorScheme="purple" />
-                <ScoreCard
-                  title="Duolingo"
-                  scores={duolingo_exam}
-                  colorScheme="orange"
-                />
-                <ScoreCard title="GRE" scores={gre_exam} colorScheme="blue" />
-                <ScoreCard
-                  title="GMAT"
-                  scores={gmat_exam}
-                  colorScheme="green"
-                />
-              </div>
-            </ModernSection>
-
-            <ModernSection
-              title="Work Experience"
-              icon={Briefcase}
-              accentColor="orange"
-              badge={`${workExperiences.length} ${
-                workExperiences.length === 1 ? "Role" : "Roles"
-              }`}
-            >
-              <ExperienceTimeline experiences={workExperiences} />
-            </ModernSection>
-
-            <ModernSection
-              title="Family Information"
-              icon={Users}
-              accentColor="blue"
-              defaultExpanded={false}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InfoCard
-                  label="Father's Occupation"
-                  value={father_Occupation}
-                  icon={Briefcase}
-                />
-                <InfoCard
-                  label="Father's Annual Income"
-                  value={father_Annual_Income}
-                  icon={DollarSign}
-                  isCurrency={true}
-                  highlight
-                />
-              </div>
-            </ModernSection>
-
-            {(refusal_details.country || refusal_details.reason) && (
-              <ModernSection
-                title="Visa Refusal History"
-                icon={AlertTriangle}
-                accentColor="red"
-              >
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <InfoCard
-                      label="Country"
-                      value={getCountryName(refusal_details.country)}
-                      icon={MapPin}
-                    />
-                    <InfoCard
-                      label="Date"
-                      value={
-                        refusal_details.date
-                          ? formatDate(refusal_details.date)
-                          : ""
-                      }
-                      icon={Calendar}
-                    />
-                    <InfoCard
-                      label="Visa Category"
-                      value={refusal_details.visa_category}
-                      icon={Shield}
-                    />
-                  </div>
-                  {refusal_details.reason && (
-                    <div className="mt-4">
-                      <InfoCard
-                        label="Reason for Refusal"
-                        value={refusal_details.reason}
-                      />
-                    </div>
-                  )}
-                </div>
-              </ModernSection>
-            )}
-
-            <ModernSection
-              title="Document Library"
-              icon={FileText}
-              accentColor="gray"
-              badge="15 Documents"
-            >
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center">
-                  <Info className="text-blue-600 mr-2" size={20} />
-                  <p className="text-blue-800 text-sm">
-                    Document management system with preview and download
-                    capabilities. Files are securely stored and accessible only
-                    to authorized users.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <ModernDocumentCard
-                  label="10th Certificate"
-                  docNameValue={tenth_Document}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="12th Certificate"
-                  docNameValue={twelveth_Document}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="Graduation Marksheet"
-                  docNameValue={graduation_Marksheet}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="Graduation Certificate"
-                  docNameValue={graduation_Certificate}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="UG Marksheet"
-                  docNameValue={ug_Marksheet}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="UG Certificate"
-                  docNameValue={ug_Certificate}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="Work Experience Letter"
-                  docNameValue={work_Experience_Document}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="Passport"
-                  docNameValue={passport_Document}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="Offer Letter"
-                  docNameValue={offer_Letter}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="IELTS TRF"
-                  docNameValue={ielts_Result}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="TOEFL Report"
-                  docNameValue={toefl_Result}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="PTE Report"
-                  docNameValue={pte_Result}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="Duolingo Report"
-                  docNameValue={duolingo_Result}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="GRE Report"
-                  docNameValue={gre_Result}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-                <ModernDocumentCard
-                  label="GMAT Report"
-                  docNameValue={gmat_Result}
-                  onDownload={onDownload}
-                  onView={onView}
-                />
-              </div>
-            </ModernSection>
-
-            <ModernSection
-              title="Confirmed Services"
-              icon={CheckCircle}
-              accentColor="green"
-              badge={`${confirmed_services.length} Services`}
-            >
-              {confirmed_services.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {confirmed_services.map((service, index) => (
-                    <div
-                      key={index}
-                      className="bg-green-50 border-2 border-green-200 rounded-lg p-4"
-                    >
-                      <div className="flex items-center">
-                        <CheckCircle
-                          className="text-green-600 mr-3"
-                          size={20}
-                        />
-                        <div>
-                          <h4 className="font-medium text-green-900">
-                            {service}
-                          </h4>
-                          <p className="text-sm text-green-700">Active</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <CheckCircle
-                    className="mx-auto text-gray-400 mb-4"
-                    size={48}
+              {refusal_details.reason && (
+                <div className="mt-4">
+                  <InfoCard
+                    label="Reason for Refusal"
+                    value={refusal_details.reason}
                   />
-                  <p className="text-gray-500">No services confirmed yet</p>
                 </div>
               )}
-            </ModernSection>
+            </div>
+          </ModernSection>
+        )}
+
+        <ModernSection
+          title="Document Library"
+          icon={FileText}
+          accentColor="gray"
+          badge="15 Documents"
+        >
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center">
+              <Info className="text-blue-600 mr-2" size={20} />
+              <p className="text-blue-800 text-sm">
+                Document management system with preview and download
+                capabilities. Files are securely stored and accessible only to
+                authorized users.
+              </p>
+            </div>
           </div>
-        </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <ModernDocumentCard
+              label="10th Certificate"
+              docNameValue={tenth_Document}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="12th Certificate"
+              docNameValue={twelveth_Document}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="Graduation Marksheet"
+              docNameValue={graduation_Marksheet}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="Graduation Certificate"
+              docNameValue={graduation_Certificate}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="UG Marksheet"
+              docNameValue={ug_Marksheet}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="UG Certificate"
+              docNameValue={ug_Certificate}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="Work Experience Letter"
+              docNameValue={work_Experience_Document}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="Passport"
+              docNameValue={passport_Document}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="Offer Letter"
+              docNameValue={offer_Letter}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="IELTS TRF"
+              docNameValue={ielts_Result}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="TOEFL Report"
+              docNameValue={toefl_Result}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="PTE Report"
+              docNameValue={pte_Result}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="Duolingo Report"
+              docNameValue={duolingo_Result}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="GRE Report"
+              docNameValue={gre_Result}
+              onDownload={onDownload}
+              onView={onView}
+            />
+            <ModernDocumentCard
+              label="GMAT Report"
+              docNameValue={gmat_Result}
+              onDownload={onDownload}
+              onView={onView}
+            />
+          </div>
+        </ModernSection>
+
+        <ModernSection
+          title="Confirmed Services"
+          icon={CheckCircle}
+          accentColor="green"
+          badge={`${confirmed_services.length} Services`}
+        >
+          {confirmed_services.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {confirmed_services.map((service, index) => (
+                <div
+                  key={index}
+                  className="bg-green-50 border-2 border-green-200 rounded-lg p-4"
+                >
+                  <div className="flex items-center">
+                    <CheckCircle className="text-green-600 mr-3" size={20} />
+                    <div>
+                      <h4 className="font-medium text-green-900">{service}</h4>
+                      <p className="text-sm text-green-700">Active</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <CheckCircle className="mx-auto text-gray-400 mb-4" size={48} />
+              <p className="text-gray-500">No services confirmed yet</p>
+            </div>
+          )}
+        </ModernSection>
       </div>
     </div>
   );
