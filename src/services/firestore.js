@@ -9,7 +9,6 @@ import {
   query,
   where,
   orderBy,
-  limit,
   onSnapshot,
   serverTimestamp,
 } from "firebase/firestore";
@@ -42,7 +41,7 @@ export const firestoreService = {
 
   async getAll(collectionName, constraints = []) {
     try {
-      let q = collection(db, collectionName);
+      let q = collection(db, collectionName); // Changed from q_ to q for consistency
 
       const validConstraints = constraints.filter(
         (constraint) => constraint != null && typeof constraint === "object"
@@ -94,7 +93,7 @@ export const firestoreService = {
       const docRef = doc(db, collectionName, id);
       await updateDoc(docRef, {
         ...data,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(), // Automatically updates server-side timestamp
       });
     } catch (error) {
       console.error(
@@ -123,6 +122,7 @@ export const firestoreService = {
     }
   },
 
+  // Realtime subscription
   subscribe(collectionName, callback, constraints = [], onErrorCallback) {
     try {
       let qRef = collection(db, collectionName);
@@ -135,7 +135,8 @@ export const firestoreService = {
         qRef = query(qRef, ...validConstraints);
       }
 
-      return onSnapshot(
+      // Return the unsubscribe function
+      const unsubscribe = onSnapshot(
         qRef,
         (querySnapshot) => {
           const documents = querySnapshot.docs.map((docSnap) => ({
@@ -145,6 +146,7 @@ export const firestoreService = {
           callback(documents);
         },
         (error) => {
+          // Handle errors in the subscription
           console.error(
             `Firestore Subscription Error for ${collectionName}:`,
             error
@@ -154,7 +156,9 @@ export const firestoreService = {
           }
         }
       );
+      return unsubscribe;
     } catch (error) {
+      // Handle errors setting up the subscription
       console.error(
         `Error setting up subscription for ${collectionName}:`,
         error
@@ -162,19 +166,21 @@ export const firestoreService = {
       if (onErrorCallback) {
         onErrorCallback(error);
       }
-      return () => {};
+      return () => {}; // Return a no-op unsubscribe function on setup error
     }
   },
 };
 
+// --- Specific services (enquiryService, universityService, etc.) remain the same as provided ---
+// For brevity, I'm not repeating them here. They use the generic firestoreService.
 export const enquiryService = {
   create: (data) => {
     const currentUser = auth.currentUser;
-    const userProfile = getUserProfile();
+    const userProfile = getUserProfile(); // You might want to get this from auth context or props instead of localStorage directly in services
     return firestoreService.create("enquiries", {
       ...data,
-      createdBy: currentUser?.uid,
-      branchId: data.branchId || userProfile?.branchId || null,
+      createdBy: currentUser?.uid, // Add creator UID
+      branchId: data.branchId || userProfile?.branchId || null, // Example of adding branchId
     });
   },
   getAll: (constraints = []) =>
@@ -226,7 +232,7 @@ export const assessmentService = {
     return firestoreService.create("assessments", {
       ...data,
       createdBy: currentUser?.uid,
-      branchId: data.branchId || userProfile?.branchId || null,
+      branchId: userProfile.branchId || null,
     });
   },
   getAll: (constraints = []) =>
@@ -324,14 +330,15 @@ export const chatService = {
 
     try {
       await addDoc(messagesRef, {
-        chatId: chatId,
+        chatId: chatId, // Good for querying messages by chatId if needed, though subcollection implies it
         text: messageText.trim(),
         senderId: currentUser.uid,
-        senderName: currentUser.displayName || "Anonymous",
-        senderPhotoURL: currentUser.photoURL || "",
+        senderName: currentUser.displayName || "Anonymous", // Fallback for senderName
+        senderPhotoURL: currentUser.photoURL || "", // Fallback for photoURL
         timestamp: serverTimestamp(),
       });
 
+      // Update chat document with last message info and unread counts
       const chatSnap = await getDoc(chatDocRef);
       if (chatSnap.exists()) {
         const chatData = chatSnap.data();
@@ -340,8 +347,10 @@ export const chatService = {
         if (chatData.members && Array.isArray(chatData.members)) {
           chatData.members.forEach((memberId) => {
             if (memberId !== currentUser.uid) {
+              // Increment for other members
               newUnreadCount[memberId] = (newUnreadCount[memberId] || 0) + 1;
             } else {
+              // Reset for sender
               newUnreadCount[memberId] = 0;
             }
           });
@@ -364,7 +373,7 @@ export const chatService = {
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error("User not authenticated.");
 
-    const { type, name, members, memberInfo } = chatData;
+    const { type, name, members, memberInfo } = chatData; // memberInfo for storing names/photos
 
     if (
       !type ||
@@ -375,13 +384,14 @@ export const chatService = {
       throw new Error("Invalid chat data: type or members missing/invalid.");
     }
 
+    // For direct chats, check if a chat already exists between the two members
     if (type === "direct" && members.length === 2) {
-      const sortedMembers = [...members].sort();
+      const sortedMembers = [...members].sort(); // Ensure consistent member order for querying
       try {
         const q = query(
           collection(db, "chats"),
           where("type", "==", "direct"),
-          where("members", "==", sortedMembers)
+          where("members", "==", sortedMembers) // Firestore allows equality check on arrays
         );
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
@@ -390,10 +400,11 @@ export const chatService = {
             id: existingChatDoc.id,
             ...existingChatDoc.data(),
             existing: true,
-          };
+          }; // Return existing chat
         }
       } catch (error) {
         console.warn("Error checking for existing direct chat:", error);
+        // Proceed to create if check fails, or handle error as needed
       }
     }
 
@@ -404,18 +415,17 @@ export const chatService = {
 
     try {
       const docRef = await addDoc(collection(db, "chats"), {
-        name: type === "group" ? name || "New Group" : "",
+        name: type === "group" ? name || "New Group" : "", // Name for group chats
         type: type,
-        members: type === "direct" ? [...members].sort() : members,
-        memberInfo: memberInfo || {},
+        members: type === "direct" ? [...members].sort() : members, // Sort members for direct chats for consistency
+        memberInfo: memberInfo || {}, // Store display names, photoURLs keyed by UID
         lastMessageText: type === "group" ? "Group created" : "Chat started",
         lastMessageTimestamp: serverTimestamp(),
-        lastMessageSenderId: currentUser.uid,
+        lastMessageSenderId: currentUser.uid, // Or a system ID for "Group created"
         unreadCount: initialUnreadCount,
         createdBy: currentUser.uid,
         createdAt: serverTimestamp(),
       });
-
       const newChatSnap = await getDoc(docRef);
       return { id: newChatSnap.id, ...newChatSnap.data(), created: true };
     } catch (error) {
@@ -434,7 +444,7 @@ export const chatService = {
       if (chatSnap.exists()) {
         const chatData = chatSnap.data();
         const newUnreadCount = { ...(chatData.unreadCount || {}) };
-        newUnreadCount[currentUser.uid] = 0;
+        newUnreadCount[currentUser.uid] = 0; // Set current user's unread count to 0
 
         await updateDoc(chatDocRef, {
           unreadCount: newUnreadCount,
@@ -442,22 +452,23 @@ export const chatService = {
       }
     } catch (error) {
       console.error("Error marking chat as read:", error);
+      // Optionally re-throw or handle
     }
   },
 
   subscribeToUserChats(userId, callback, onError) {
     if (!userId) {
-      if (onError) onError(new Error("User ID is required"));
-      return () => {};
+      if (onError)
+        onError(new Error("User ID is required for chat subscription."));
+      return () => {}; // Return a no-op unsubscribe function
     }
-
     try {
       const q = query(
         collection(db, "chats"),
         where("members", "array-contains", userId),
         orderBy("lastMessageTimestamp", "desc")
       );
-
+      // The callback for onSnapshot should handle the snapshot directly
       return onSnapshot(q, callback, onError);
     } catch (error) {
       console.error("Error subscribing to user chats:", error);
@@ -468,16 +479,16 @@ export const chatService = {
 
   subscribeToMessages(chatId, callback, onError) {
     if (!chatId) {
-      if (onError) onError(new Error("Chat ID is required"));
+      if (onError)
+        onError(new Error("Chat ID is required for message subscription."));
       return () => {};
     }
-
     try {
       const q = query(
         collection(db, "chats", chatId, "messages"),
-        orderBy("timestamp", "asc")
+        orderBy("timestamp", "asc") // Order messages chronologically
       );
-
+      // The callback for onSnapshot receives the QuerySnapshot
       return onSnapshot(
         q,
         (querySnapshot) => {

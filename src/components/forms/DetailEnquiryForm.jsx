@@ -5,9 +5,9 @@ import {
   AVAILABLE_SERVICES,
   ENQUIRY_STATUS,
   COUNTRIES,
-} from "../../utils/constants";
+} from "../../utils/constants"; // Assuming these constants are correctly defined
 import { firestoreService } from "../../services/firestore";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext"; // Assuming this context provides user
 import {
   Upload,
   FileText,
@@ -26,7 +26,7 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import app from "../../services/firebase";
+import app from "../../services/firebase"; // Assuming 'app' is your initialized Firebase app
 
 const storage = getStorage(app);
 
@@ -63,6 +63,7 @@ const STEPS = [
     id: 5,
     name: "Document Uploads",
     fields: [
+      // These are RHF field names, not necessarily all required for validation trigger
       "tenth_Document",
       "twelveth_Document",
       "graduation_Marksheet",
@@ -105,6 +106,10 @@ const DOCUMENT_FIELD_KEYS = [
   "gre_Result",
   "gmat_Result",
 ];
+
+// --- Step Components (Step1Academics, Step2TestScores, etc.) remain the same as provided by the user ---
+// For brevity, I'm not repeating them here. Assume they are defined as in your original file.
+// Make sure they correctly use `register` and `errors` props.
 
 const Step1Academics = ({ register, errors }) => (
   <div className="space-y-6">
@@ -1008,7 +1013,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
       <h6 className="text-sm font-semibold text-gray-600">{title}</h6>
       {Object.entries(obj || {}).map(
         ([key, value]) =>
-          (value || value === 0) && (
+          (value || value === 0 || typeof value === "boolean") && ( // Show false booleans too
             <p key={key} className="text-xs text-gray-700 ml-2">
               <span className="capitalize font-medium">
                 {key
@@ -1017,12 +1022,17 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
                   .trim()}
                 :
               </span>{" "}
-              {typeof value === "object"
+              {typeof value === "object" &&
+              value !== null &&
+              !Array.isArray(value) // Check for non-null objects
                 ? JSON.stringify(value)
                 : String(value)}
             </p>
           )
       )}
+      {Object.values(obj || {}).every(
+        (val) => !val && val !== 0 && typeof val !== "boolean"
+      ) && <p className="text-xs text-gray-500 ml-2 italic">Not provided</p>}
     </div>
   );
   const renderArrayOfObjects = (arr, title) => (
@@ -1052,7 +1062,8 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
       ))}
       {(!arr ||
         arr.length === 0 ||
-        (arr.length === 1 && !Object.values(arr[0]).some((v) => v))) && (
+        (arr.length === 1 &&
+          !Object.values(arr[0]).some((v) => v || v === 0))) && ( // Check if all values in first item are falsy (excluding 0)
         <p className="text-xs text-gray-500 ml-2 italic">Not provided</p>
       )}
     </div>
@@ -1126,8 +1137,9 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
         </h5>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
           {DOCUMENT_FIELD_KEYS.map((key) => {
-            const documentName = uploadedDocumentsDisplay[key] || formData[key];
+            const documentName = uploadedDocumentsDisplay[key] || formData[key]; // formData[key] is display name from RHF
             if (documentName) {
+              // Check if there's a display name or an old URL string
               return (
                 <div
                   key={key}
@@ -1135,7 +1147,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
                   title={
                     typeof documentName === "string"
                       ? documentName
-                      : "File selected"
+                      : "File selected" // Should be display name if it's a file object
                   }
                 >
                   <FileText size={14} className="text-gray-600 flex-shrink-0" />
@@ -1152,9 +1164,8 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
                     :
                   </span>
                   <span className="text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
-                    {typeof documentName === "string"
-                      ? documentName
-                      : "File ready for upload"}
+                    {/* Display the name from uploadedDocumentsDisplay which is more reliable */}
+                    {uploadedDocumentsDisplay[key] || "File ready for upload"}
                   </span>
                 </div>
               );
@@ -1162,7 +1173,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
             return null;
           })}
           {Object.keys(uploadedDocumentsDisplay).length === 0 &&
-            !DOCUMENT_FIELD_KEYS.some((key) => formData[key]) && (
+            !DOCUMENT_FIELD_KEYS.some((key) => getValues(key)) && ( // Check RHF values directly
               <p className="text-xs text-gray-500 italic col-span-full">
                 No documents selected for upload.
               </p>
@@ -1182,9 +1193,10 @@ const DetailEnquiryForm = ({
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = STEPS.length;
 
-  const [filesToUpload, setFilesToUpload] = useState({});
-  const [uploadedDocumentsDisplay, setUploadedDocumentsDisplay] = useState({});
+  const [filesToUpload, setFilesToUpload] = useState({}); // Stores File objects or existing URLs
+  const [uploadedDocumentsDisplay, setUploadedDocumentsDisplay] = useState({}); // Stores display names for UI
 
+  // Define defaultValues carefully
   const defaultValues = {
     Current_Enquiry: selectedEnquiry?.id || "",
     current_education_details: editData?.current_education_details || {
@@ -1261,13 +1273,13 @@ const DetailEnquiryForm = ({
       visa_category: "",
       reason: "",
     },
-    ...(() => {
-      const docFields = {};
-      DOCUMENT_FIELD_KEYS.forEach((key) => {
-        docFields[key] = "";
-      });
-      return docFields;
-    })(),
+    ...DOCUMENT_FIELD_KEYS.reduce((acc, key) => {
+      // Initialize document fields for RHF
+      acc[key] = editData?.[key]
+        ? uploadedDocumentsDisplay[key] || "Attached Document"
+        : ""; // Use display name if available, or generic
+      return acc;
+    }, {}),
     confirmed_services:
       editData?.confirmed_services ||
       selectedEnquiry?.Interested_Services ||
@@ -1282,7 +1294,6 @@ const DetailEnquiryForm = ({
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     formState: { errors, touchedFields, dirtyFields },
     trigger,
@@ -1290,7 +1301,7 @@ const DetailEnquiryForm = ({
     reset,
   } = useForm({
     defaultValues,
-    mode: "onTouched",
+    mode: "onTouched", // Or "onChange" if preferred
   });
 
   const {
@@ -1302,68 +1313,75 @@ const DetailEnquiryForm = ({
     name: "workExperiences",
   });
 
-  const { user } = useAuth();
+  const { user } = useAuth(); // Make sure useAuth provides a user object with uid
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const initialFormValues = { ...defaultValues };
+    const initialFormValues = { ...defaultValues }; // Start with base defaults
 
     if (editData) {
+      // Deep merge editData into initialFormValues
       Object.keys(editData).forEach((key) => {
-        if (key in initialFormValues) {
-          initialFormValues[key] = editData[key] ?? defaultValues[key];
-        }
-      });
-      const initialDocsDisplay = {};
-      const initialFiles = {};
-
-      DOCUMENT_FIELD_KEYS.forEach((docKey) => {
-        if (editData[docKey] && typeof editData[docKey] === "string") {
-          const fileUrlOrName = editData[docKey];
-          let displayName = fileUrlOrName;
-
-          if (
-            fileUrlOrName.startsWith("https://firebasestorage.googleapis.com")
-          ) {
-            try {
-              const url = new URL(fileUrlOrName);
-              const pathParts = url.pathname.split("/");
-              const encodedNameWithStoragePath = decodeURIComponent(
-                pathParts[pathParts.length - 1]
-              );
-              const actualEncodedName = encodedNameWithStoragePath
-                .split("%2F")
-                .pop();
-              const nameWithoutQuery = actualEncodedName.split("?")[0];
-              if (
-                nameWithoutQuery.includes("_") &&
-                /^\d+_/.test(nameWithoutQuery.split("/").pop())
-              ) {
-                displayName = nameWithoutQuery.substring(
-                  nameWithoutQuery.indexOf("_") + 1
+        if (DOCUMENT_FIELD_KEYS.includes(key)) {
+          // For document fields, handle separately to set display names and filesToUpload
+          if (editData[key] && typeof editData[key] === "string") {
+            const fileUrlOrName = editData[key];
+            let displayName = "Attached Document"; // Default display name
+            if (
+              fileUrlOrName.startsWith("https://firebasestorage.googleapis.com")
+            ) {
+              try {
+                const url = new URL(fileUrlOrName);
+                const pathParts = url.pathname.split("/");
+                const encodedNameWithStoragePath = decodeURIComponent(
+                  pathParts[pathParts.length - 1]
                 );
-              } else {
-                displayName = nameWithoutQuery;
+                const actualEncodedName = encodedNameWithStoragePath
+                  .split("%2F")
+                  .pop();
+                displayName = actualEncodedName.split("?")[0]; // Remove query params
+                if (
+                  displayName.includes("_") &&
+                  /^\d+_/.test(displayName.split("/").pop())
+                ) {
+                  displayName = displayName.substring(
+                    displayName.indexOf("_") + 1
+                  );
+                }
+              } catch (e) {
+                console.warn(
+                  "Could not parse filename from URL",
+                  fileUrlOrName,
+                  e
+                );
               }
-            } catch (e) {
-              console.warn(
-                "Could not parse filename from URL",
-                fileUrlOrName,
-                e
-              );
-              displayName = "Attached Document";
+            } else {
+              displayName = fileUrlOrName; // If it's not a URL, it might be an old name
             }
+            initialFormValues[key] = displayName; // RHF value is display name
+            setUploadedDocumentsDisplay((prev) => ({
+              ...prev,
+              [key]: displayName,
+            }));
+            setFilesToUpload((prev) => ({ ...prev, [key]: fileUrlOrName })); // Store the actual URL
+          } else {
+            initialFormValues[key] = ""; // Clear if no URL
           }
-          initialDocsDisplay[docKey] = displayName;
-          initialFiles[docKey] = fileUrlOrName;
-          initialFormValues[docKey] = displayName;
-        } else {
-          initialFormValues[docKey] = "";
+        } else if (editData[key] !== undefined) {
+          // For non-document fields
+          initialFormValues[key] = editData[key];
         }
       });
-      setUploadedDocumentsDisplay(initialDocsDisplay);
-      setFilesToUpload(initialFiles);
+      // Ensure workExperiences is correctly populated for edit mode
+      if (editData.workExperiences && editData.workExperiences.length > 0) {
+        initialFormValues.workExperiences = editData.workExperiences;
+      } else {
+        initialFormValues.workExperiences = [
+          { companyName: "", designation: "", startDate: "", endDate: "" },
+        ];
+      }
     } else if (selectedEnquiry) {
+      // For new form, prefill from selectedEnquiry
       initialFormValues.current_education_details.level =
         selectedEnquiry.current_education || "";
       initialFormValues.confirmed_services =
@@ -1371,67 +1389,47 @@ const DetailEnquiryForm = ({
       initialFormValues.enquiry_status =
         selectedEnquiry.enquiry_status || "Profile Under Review";
     }
-    reset(initialFormValues);
-  }, [editData, selectedEnquiry, reset]);
+    reset(initialFormValues); // Reset the form with the processed values
+  }, [editData, selectedEnquiry, reset]); // Removed defaultValues from deps as it's complex and might cause loops
 
   const nextStep = async () => {
     const currentStepConfig = STEPS.find((step) => step.id === currentStep);
     let fieldsToValidate = currentStepConfig?.fields || [];
 
-    const expandedFieldsToValidate = [];
-    fieldsToValidate.forEach((parentField) => {
-      const value = getValues(parentField);
-      if (
-        typeof value === "object" &&
-        !Array.isArray(value) &&
-        value !== null &&
-        !(value instanceof File)
-      ) {
-        Object.keys(value).forEach((childKey) => {
-          if (
-            touchedFields[parentField]?.[childKey] ||
-            dirtyFields[parentField]?.[childKey]
-          ) {
-            expandedFieldsToValidate.push(`${parentField}.${childKey}`);
-          } else if (!getValues(`${parentField}.${childKey}`)) {
-            expandedFieldsToValidate.push(`${parentField}.${childKey}`);
-          }
-        });
-      } else {
+    // More robust field validation trigger
+    const stepFields = STEPS.find((s) => s.id === currentStep)?.fields || [];
+    const validationPromises = [];
+    if (stepFields.length > 0) {
+      stepFields.forEach((field) => {
+        // For nested fields like 'current_education_details.level'
         if (
-          touchedFields[parentField] ||
-          dirtyFields[parentField] ||
-          !getValues(parentField)
+          typeof getValues(field) === "object" &&
+          getValues(field) !== null &&
+          !Array.isArray(getValues(field)) &&
+          !(getValues(field) instanceof File)
         ) {
-          expandedFieldsToValidate.push(parentField);
-        }
-      }
-    });
-
-    fieldsToValidate =
-      expandedFieldsToValidate.length > 0
-        ? expandedFieldsToValidate
-        : fieldsToValidate.filter(
-            (f) => touchedFields[f] || dirtyFields[f] || !getValues(f)
-          );
-
-    if (currentStepConfig?.name === "Work Experience") {
-      const workExArray = getValues("workExperiences");
-      if (workExArray && workExArray.length > 0) {
-        workExArray.forEach((_, index) => {
-          if (
-            touchedFields.workExperiences?.[index]?.companyName ||
-            dirtyFields.workExperiences?.[index]?.companyName ||
-            !getValues(`workExperiences.${index}.companyName`)
-          ) {
-            fieldsToValidate.push(`workExperiences.${index}.companyName`);
+          Object.keys(getValues(field)).forEach((subField) => {
+            if (
+              errors[field]?.[subField] ||
+              touchedFields[field]?.[subField] ||
+              dirtyFields[field]?.[subField]
+            ) {
+              validationPromises.push(trigger(`${field}.${subField}`));
+            }
+          });
+        } else {
+          if (errors[field] || touchedFields[field] || dirtyFields[field]) {
+            validationPromises.push(trigger(field));
           }
-        });
-      }
+        }
+      });
     }
 
-    const isValid =
-      fieldsToValidate.length > 0 ? await trigger(fieldsToValidate) : true;
+    const results =
+      validationPromises.length > 0
+        ? await Promise.all(validationPromises)
+        : [true];
+    const isValid = results.every(Boolean);
 
     if (isValid && currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
@@ -1440,9 +1438,8 @@ const DetailEnquiryForm = ({
         "Please fill all required fields in this section correctly.",
         { id: "validationError" }
       );
-    } else if (currentStep < totalSteps) {
-      setCurrentStep((prev) => prev + 1);
     }
+    // Removed redundant else if (currentStep < totalSteps)
   };
 
   const prevStep = () => {
@@ -1452,6 +1449,17 @@ const DetailEnquiryForm = ({
   };
 
   const onSubmitHandler = async (formDataFromHook) => {
+    if (!user || !user.uid) {
+      toast.error("User not authenticated. Cannot save profile.");
+      setLoading(false);
+      return;
+    }
+    if (!selectedEnquiry || !selectedEnquiry.id) {
+      toast.error("Associated enquiry ID is missing. Cannot save profile.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     const toastIdSubmit = toast.loading(
       editData ? "Updating profile..." : "Creating profile..."
@@ -1459,73 +1467,99 @@ const DetailEnquiryForm = ({
 
     try {
       const newDocumentURLs = {};
-      const uploadTasks = [];
+      const uploadPromises = [];
 
       for (const fieldName in filesToUpload) {
         const fileOrUrl = filesToUpload[fieldName];
         if (fileOrUrl instanceof File) {
           const file = fileOrUrl;
-          const uploadToastId = toast.loading(`Uploading ${file.name}...`);
+          const uploadToastId = toast.loading(`Uploading ${file.name}...`, {
+            duration: 10000,
+          }); // Increased duration
 
-          const enquiryIdForPath = selectedEnquiry?.id || `temp_${Date.now()}`;
+          const enquiryIdForPath = selectedEnquiry.id; // Must have selectedEnquiry.id
           const storageFilePath = `detailEnquiries/${enquiryIdForPath}/${fieldName}/${Date.now()}_${
             file.name
           }`;
           const fileStorageRef = ref(storage, storageFilePath);
 
-          uploadTasks.push(
-            uploadBytesResumable(fileStorageRef, file)
-              .then((snapshot) => getDownloadURL(snapshot.ref))
-              .then((downloadURL) => {
-                newDocumentURLs[fieldName] = downloadURL;
-                toast.success(`${file.name} uploaded!`, { id: uploadToastId });
-              })
-              .catch((error) => {
-                console.error(
-                  `Error uploading ${fieldName} (${file.name}):`,
-                  error
-                );
-                toast.error(`Failed to upload ${file.name}.`, {
-                  id: uploadToastId,
-                });
-                throw new Error(
-                  `Upload failed for ${file.name}: ${error.message}`
-                );
-              })
+          const uploadTask = uploadBytesResumable(fileStorageRef, file);
+
+          uploadPromises.push(
+            new Promise((resolve, reject) => {
+              uploadTask.on(
+                "state_changed",
+                (snapshot) => {
+                  /* Progress handling (optional) */
+                },
+                (error) => {
+                  // Handle unsuccessful uploads
+                  console.error(
+                    `Error uploading ${fieldName} (${file.name}):`,
+                    error
+                  );
+                  toast.error(`Failed to upload ${file.name}.`, {
+                    id: uploadToastId,
+                  });
+                  reject(
+                    new Error(
+                      `Upload failed for ${file.name}: ${error.message}`
+                    )
+                  );
+                },
+                () => {
+                  // Handle successful uploads on complete
+                  getDownloadURL(uploadTask.snapshot.ref)
+                    .then((downloadURL) => {
+                      newDocumentURLs[fieldName] = downloadURL;
+                      toast.success(`${file.name} uploaded!`, {
+                        id: uploadToastId,
+                      });
+                      resolve();
+                    })
+                    .catch((error) => {
+                      console.error(
+                        `Error getting download URL for ${file.name}:`,
+                        error
+                      );
+                      toast.error(`Failed to get URL for ${file.name}.`, {
+                        id: uploadToastId,
+                      });
+                      reject(error);
+                    });
+                }
+              );
+            })
           );
         }
       }
 
-      if (uploadTasks.length > 0) {
-        await Promise.all(uploadTasks);
+      if (uploadPromises.length > 0) {
+        await Promise.all(uploadPromises);
       }
 
+      // Prepare data for Firestore, ensuring RHF's file names are replaced by URLs or cleared
       const dataToSave = { ...formDataFromHook };
 
       DOCUMENT_FIELD_KEYS.forEach((fieldName) => {
+        let urlToSave = ""; // Default to empty string for the document field
         if (newDocumentURLs[fieldName]) {
-          dataToSave[fieldName] = newDocumentURLs[fieldName];
+          urlToSave = newDocumentURLs[fieldName]; // Use new URL if upload was successful
         } else if (
           filesToUpload[fieldName] &&
           typeof filesToUpload[fieldName] === "string"
         ) {
-          dataToSave[fieldName] = filesToUpload[fieldName];
-        } else if (
-          !filesToUpload.hasOwnProperty(fieldName) &&
-          editData?.[fieldName]
-        ) {
-          dataToSave[fieldName] = "";
-        } else if (
-          !newDocumentURLs[fieldName] &&
-          !(filesToUpload[fieldName] instanceof File)
-        ) {
-          dataToSave[fieldName] = formDataFromHook[fieldName] || "";
+          // If it's a string in filesToUpload, it's an existing URL that wasn't changed
+          urlToSave = filesToUpload[fieldName];
         }
+        // If filesToUpload[fieldName] was a File but no newDocumentURL (failed upload), it remains ""
+        // If filesToUpload[fieldName] is undefined (cleared field), it remains ""
+        dataToSave[fieldName] = urlToSave;
       });
 
-      dataToSave.Current_Enquiry = selectedEnquiry.id;
+      dataToSave.Current_Enquiry = selectedEnquiry.id; // Ensure this is always set
       dataToSave.lastUpdatedBy = user.uid;
-      dataToSave.updatedAt = new Date();
+      // Timestamps (createdAt, updatedAt) will be handled by firestoreService
 
       if (editData && editData.id) {
         await firestoreService.update(
@@ -1538,14 +1572,14 @@ const DetailEnquiryForm = ({
         });
       } else {
         dataToSave.createdBy = user.uid;
-        dataToSave.createdAt = new Date();
+        await firestoreService.create("detailEnquiries", dataToSave); // Call create for new entries
         toast.success("Detailed profile created successfully!", {
           id: toastIdSubmit,
         });
       }
 
-      onSuccess?.();
-      onClose();
+      onSuccess?.(); // Call parent's success handler (e.g., to reload data)
+      onClose(); // Close the modal
     } catch (error) {
       console.error("Error saving detailed profile:", error);
       toast.error(
@@ -1565,6 +1599,7 @@ const DetailEnquiryForm = ({
         [fieldName]: file.name,
       }));
       setValue(fieldName, file.name, {
+        // Set RHF value to filename for display/validation
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
@@ -1585,6 +1620,7 @@ const DetailEnquiryForm = ({
       return updated;
     });
     setValue(fieldName, "", {
+      // Clear RHF value
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true,
@@ -1597,8 +1633,7 @@ const DetailEnquiryForm = ({
   };
 
   const FileUploadFieldComponent = ({ name, label, accept = "*/*" }) => {
-    const currentRHFValue = watch(name);
-    const displayFileName = uploadedDocumentsDisplay[name] || currentRHFValue;
+    const displayFileName = uploadedDocumentsDisplay[name]; // Prioritize display state
 
     return (
       <div>
@@ -1637,7 +1672,7 @@ const DetailEnquiryForm = ({
                     <span>Upload a file</span>
                     <input
                       id={name}
-                      name={name}
+                      // name={name} // RHF handles name via register, but direct onChange is used here
                       type="file"
                       className="sr-only"
                       accept={accept}
@@ -1665,13 +1700,13 @@ const DetailEnquiryForm = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmitHandler)}
-      className="space-y-6 p-1 sm:p-4 max-h-[calc(100vh-150px)] overflow-y-auto"
+      className="space-y-6 p-1 sm:p-4 max-h-[calc(100vh-150px)] overflow-y-auto" // Adjust max-h as needed
       noValidate
     >
       <div className="sticky top-0 bg-white py-3 px-1 sm:px-0 z-10 border-b mb-6">
         <h3 className="text-lg font-semibold text-gray-900">
-          Detailed Profile for {selectedEnquiry.student_First_Name}{" "}
-          {selectedEnquiry.student_Last_Name}
+          Detailed Profile for {selectedEnquiry?.student_First_Name}{" "}
+          {selectedEnquiry?.student_Last_Name}
         </h3>
         <div className="flex items-center justify-between mt-2">
           <p className="text-sm text-gray-600">
@@ -1696,31 +1731,23 @@ const DetailEnquiryForm = ({
         {currentStep === 1 && (
           <Step1Academics register={register} errors={errors} />
         )}
-        {currentStep === 2 && (
-          <Step2TestScores register={register} errors={errors} />
-        )}
+        {currentStep === 2 && <Step2TestScores register={register} />}
         {currentStep === 3 && (
           <Step3WorkExperience
             register={register}
-            control={control}
             fields={workExperienceFields}
             append={appendWorkExperience}
             remove={removeWorkExperience}
           />
         )}
-        {currentStep === 4 && (
-          <Step4FamilyAndRefusal register={register} errors={errors} />
-        )}
+        {currentStep === 4 && <Step4FamilyAndRefusal register={register} />}
         {currentStep === 5 && (
           <Step5Documents FileUploadField={FileUploadFieldComponent} />
         )}
-        {currentStep === 6 && (
-          <Step6ServicesAndStatus register={register} errors={errors} />
-        )}
+        {currentStep === 6 && <Step6ServicesAndStatus register={register} />}
         {currentStep === 7 && (
           <Step7Review
             getValues={getValues}
-            selectedEnquiry={selectedEnquiry}
             uploadedDocumentsDisplay={uploadedDocumentsDisplay}
           />
         )}
@@ -1765,7 +1792,8 @@ const DetailEnquiryForm = ({
                 "Submitting..."
               ) : (
                 <>
-                  <CheckCircle size={18} className="mr-1" /> Confirm & Submit
+                  {" "}
+                  <CheckCircle size={18} className="mr-1" /> Confirm & Submit{" "}
                 </>
               )}
             </button>

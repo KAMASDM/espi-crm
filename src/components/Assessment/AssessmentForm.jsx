@@ -22,13 +22,15 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm({
-    defaultValues: editData || {},
-  });
+    reset,
+  } = useForm({});
+
   const { user } = useAuth();
-  const { data: enquiries } = useEnquiries();
-  const { data: universities } = useUniversities();
-  const { data: courses } = useCourses();
+  const { data: enquiries, loading: enquiriesLoading } = useEnquiries();
+  const { data: universities, loading: universitiesLoading } =
+    useUniversities();
+  const { data: courses, loading: coursesLoading } = useCourses();
+
   const [loading, setLoading] = useState(false);
   const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
@@ -38,49 +40,81 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
   const selectedLevel = watch("level_applying_for");
 
   useEffect(() => {
+    if (editData) {
+      reset(editData);
+    } else {
+      reset({
+        enquiry: "",
+        student_country: "",
+        university: "",
+        level_applying_for: "",
+        course_interested: "",
+        intake_interested: "",
+        specialisation: "",
+        duration: "",
+        course_link: "",
+        application_fee: "",
+        tution_fee: "",
+        fee_currency: "",
+        ass_status: "",
+        notes: "",
+      });
+    }
+  }, [editData, reset]);
+
+  useEffect(() => {
+    if (universitiesLoading) return;
     if (selectedCountry) {
       const filtered = universities.filter(
         (uni) => uni.country === selectedCountry
       );
       setFilteredUniversities(filtered);
     } else {
-      setFilteredUniversities(universities);
+      setFilteredUniversities(universities || []);
     }
-  }, [selectedCountry, universities]);
+  }, [selectedCountry, universities, universitiesLoading]);
 
   useEffect(() => {
-    let filtered = courses;
+    if (coursesLoading) return;
+    let localFilteredCourses = courses || [];
 
     if (selectedUniversity) {
-      filtered = filtered.filter(
+      localFilteredCourses = localFilteredCourses.filter(
         (course) => course.university === selectedUniversity
       );
     }
 
     if (selectedLevel) {
-      filtered = filtered.filter(
+      localFilteredCourses = localFilteredCourses.filter(
         (course) => course.course_levels === selectedLevel
       );
     }
+    setFilteredCourses(localFilteredCourses);
+  }, [selectedUniversity, selectedLevel, courses, coursesLoading]);
 
-    setFilteredCourses(filtered);
-  }, [selectedUniversity, selectedLevel, courses]);
+  const onSubmit = async (dataFromForm) => {
+    console.log("Raw data from form:", dataFromForm);
 
-  const onSubmit = async (data) => {
+    if (!user || !user.uid) {
+      toast.error("User not authenticated. Cannot save assessment.");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const assessmentData = {
-        ...data,
+      const assessmentPayload = {
+        ...dataFromForm,
         assigned_users: user.uid,
-        createdBy: user.uid,
+        branchId: dataFromForm.branchId || null,
       };
 
-      if (editData) {
-        await assessmentService.update(editData.id, assessmentData);
+      if (editData && editData.id) {
+        await assessmentService.update(editData.id, assessmentPayload);
         toast.success("Assessment updated successfully!");
       } else {
-        await assessmentService.create(assessmentData);
+        await assessmentService.create(assessmentPayload);
         toast.success("Assessment created successfully!");
       }
 
@@ -88,18 +122,17 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
       onClose();
     } catch (error) {
       console.error("Error saving assessment:", error);
-      toast.error("Failed to save assessment. Please try again.");
+      toast.error(
+        error.message || "Failed to save assessment. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const getStudentName = (enquiryId) => {
-    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return enquiry
-      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
-      : "Unknown Student";
-  };
+  if (enquiriesLoading || universitiesLoading || coursesLoading) {
+    return <div className="p-4 text-center">Loading form data...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
