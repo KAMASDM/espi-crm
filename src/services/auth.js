@@ -14,25 +14,22 @@ export const signInWithGoogle = async () => {
     let userProfile;
 
     if (!userSnap.exists()) {
-      let initialRole = USER_ROLES.BRANCH_ADMIN;
-      let initialBranchId = "";
-
-      if (user.email === "anantsoftcomputing@gmail.com") {
-        initialRole = USER_ROLES.SUPERADMIN;
-        initialBranchId = null;
-      }
-
       userProfile = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
-        role: initialRole,
-        branchId: initialBranchId,
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
+      if (user.email === "anantsoftcomputing@gmail.com") {
+        userProfile.role = USER_ROLES.SUPERADMIN;
+        userProfile.branchId = null;
+      } else {
+        userProfile.role = null;
+        userProfile.branchId = null;
+      }
 
       await setDoc(userRef, userProfile);
 
@@ -50,26 +47,11 @@ export const signInWithGoogle = async () => {
 
       if (
         user.email === "anantsoftcomputing@gmail.com" &&
-        existingData.role !== USER_ROLES.SUPERADMIN
+        (existingData.role !== USER_ROLES.SUPERADMIN ||
+          existingData.branchId !== null)
       ) {
         updates.role = USER_ROLES.SUPERADMIN;
         updates.branchId = null;
-        needsUpdate = true;
-      }
-
-      if (!existingData.role) {
-        updates.role =
-          user.email === "anantsoftcomputing@gmail.com"
-            ? USER_ROLES.SUPERADMIN
-            : USER_ROLES.BRANCH_ADMIN;
-        needsUpdate = true;
-      }
-
-      if (
-        existingData.role !== USER_ROLES.SUPERADMIN &&
-        !existingData.hasOwnProperty("branchId")
-      ) {
-        updates.branchId = "";
         needsUpdate = true;
       }
 
@@ -99,7 +81,7 @@ export const signInWithGoogle = async () => {
 
     return user;
   } catch (error) {
-    console.error("Error signing in with Google:", error);
+    console.log("Error signing in with Google:", error);
     localStorage.removeItem("userProfile");
     throw error;
   }
@@ -109,9 +91,8 @@ export const signOutUser = async () => {
   try {
     await signOut(auth);
     localStorage.removeItem("userProfile");
-    console.log("User signed out successfully");
   } catch (error) {
-    console.error("Error signing out:", error);
+    console.log("Error signing out:", error);
     throw error;
   }
 };
@@ -121,7 +102,7 @@ export const getCurrentUserProfile = () => {
     const profile = localStorage.getItem("userProfile");
     return profile ? JSON.parse(profile) : null;
   } catch (error) {
-    console.error("Error getting user profile from localStorage:", error);
+    console.log("Error getting user profile from localStorage:", error);
     return null;
   }
 };

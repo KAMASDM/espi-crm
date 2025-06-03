@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Plus, FileText, Download } from "lucide-react";
+import { ArrowLeft, Edit, Plus, FileText } from "lucide-react"; // Removed Download as it's not used in this file directly for DetailEnquiryView props
 import Modal from "../components/common/Modal";
 import DetailEnquiryForm from "../components/forms/DetailEnquiryForm";
 import DetailEnquiryView from "../components/views/DetailEnquiryView";
-import { useDocument } from "../hooks/useFirestore";
+import { useDocument } from "../hooks/useFirestore"; // Assuming this hook exists and works
 import { firestoreService } from "../services/firestore";
 import { where } from "firebase/firestore";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -18,15 +18,20 @@ const DetailedEnquiry = () => {
   const [detailEnquiry, setDetailEnquiry] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
 
+  // console.log("---detailEnquiry--->", detailEnquiry);
+
   const {
     data: enquiry,
     loading: enquiryLoading,
     error: enquiryError,
-  } = useDocument("enquiries", enquiryId);
+  } = useDocument("enquiries", enquiryId); // Fetches the basic enquiry
 
-  const loadDetailEnquiry = async () => {
+  // console.log("--enquiry-->", enquiry);
+
+  const loadDetailEnquiry = useCallback(async () => {
     if (!enquiryId) {
       setLoadingDetail(false);
+      setDetailEnquiry(null); // Ensure detailEnquiry is nulled if no enquiryId
       return;
     }
     try {
@@ -35,36 +40,39 @@ const DetailedEnquiry = () => {
         where("Current_Enquiry", "==", enquiryId),
       ]);
 
+      // console.log("--detailEnquiries-->", detailEnquiries);
+
       if (detailEnquiries.length > 0) {
         setDetailEnquiry(detailEnquiries[0]);
       } else {
         setDetailEnquiry(null);
       }
     } catch (error) {
-      console.error("Error loading detail enquiry:", error); //
+      console.error("Error loading detail enquiry:", error);
       toast.error("Failed to load detailed profile");
       setDetailEnquiry(null);
     } finally {
       setLoadingDetail(false);
     }
-  };
+  }, [enquiryId]);
 
   useEffect(() => {
     loadDetailEnquiry();
-  }, [enquiryId]);
+  }, [enquiryId, loadDetailEnquiry]);
 
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
-    loadDetailEnquiry();
-    toast.success("Detailed profile created successfully!");
+    loadDetailEnquiry(); // Reloads the detailed enquiry data
+    // Toast for creation success is now handled within DetailEnquiryForm
   };
 
   const handleEditSuccess = () => {
     setShowEditModal(false);
-    loadDetailEnquiry();
-    toast.success("Detailed profile updated successfully!");
+    loadDetailEnquiry(); // Reloads the detailed enquiry data
+    // Toast for update success is now handled within DetailEnquiryForm
   };
 
+  // This function is passed to DetailEnquiryView, ensure it's correctly implemented there or here if needed.
   const handleDownload = (documentField, documentUrl) => {
     if (
       documentUrl &&
@@ -99,7 +107,7 @@ const DetailedEnquiry = () => {
           </p>
           <p className="text-xs text-red-500 mt-1">{enquiryError.message}</p>
           <button
-            onClick={() => navigate("/students")}
+            onClick={() => navigate("/students")} // Ensure this route is correct
             className="btn-secondary mt-4"
           >
             Back to Students
@@ -120,7 +128,7 @@ const DetailedEnquiry = () => {
             The enquiry (ID: {enquiryId}) you're looking for doesn't exist.
           </p>
           <button
-            onClick={() => navigate("/students")}
+            onClick={() => navigate("/students")} // Ensure this route is correct
             className="btn-primary mt-4"
           >
             Back to Students
@@ -135,7 +143,7 @@ const DetailedEnquiry = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
           <button
-            onClick={() => navigate("/students")}
+            onClick={() => navigate("/students")} // Ensure this route is correct
             className="mr-3 sm:mr-4 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Back to Students"
           >
@@ -230,10 +238,10 @@ const DetailedEnquiry = () => {
         <DetailEnquiryView
           detailEnquiry={detailEnquiry}
           onEdit={() => setShowEditModal(true)}
-          onDownload={handleDownload}
+          onDownload={handleDownload} // Make sure DetailEnquiryView uses this prop
         />
       ) : (
-        !loadingDetail && (
+        !loadingDetail && ( // Only show "No Detailed Profile" if not loading
           <div className="card">
             <div className="text-center py-10 sm:py-12">
               <FileText
@@ -264,23 +272,24 @@ const DetailedEnquiry = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Create Detailed Student Profile"
-        size="full"
+        size="full" // Or appropriate size
       >
         <DetailEnquiryForm
-          selectedEnquiry={enquiry}
+          selectedEnquiry={enquiry} // Pass the basic enquiry data
           onClose={() => setShowCreateModal(false)}
           onSuccess={handleCreateSuccess}
+          // editData will be null for creation
         />
       </Modal>
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         title="Edit Detailed Student Profile"
-        size="full"
+        size="full" // Or appropriate size
       >
         <DetailEnquiryForm
-          selectedEnquiry={enquiry}
-          editData={detailEnquiry}
+          selectedEnquiry={enquiry} // Pass the basic enquiry data
+          editData={detailEnquiry} // Pass existing detail enquiry for editing
           onClose={() => setShowEditModal(false)}
           onSuccess={handleEditSuccess}
         />
