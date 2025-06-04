@@ -129,7 +129,7 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
 
       return "N/A";
     } catch (error) {
-      return "N/A";
+      console.error("Error formatting date:", error);
     }
   };
 
@@ -183,7 +183,7 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
         Showing {filteredUsers.length} of {safeUsers.length} users
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="table-container">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -222,9 +222,6 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                   <div className="flex flex-col items-center">
                     <Shield className="mb-2 text-gray-300" size={48} />
                     <p>No users found</p>
-                    {searchTerm && (
-                      <p className="text-sm">Try adjusting your search</p>
-                    )}
                   </div>
                 </td>
               </tr>
@@ -247,9 +244,6 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                         <div className="font-medium text-gray-900">
                           {user.displayName}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          ID: {(user.id || user.uid).slice(0, 8)}...
-                        </div>
                       </div>
                     </div>
                   </td>
@@ -264,19 +258,9 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                       {branchesLoading ? (
                         <span className="text-gray-400">Loading...</span>
                       ) : (
-                        <>
-                          <span className="font-medium text-gray-900">
-                            {getBranchName(user.branchId)}
-                          </span>
-                          {user.branchId && user.branchId !== "No Branch" && (
-                            <span
-                              className="text-xs text-gray-400"
-                              title={`Branch ID: ${user.branchId}`}
-                            >
-                              ID: {user.branchId.slice(0, 8)}...
-                            </span>
-                          )}
-                        </>
+                        <span className="font-medium text-gray-900">
+                          {getBranchName(user.branchId)}
+                        </span>
                       )}
                     </div>
                   </td>

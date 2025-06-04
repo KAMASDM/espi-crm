@@ -9,7 +9,7 @@ import { branchService } from "../services/firestore";
 import BranchForm from "../components/Branch/BranchForm";
 import BranchesTable from "../components/Branch/BranchesTable";
 
-const BranchManagement = () => {
+const Branches = () => {
   const { userProfile } = useAuth();
   const [error, setError] = useState(null);
   const [branches, setBranches] = useState([]);
@@ -63,14 +63,14 @@ const BranchManagement = () => {
     fetchBranches();
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <Loading size="default" />;
 
   if (error) return <div className="text-red-500">{error.message}</div>;
 
   if (userProfile?.role !== USER_ROLES.SUPERADMIN) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Branch Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Branches</h1>
         <p className="text-red-600">
           You do not have permission to manage branches.
         </p>
@@ -83,7 +83,7 @@ const BranchManagement = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Branch Management
+            Branches
           </h1>
           <p className="text-gray-600">
             Oversee and manage all company branches
@@ -130,4 +130,4 @@ const BranchManagement = () => {
   );
 };
 
-export default BranchManagement;
+export default Branches;

@@ -7,8 +7,9 @@ import { useAuth } from "../context/AuthContext";
 import { userService } from "../services/firestore";
 import UserForm from "../components/Users/UserForm";
 import UsersTable from "../components/Users/UsersTable";
+import Loading from "../components/Common/Loading";
 
-const UserManagement = () => {
+const Users = () => {
   const { userProfile } = useAuth();
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
@@ -78,14 +79,7 @@ const UserManagement = () => {
   const inactiveUsers = allUsers.filter((u) => u.isActive === false);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading users...</p>
-        </div>
-      </div>
-    );
+    return <Loading size="default" />;
   }
 
   if (error) {
@@ -124,7 +118,7 @@ const UserManagement = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
           <p className="text-gray-600">Manage staff accounts and their roles</p>
         </div>
         <button
@@ -172,18 +166,10 @@ const UserManagement = () => {
           </div>
         </div>
       </div>
-      {process.env.NODE_ENV === "development" && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-          <p className="text-sm text-yellow-800">
-            Debug: Found {allUsers.length} users. Current user role:{" "}
-            {userProfile?.role}
-          </p>
-        </div>
-      )}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Users List
+            Users
           </h3>
           {allUsers.length === 0 ? (
             <div className="text-center py-12">
@@ -233,4 +219,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default Users;

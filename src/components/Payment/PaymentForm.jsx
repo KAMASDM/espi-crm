@@ -647,11 +647,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading
-            ? "Saving..."
-            : editData
-            ? "Update Payment"
-            : "Record Payment"}
+          {loading ? "Saving..." : editData ? "Update " : "Create "}
         </button>
       </div>
     </form>
