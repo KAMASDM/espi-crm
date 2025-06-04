@@ -70,7 +70,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               </p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Country *
@@ -92,7 +91,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               </p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Application Deadline
@@ -103,7 +101,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               className="input-field"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Phone
@@ -114,7 +111,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               className="input-field"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email
@@ -125,7 +121,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               className="input-field"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Website
@@ -137,7 +132,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               placeholder="https://university.edu"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Application Fee
@@ -150,7 +144,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               placeholder="0.00"
             />
           </div>
-
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               University Description
@@ -164,7 +157,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
         </div>
       </div>
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           Academic Information
@@ -188,7 +180,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               ))}
             </div>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Backlogs Allowed
@@ -214,7 +205,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
         </div>
       </div>
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">Settings</h4>
         <div className="space-y-4">
@@ -228,7 +218,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               Medium of Instruction Accepted
             </label>
           </div>
-
           <div className="flex items-center">
             <input type="checkbox" {...register("Active")} className="mr-3" />
             <label className="text-sm font-medium text-gray-700">
@@ -237,7 +226,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
         </div>
       </div>
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           Additional Information
@@ -254,7 +242,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               placeholder="https://university.edu/apply"
             />
           </div>
-
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Notes
@@ -268,7 +255,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
         </div>
       </div>
-
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
         <button
           type="button"
@@ -279,11 +265,7 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading
-            ? "Saving..."
-            : editData
-            ? "Update University"
-            : "Create University"}
+          {loading ? "Saving..." : editData ? "Update" : "Create"}
         </button>
       </div>
     </form>

@@ -138,7 +138,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         toast.success("Enquiry created successfully!");
       }
 
-      onSuccess?.();
+      onSuccess();
       onClose();
     } catch (error) {
       console.log("error", error);

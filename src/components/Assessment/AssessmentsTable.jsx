@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { COUNTRIES, ASSESSMENT_STATUS } from "../../utils/constants";
+import Loading from "../Common/Loading";
 
 const AssessmentsTable = ({
   assessments,
@@ -39,7 +40,7 @@ const AssessmentsTable = ({
   };
   const getUniversityName = (universityId) => {
     const university = universities.find((uni) => uni.id === universityId);
-    return university ? university.univ_name : "Unknown University";
+    return university && university.univ_name;
   };
 
   const filteredAssessments = assessments
@@ -91,7 +92,7 @@ const AssessmentsTable = ({
 
   const getCourseName = (courseId) => {
     const course = courses.find((c) => c.id === courseId);
-    return course ? course.course_name : "Course not specified";
+    return course && course.course_name;
   };
 
   const getCountryName = (countryCode) => {
@@ -120,11 +121,7 @@ const AssessmentsTable = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <Loading size="default" />;
   }
 
   return (
@@ -143,7 +140,6 @@ const AssessmentsTable = ({
             className="pl-10 input-field"
           />
         </div>
-
         <div className="flex gap-2">
           <select
             value={countryFilter}
@@ -157,7 +153,6 @@ const AssessmentsTable = ({
               </option>
             ))}
           </select>
-
           <div className="relative">
             <Filter
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -178,11 +173,9 @@ const AssessmentsTable = ({
           </div>
         </div>
       </div>
-
       <div className="text-sm text-gray-500">
         Showing {filteredAssessments.length} of {assessments.length} assessments
       </div>
-
       <div className="table-container">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -281,7 +274,6 @@ const AssessmentsTable = ({
                       </div>
                     </div>
                   </td>
-
                   <td className="table-cell">
                     <div className="space-y-1">
                       <div className="flex items-center text-sm font-medium text-gray-900">
@@ -296,7 +288,6 @@ const AssessmentsTable = ({
                       </div>
                     </div>
                   </td>
-
                   <td className="table-cell">
                     <div className="space-y-1">
                       {assessment.specialisation && (
@@ -329,7 +320,6 @@ const AssessmentsTable = ({
                       )}
                     </div>
                   </td>
-
                   <td className="table-cell">
                     <div className="space-y-1">
                       {assessment.application_fee && (
@@ -353,11 +343,9 @@ const AssessmentsTable = ({
                       )}
                     </div>
                   </td>
-
                   <td className="table-cell">
                     {getStatusBadge(assessment.ass_status)}
                   </td>
-
                   <td className="table-cell">
                     <div className="flex items-center text-sm text-gray-500">
                       <Calendar size={14} className="mr-2 text-gray-400" />
@@ -368,7 +356,6 @@ const AssessmentsTable = ({
                         )}
                     </div>
                   </td>
-
                   <td className="table-cell">
                     <div className="flex items-center space-x-2">
                       <button

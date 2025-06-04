@@ -7,8 +7,8 @@ import Modal from "../components/Common/Modal";
 import Loading from "../components/Common/Loading";
 import { useDocument } from "../hooks/useFirestore";
 import { firestoreService } from "../services/firestore";
+import EnquiryDetail from "../components/Students/EnquiryDetail";
 import DetailEnquiryForm from "../components/Forms/DetailEnquiryForm";
-import DetailEnquiryView from "../components/Views/DetailEnquiryView";
 
 const DetailedEnquiry = () => {
   const { enquiryId } = useParams();
@@ -76,16 +76,13 @@ const DetailedEnquiry = () => {
   };
 
   if (enquiryLoading || loadingDetail) {
-    return <Loading />;
+    return <Loading size="default" />;
   }
 
   if (enquiryError) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="text-center card bg-red-50 border-red-300">
-          <h2 className="text-xl font-semibold text-red-700">
-            Error Loading Enquiry
-          </h2>
           <p className="text-red-600 mt-2">
             Could not load the basic enquiry data. Please try again later.
           </p>
@@ -108,9 +105,6 @@ const DetailedEnquiry = () => {
           <h2 className="text-xl font-semibold text-gray-900">
             Enquiry Not Found
           </h2>
-          <p className="text-gray-600 mt-2">
-            The enquiry (ID: {enquiryId}) you're looking for doesn't exist.
-          </p>
           <button
             onClick={() => navigate("/students")}
             className="btn-primary mt-4"
@@ -123,7 +117,7 @@ const DetailedEnquiry = () => {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
           <button
@@ -148,7 +142,7 @@ const DetailedEnquiry = () => {
           {detailEnquiry ? (
             <button
               onClick={() => setShowEditModal(true)}
-              className="btn-secondary flex items-center text-sm sm:text-base"
+              className="btn-primary flex items-center text-sm sm:text-base"
             >
               <Edit size={18} className="mr-1 sm:mr-2" /> Edit Profile
             </button>
@@ -217,9 +211,8 @@ const DetailedEnquiry = () => {
         </div>
       </div>
       {detailEnquiry ? (
-        <DetailEnquiryView
+        <EnquiryDetail
           detailEnquiry={detailEnquiry}
-          onEdit={() => setShowEditModal(true)}
           onDownload={handleDownload}
         />
       ) : (

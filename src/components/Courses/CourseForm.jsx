@@ -57,7 +57,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
         toast.success("Course created successfully!");
       }
 
-      onSuccess?.();
+      onSuccess();
       onClose();
     } catch (error) {
       console.log("error", error);
