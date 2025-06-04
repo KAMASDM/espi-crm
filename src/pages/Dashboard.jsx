@@ -1,3 +1,4 @@
+import React from "react";
 import { Users, Building2, FileText, CreditCard } from "lucide-react";
 import {
   useEnquiries,
@@ -176,22 +177,18 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.displayName?.split(" ")[0] || "User"}!
+          Welcome back, {user?.displayName?.split(" ")[0]}!
         </h1>
         <p className="text-gray-600">
           Here's what's happening with your education consultancy today.
         </p>
       </div>
-
       <Stats stats={stats} />
-
       <QuickAction
         recentActivities={recentActivities}
         formatActivityTime={formatActivityTime}
       />
-
       <PendingTasks pendingTasks={pendingTasks} />
-
       <MonthPerformance
         newEnquiriesLast7Days={newEnquiriesLast7Days}
         totalActiveUniversities={totalActiveUniversities}

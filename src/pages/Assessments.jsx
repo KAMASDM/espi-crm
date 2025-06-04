@@ -1,22 +1,23 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { Plus, Download, Upload } from "lucide-react";
-import Modal from "../components/common/Modal";
+import Modal from "../components/Common/Modal";
+import { COUNTRIES } from "../utils/constants";
 import AssessmentForm from "../components/Assessment/AssessmentForm";
 import AssessmentsTable from "../components/Assessment/AssessmentsTable";
 import {
-  useAssessments,
-  useEnquiries,
-  useUniversities,
   useCourses,
+  useEnquiries,
+  useAssessments,
+  useUniversities,
 } from "../hooks/useFirestore";
-import { COUNTRIES } from "../utils/constants";
-import toast from "react-hot-toast";
 
 const Assessments = () => {
-  const { data: assessments, loading, remove } = useAssessments();
+  const { data: courses } = useCourses();
   const { data: enquiries } = useEnquiries();
   const { data: universities } = useUniversities();
-  const { data: courses } = useCourses();
+  const { data: assessments, loading, remove } = useAssessments();
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -42,13 +43,14 @@ const Assessments = () => {
         await remove(assessmentId);
         toast.success("Assessment deleted successfully!");
       } catch (error) {
-        console.error("Error deleting assessment:", error);
-        toast.error("Failed to delete assessment. Please try again.");
+        console.log("error", error);
       }
     }
   };
 
-  const handleFormSuccess = () => {};
+  const handleFormSuccess = () => {
+    toast.success("Assessment submitted successfully!");
+  };
 
   const handleExport = () => {
     toast.info("Export functionality will be implemented soon!");
@@ -58,7 +60,6 @@ const Assessments = () => {
     toast.info("Import functionality will be implemented soon!");
   };
 
-  // Calculate stats
   const pendingAssessments = assessments.filter(
     (a) => a.ass_status === "Pending"
   ).length;
@@ -68,29 +69,6 @@ const Assessments = () => {
   const completedAssessments = assessments.filter(
     (a) => a.ass_status === "Completed"
   ).length;
-  const uniqueStudents = [...new Set(assessments.map((a) => a.enquiry))].length;
-
-  const getStudentName = (enquiryId) => {
-    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return enquiry
-      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
-      : "Unknown Student";
-  };
-
-  const getUniversityName = (universityId) => {
-    const university = universities.find((uni) => uni.id === universityId);
-    return university ? university.univ_name : "Unknown University";
-  };
-
-  const getCourseName = (courseId) => {
-    const course = courses.find((c) => c.id === courseId);
-    return course ? course.course_name : "Course not specified";
-  };
-
-  const getCountryName = (countryCode) => {
-    const country = COUNTRIES.find((c) => c.code === countryCode);
-    return country ? country.name : countryCode;
-  };
 
   return (
     <div className="space-y-6">
@@ -101,7 +79,6 @@ const Assessments = () => {
             Evaluate student profiles and recommend suitable programs
           </p>
         </div>
-
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleImport}
@@ -126,7 +103,6 @@ const Assessments = () => {
           </button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <div className="flex items-center">
@@ -143,7 +119,6 @@ const Assessments = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
@@ -157,7 +132,6 @@ const Assessments = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -171,7 +145,6 @@ const Assessments = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -186,7 +159,6 @@ const Assessments = () => {
           </div>
         </div>
       </div>
-
       <div className="card">
         <AssessmentsTable
           assessments={assessments}
@@ -199,7 +171,6 @@ const Assessments = () => {
           onView={handleView}
         />
       </div>
-
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -211,7 +182,6 @@ const Assessments = () => {
           onSuccess={handleFormSuccess}
         />
       </Modal>
-
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -224,7 +194,6 @@ const Assessments = () => {
           onSuccess={handleFormSuccess}
         />
       </Modal>
-
       <Modal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
@@ -252,24 +221,24 @@ const AssessmentDetails = ({
 }) => {
   const getStudentName = (enquiryId) => {
     const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return enquiry
-      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
-      : "Unknown Student";
+    return (
+      enquiry && `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
+    );
   };
 
   const getStudentEmail = (enquiryId) => {
     const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return enquiry ? enquiry.student_email : "Unknown";
+    return enquiry && enquiry.student_email;
   };
 
   const getUniversityName = (universityId) => {
     const university = universities.find((uni) => uni.id === universityId);
-    return university ? university.univ_name : "Unknown University";
+    return university && university.univ_name;
   };
 
   const getCourseName = (courseId) => {
     const course = courses.find((c) => c.id === courseId);
-    return course ? course.course_name : "Course not specified";
+    return course && course.course_name;
   };
 
   const getCountryName = (countryCode) => {
@@ -318,7 +287,6 @@ const AssessmentDetails = ({
           </div>
         </div>
       </div>
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-3">
           University & Course Information
@@ -345,7 +313,7 @@ const AssessmentDetails = ({
               Specialization
             </label>
             <p className="text-sm text-gray-900">
-              {assessment.specialisation || "Not specified"}
+              {assessment.specialisation}
             </p>
           </div>
           <div>
@@ -353,7 +321,7 @@ const AssessmentDetails = ({
               Duration
             </label>
             <p className="text-sm text-gray-900">
-              {assessment.duration || "Not specified"}
+              {assessment.duration}
             </p>
           </div>
           <div>
@@ -361,7 +329,7 @@ const AssessmentDetails = ({
               Intake Interested
             </label>
             <p className="text-sm text-gray-900">
-              {assessment.intake_interested || "Not specified"}
+              {assessment.intake_interested}
             </p>
           </div>
           <div>
@@ -385,7 +353,6 @@ const AssessmentDetails = ({
           </div>
         </div>
       </div>
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-3">
           Financial Information
@@ -396,7 +363,7 @@ const AssessmentDetails = ({
               Application Fee
             </label>
             <p className="text-sm text-gray-900">
-              {assessment.application_fee || "Not specified"}
+              {assessment.application_fee}
             </p>
           </div>
           <div>
@@ -404,7 +371,7 @@ const AssessmentDetails = ({
               Tuition Fee
             </label>
             <p className="text-sm text-gray-900">
-              {assessment.tution_fee || "Not specified"}
+              {assessment.tution_fee}
             </p>
           </div>
           <div>
@@ -412,7 +379,7 @@ const AssessmentDetails = ({
               Currency
             </label>
             <p className="text-sm text-gray-900">
-              {assessment.fee_currency || "Not specified"}
+              {assessment.fee_currency}
             </p>
           </div>
         </div>
@@ -452,12 +419,11 @@ const AssessmentDetails = ({
               Assessment Notes
             </label>
             <p className="text-sm text-gray-900 whitespace-pre-wrap">
-              {assessment.notes || "No notes available"}
+              {assessment.notes}
             </p>
           </div>
         </div>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700">
           Created Date

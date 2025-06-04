@@ -1,25 +1,20 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { APPLICATION_STATUS } from "../../utils/constants"; // Assuming this constant exists
-import { useAssessments } from "../../hooks/useFirestore"; // Assuming this custom hook exists
-import { applicationService } from "../../services/firestore";
-import { useAuth } from "../../context/AuthContext";
-import { Upload, FileText, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { Upload, FileText, X } from "lucide-react";
+import app from "../../services/firebase";
+import { useAuth } from "../../context/AuthContext";
+import { useAssessments } from "../../hooks/useFirestore";
+import { APPLICATION_STATUS } from "../../utils/constants";
+import { applicationService } from "../../services/firestore";
 import {
-  getStorage,
   ref,
-  uploadBytesResumable,
+  getStorage,
+  deleteObject,
   getDownloadURL,
-  deleteObject, // Import for deleting old files if replaced
+  uploadBytesResumable,
 } from "firebase/storage";
-import app from "../../services/firebase"; // Your Firebase app initialization
 
-// Initialize Firebase Storage
-const storage = getStorage(app);
-
-// Define a list of field names that are expected to be file uploads
-// These should match the 'name' prop of your FileUploadFieldComponent instances
 const FILE_FIELD_NAMES = [
   "passport",
   "diploma_marksheet",
@@ -42,19 +37,13 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
     handleSubmit,
     formState: { errors },
     setValue,
-    watch, // Watch for changes if needed, e.g., for conditional logic
   } = useForm();
-
   const { user } = useAuth();
-  // Assuming useAssessments returns { data: assessmentsArray, isLoading: boolean }
-  const { data: assessments, isLoading: assessmentsLoading } = useAssessments();
+  const storage = getStorage(app);
   const [loading, setLoading] = useState(false);
-
-  // State to hold File objects for new uploads or string URLs for existing files
+  const { data: assessments, isLoading: assessmentsLoading } = useAssessments();
   const [filesToUpload, setFilesToUpload] = useState({});
-  // State to hold display names for files in the UI
   const [fileDisplayNames, setFileDisplayNames] = useState({});
-  // State to store original file URLs from editData to handle deletion of old files on replacement
   const [originalFileUrls, setOriginalFileUrls] = useState({});
 
   useEffect(() => {
@@ -66,7 +55,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
     if (editData) {
       for (const key in editData) {
         if (Object.prototype.hasOwnProperty.call(editData, key)) {
-          // For React Hook Form, use assessmentId for the dropdown value
           if (key === "application" && editData.application) {
             defaultFormValues["assessmentId"] = editData.application;
           } else {
@@ -79,8 +67,8 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
             editData[key].startsWith("https://firebasestorage.googleapis.com")
           ) {
             const fileUrl = editData[key];
-            initialFilesToUpload[key] = fileUrl; // Store existing URL
-            initialOriginalFileUrls[key] = fileUrl; // Store original URL for potential deletion
+            initialFilesToUpload[key] = fileUrl;
+            initialOriginalFileUrls[key] = fileUrl;
             try {
               const url = new URL(fileUrl);
               const pathParts = url.pathname.split("/");
@@ -93,29 +81,26 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
                 underscoreIndex > -1 &&
                 underscoreIndex < 20
               ) {
-                // Check if prefix is likely a timestamp
                 displayName = displayName.substring(underscoreIndex + 1);
               }
               initialFileDisplayNames[key] = displayName || "Attached Document";
             } catch (e) {
-              console.warn("Error parsing filename from URL:", fileUrl, e);
+              console.log("Error parsing filename from URL:", fileUrl, e);
               initialFileDisplayNames[key] = "Attached Document";
             }
           }
         }
       }
     } else {
-      // Initialize with default empty values for a new form
       defaultFormValues.assessmentId = "";
       defaultFormValues.application_status =
         APPLICATION_STATUS.length > 0 ? APPLICATION_STATUS[0] : "";
       defaultFormValues.notes = "";
       FILE_FIELD_NAMES.forEach((name) => {
-        defaultFormValues[name] = ""; // For RHF state
+        defaultFormValues[name] = "";
       });
     }
 
-    // Set all form values for React Hook Form
     for (const key in defaultFormValues) {
       setValue(key, defaultFormValues[key]);
     }
@@ -129,23 +114,21 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
     if (file) {
       setFilesToUpload((prev) => ({
         ...prev,
-        [fieldName]: file, // Store the File object
+        [fieldName]: file,
       }));
       setFileDisplayNames((prev) => ({
         ...prev,
-        [fieldName]: file.name, // Store the file name for display
+        [fieldName]: file.name,
       }));
       setValue(fieldName, file.name, {
         shouldValidate: true,
         shouldDirty: true,
-      }); // Update RHF state
+      });
       toast.success(`${file.name} selected. Ready for upload.`);
     }
   };
 
   const removeFile = (fieldName) => {
-    // If there was an original file, we might want to delete it from storage on final submit if it's removed here.
-    // For now, just clear from local state. Actual deletion from storage will be handled in onSubmit if a file is replaced.
     setFilesToUpload((prev) => {
       const updated = { ...prev };
       delete updated[fieldName];
@@ -156,7 +139,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
       delete updated[fieldName];
       return updated;
     });
-    setValue(fieldName, "", { shouldValidate: true, shouldDirty: true }); // Clear RHF state for this field
+    setValue(fieldName, "", { shouldValidate: true, shouldDirty: true });
     toast.info(`File for ${fieldName.replace(/_/g, " ")} removed.`);
   };
 
@@ -170,13 +153,9 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
       const finalApplicationData = { ...dataFromForm };
       const uploadPromises = [];
 
-      // Map assessmentId from form to 'application' for Firestore
       if (dataFromForm.assessmentId) {
         finalApplicationData.application = dataFromForm.assessmentId;
-        // delete finalApplicationData.assessmentId; // Optional: remove assessmentId if only 'application' is needed
       } else if (!editData) {
-        // If new form and no assessmentId, it's an error based on rules
-        toast.error("Assessment ID is missing.", { id: toastId });
         setLoading(false);
         return;
       }
@@ -185,9 +164,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         const fileOrUrl = filesToUpload[fieldName];
 
         if (fileOrUrl instanceof File) {
-          // New file to upload
           const file = fileOrUrl;
-          // If editing and there was an old file for this field, delete it from storage
           if (
             editData &&
             originalFileUrls[fieldName] &&
@@ -197,17 +174,16 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
               const oldFileRef = ref(storage, originalFileUrls[fieldName]);
               await deleteObject(oldFileRef);
               console.log(`Old file ${originalFileUrls[fieldName]} deleted.`);
-            } catch (deleteError) {
-              // Log error but don't necessarily block new upload unless critical
-              console.warn(
+            } catch (error) {
+              console.log(
                 `Could not delete old file ${originalFileUrls[fieldName]}:`,
-                deleteError
+                error
               );
             }
           }
 
           const parentId =
-            editData?.id || finalApplicationData.application || user.uid; // Use application ID or assessment ID or user ID for path
+            editData?.id || finalApplicationData.application || user.uid;
           const uploadPath = `applications/${parentId}/${fieldName}/${Date.now()}_${
             file.name
           }`;
@@ -217,17 +193,15 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           const promise = uploadTask
             .then((snapshot) => getDownloadURL(snapshot.ref))
             .then((downloadURL) => {
-              finalApplicationData[fieldName] = downloadURL; // Set the URL in data to be saved
+              finalApplicationData[fieldName] = downloadURL;
               toast.success(`${file.name} uploaded!`, {
                 id: `upload-toast-${fieldName}`,
               });
             })
             .catch((error) => {
               console.error(`Error uploading ${file.name}:`, error);
-              toast.error(`Failed to upload ${file.name}.`, {
-                id: `upload-toast-${fieldName}`,
-              });
-              throw error; // Propagate error to stop submission if critical
+
+              throw error;
             });
           uploadPromises.push(promise);
           toast.loading(`Uploading ${file.name}...`, {
@@ -237,12 +211,9 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           typeof fileOrUrl === "string" &&
           fileOrUrl.startsWith("https://firebasestorage.googleapis.com")
         ) {
-          // Existing URL, keep it if it's still in filesToUpload
           finalApplicationData[fieldName] = fileOrUrl;
         } else {
-          // File was removed or never set for this field
-          finalApplicationData[fieldName] = ""; // Set to empty string if removed
-          // If editing and an original file existed and was removed (fileOrUrl is now empty/undefined)
+          finalApplicationData[fieldName] = "";
           if (editData && originalFileUrls[fieldName]) {
             try {
               const oldFileRef = ref(storage, originalFileUrls[fieldName]);
@@ -250,10 +221,10 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
               console.log(
                 `Old file ${originalFileUrls[fieldName]} deleted as it was removed.`
               );
-            } catch (deleteError) {
-              console.warn(
+            } catch (error) {
+              console.log(
                 `Could not delete removed old file ${originalFileUrls[fieldName]}:`,
-                deleteError
+                error
               );
             }
           }
@@ -262,25 +233,22 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
 
       await Promise.all(uploadPromises);
 
-      // Clean up RHF specific field if it's different from Firestore field
       if (
         finalApplicationData.assessmentId &&
         finalApplicationData.application &&
         finalApplicationData.assessmentId === finalApplicationData.application
       ) {
-        // delete finalApplicationData.assessmentId; // Keep if your service/backend doesn't mind or if you use it for other UI purposes
       }
 
       if (editData) {
         finalApplicationData.updatedBy = user.uid;
-        // Ensure createdBy is not lost if it existed
         if (editData.createdBy) {
           finalApplicationData.createdBy = editData.createdBy;
         }
         await applicationService.update(editData.id, finalApplicationData);
         toast.success("Application updated successfully!", { id: toastId });
       } else {
-        finalApplicationData.createdBy = user.uid; // Already set by service, but good for clarity
+        finalApplicationData.createdBy = user.uid;
         await applicationService.create(finalApplicationData);
         toast.success("Application created successfully!", { id: toastId });
       }
@@ -289,10 +257,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
       onClose();
     } catch (error) {
       console.error("Error saving application:", error);
-      toast.error(
-        error.message || "Failed to save application. Please try again.",
-        { id: toastId }
-      );
     } finally {
       setLoading(false);
     }
@@ -300,8 +264,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
 
   const FileUploadFieldComponent = ({ name, label, accept = "*/*" }) => {
     const currentFileDisplayName = fileDisplayNames[name];
-    // Register the field with RHF, especially if you add validation rules later
-    // register(name); // You might not need to explicitly register if setValue is used and no RHF validation on the input itself
 
     return (
       <div>
@@ -337,13 +299,13 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
                 <Upload className="mx-auto text-gray-400" size={24} />
                 <div className="flex text-sm text-gray-600">
                   <label
-                    htmlFor={`${name}-file-input-applicationform`} // Ensure unique ID
+                    htmlFor={`${name}-file-input-applicationform`}
                     className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
                   >
                     <span>Upload a file</span>
                     <input
-                      id={`${name}-file-input-applicationform`} // Unique ID
-                      name={name} // RHF uses this name if registered
+                      id={`${name}-file-input-applicationform`}
+                      name={name}
                       type="file"
                       className="sr-only"
                       accept={accept}
@@ -351,7 +313,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
                         if (e.target.files && e.target.files[0]) {
                           handleFileUpload(name, e.target.files[0]);
                         }
-                        e.target.value = null; // Reset input to allow re-uploading the same file
+                        e.target.value = null;
                       }}
                     />
                   </label>
@@ -367,7 +329,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
             )}
           </div>
         </div>
-        {errors[name] && ( // Display RHF errors if the field is registered and has validation
+        {errors[name] && (
           <p className="text-red-600 text-sm mt-1">{errors[name].message}</p>
         )}
       </div>
@@ -390,7 +352,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-6 p-4 max-h-[calc(100vh-100px)] overflow-y-auto"
     >
-      {/* Basic Information Section */}
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           Basic Information
@@ -439,7 +400,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Document Upload Section */}
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           Document Uploads
@@ -513,7 +473,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Additional Information Section */}
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           Additional Information
@@ -533,7 +492,6 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-8">
         <button
           type="button"

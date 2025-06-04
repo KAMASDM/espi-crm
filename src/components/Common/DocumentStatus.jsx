@@ -1,9 +1,10 @@
+import React from "react";
 import {
+  Upload,
   FileText,
+  Download,
   CheckCircle2,
   AlertCircle,
-  Download,
-  Upload,
 } from "lucide-react";
 
 const DocumentStatus = ({

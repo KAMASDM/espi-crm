@@ -11,7 +11,6 @@ import {
   Download,
   DollarSign,
   Info,
-  Edit,
   ChevronDown,
   ChevronUp,
   MapPin,
@@ -24,6 +23,12 @@ import {
   Shield,
   Eye,
 } from "lucide-react";
+
+const COUNTRIES = [
+  { code: "US", name: "United States" },
+  { code: "UK", name: "United Kingdom" },
+  { code: "CA", name: "Canada" },
+];
 
 const formatDate = (date) => {
   if (!date) return "";
@@ -39,25 +44,6 @@ const formatCurrency = (amount, code = "INR") => {
     maximumFractionDigits: 0,
   }).format(amount);
 };
-
-const COUNTRIES = [
-  { code: "US", name: "United States" },
-  { code: "UK", name: "United Kingdom" },
-  { code: "CA", name: "Canada" },
-];
-
-const ENQUIRY_STATUS = [
-  "New",
-  "In Progress",
-  "Profile Under Review",
-  "Completed",
-];
-
-const AVAILABLE_SERVICES = [
-  { name: "University Selection", price: 15000 },
-  { name: "Application Support", price: 25000 },
-  { name: "Visa Guidance", price: 20000 },
-];
 
 const ModernSection = ({
   title,
@@ -105,7 +91,6 @@ const ModernSection = ({
             </h3>
           </div>
         </div>
-
         <div className="flex items-center space-x-2">
           {isExpanded ? (
             <ChevronUp className="text-gray-400" size={20} />
@@ -114,7 +99,6 @@ const ModernSection = ({
           )}
         </div>
       </div>
-
       {isExpanded && (
         <div className="px-6 pb-6 pt-0">
           <div className="bg-white rounded-lg p-6 shadow-sm">{children}</div>
@@ -256,7 +240,6 @@ const ModernDocumentCard = ({
             )}
           </div>
         </div>
-
         <div className="flex items-center space-x-2 flex-shrink-0">
           {isUploaded ? (
             <>
@@ -332,11 +315,9 @@ const ExperienceTimeline = ({ experiences }) => {
           {index < experiences.length - 1 && (
             <div className="absolute left-3 top-8 w-0.5 h-full bg-gray-200"></div>
           )}
-
           <div className="absolute left-0 top-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
             <div className="w-2 h-2 bg-white rounded-full"></div>
           </div>
-
           <div className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-2">
               <div>
@@ -438,7 +419,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
     current_education_details = {},
     tenth_education_details = {},
     twelveth_education_details = {},
-    graduation_education_details = {},
     workExperiences = [],
     toefl_exam = {},
     ielts_exam = {},
@@ -485,7 +465,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
             <StatusBadge status={enquiry_status} />
           </div>
         </div>
-
         {updatedAt && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex items-center text-sm text-gray-500">
@@ -499,7 +478,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
           </div>
         )}
       </div>
-
       <div className="space-y-8">
         <ModernSection
           title="Current Education"
@@ -541,7 +519,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
             />
           </div>
         </ModernSection>
-
         <ModernSection
           title="Academic History"
           icon={BookOpen}
@@ -564,7 +541,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
                 <InfoCard label="Board" value={tenth_education_details.board} />
               </div>
             </div>
-
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">12th Grade</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -588,7 +564,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
             </div>
           </div>
         </ModernSection>
-
         <ModernSection
           title="Test Scores"
           icon={Award}
@@ -610,7 +585,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
             <ScoreCard title="GMAT" scores={gmat_exam} colorScheme="green" />
           </div>
         </ModernSection>
-
         <ModernSection
           title="Work Experience"
           icon={Briefcase}
@@ -621,7 +595,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
         >
           <ExperienceTimeline experiences={workExperiences} />
         </ModernSection>
-
         <ModernSection
           title="Family Information"
           icon={Users}
@@ -643,7 +616,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
             />
           </div>
         </ModernSection>
-
         {(refusal_details.country || refusal_details.reason) && (
           <ModernSection
             title="Visa Refusal History"
@@ -681,7 +653,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
             </div>
           </ModernSection>
         )}
-
         <ModernSection
           title="Document Library"
           icon={FileText}
@@ -698,7 +669,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
               </p>
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <ModernDocumentCard
               label="10th Certificate"
@@ -792,7 +762,6 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
             />
           </div>
         </ModernSection>
-
         <ModernSection
           title="Confirmed Services"
           icon={CheckCircle}

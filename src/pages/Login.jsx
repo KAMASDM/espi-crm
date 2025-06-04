@@ -15,8 +15,7 @@ const Login = () => {
       toast.success("Successfully signed in!");
       navigate("/");
     } catch (error) {
-      console.error("Sign in error:", error);
-      toast.error("Failed to sign in. Please try again.");
+      console.log("error", error);
     } finally {
       setLoading(false);
     }
@@ -38,7 +37,6 @@ const Login = () => {
             Your comprehensive education consultancy management system
           </p>
         </div>
-
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="space-y-6">
             <div className="text-center">
@@ -49,7 +47,6 @@ const Login = () => {
                 Manage students, universities, and applications all in one place
               </p>
             </div>
-
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
@@ -79,7 +76,6 @@ const Login = () => {
               )}
               {loading ? "Signing in..." : "Continue with Google"}
             </button>
-
             <div className="mt-8 border-t border-gray-200 pt-6">
               <h4 className="text-sm font-medium text-gray-900 mb-4">
                 What you can do:
@@ -105,7 +101,6 @@ const Login = () => {
             </div>
           </div>
         </div>
-
         <div className="text-center text-sm text-gray-500">
           Secure authentication powered by Google
         </div>

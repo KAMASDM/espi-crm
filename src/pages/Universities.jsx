@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import Papa from "papaparse";
+import toast from "react-hot-toast";
 import {
   Plus,
   Download,
@@ -6,34 +8,13 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
-import Modal from "../components/common/Modal";
+import Modal from "../components/Common/Modal";
+import { useAuth } from "../context/AuthContext";
+import { downloadAsCSV } from "../utils/helpers";
+import { useUniversities } from "../hooks/useFirestore";
+import { COUNTRIES, COURSE_LEVELS } from "../utils/constants";
 import UniversityForm from "../components/University/UniversityForm";
 import UniversitiesTable from "../components/University/UniversitiesTable";
-import { useUniversities } from "../hooks/useFirestore";
-import { useAuth } from "../context/AuthContext";
-import { COUNTRIES, COURSE_LEVELS } from "../utils/constants";
-import toast from "react-hot-toast";
-import { downloadAsCSV } from "../utils/helpers";
-import Papa from "papaparse";
-
-const UNIVERSITY_CSV_EXPECTED_HEADERS = [
-  "UniversityName",
-  "CountryCode",
-  "Email",
-  "Phone",
-  "Website",
-  "ApplicationFee",
-  "IsActive",
-  "ApplicationDeadline",
-  "CourseLevels",
-  "BacklogsAllowed",
-  "MOIAccepted",
-  "Description",
-  "Notes",
-  "AdmissionRequirements",
-  "ApplicationFormLink",
-];
-const UNIVERSITY_REQUIRED_FIRESTORE_FIELDS = ["univ_name", "country"];
 
 const Universities = () => {
   const {
@@ -41,7 +22,6 @@ const Universities = () => {
     loading,
     error,
     remove,
-    update,
     create,
   } = useUniversities();
   const { user } = useAuth();
@@ -50,14 +30,13 @@ const Universities = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedUniversity, setSelectedUniversity] = useState(null);
 
+  const fileInputRef = useRef(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (error) {
-      console.error("Error fetching universities:", error);
-      toast.error("Failed to load university data. Check console for details.");
+      console.log("error", error);
     }
   }, [error]);
 
@@ -80,14 +59,16 @@ const Universities = () => {
       try {
         await remove(universityId);
         toast.success("University deleted successfully!");
-      } catch (err) {
-        console.error("Error deleting university:", err);
-        toast.error("Failed to delete university. Please try again.");
+      } catch (error) {
+        console.error("Error deleting university:", error);
+        console.log("Failed to delete university. Please try again.");
       }
     }
   };
 
-  const handleFormSuccess = () => {};
+  const handleFormSuccess = () => {
+    toast.success("University added successfully!");
+  };
 
   const handleExport = () => {
     if (universities && universities.length > 0) {
@@ -121,7 +102,7 @@ const Universities = () => {
       downloadAsCSV(dataToExport, "universities_export.csv");
       toast.success("Universities data exported successfully!");
     } else {
-      toast.error("No data available to export.");
+      console.log("No data available to export.");
     }
   };
 
@@ -141,7 +122,7 @@ const Universities = () => {
           );
 
           if (missingEssentialHeaders.length > 0) {
-            toast.error(
+            console.log(
               `CSV is missing essential headers: ${missingEssentialHeaders.join(
                 ", "
               )}.`
@@ -153,8 +134,8 @@ const Universities = () => {
           await processUniversityImportData(results.data);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
-        error: (err) => {
-          toast.error(`Error parsing CSV: ${err.message}`);
+        error: (error) => {
+          console.log(`Error parsing CSV: ${error.message}`);
           setIsImporting(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
@@ -168,7 +149,7 @@ const Universities = () => {
     const errors = [];
 
     if (!user || !user.uid) {
-      toast.error("User not authenticated. Cannot import data.");
+      console.log("User not authenticated. Cannot import data.");
       setIsImporting(false);
       return;
     }
@@ -272,11 +253,11 @@ const Universities = () => {
 
         await create(universityData);
         successCount++;
-      } catch (err) {
-        console.error(`Error importing university row ${i + 2}:`, err, row);
+      } catch (error) {
+        console.error(`Error importing university row ${i + 2}:`, error, row);
         errors.push(
           `Row ${i + 2} (${row.UniversityName || "N/A"}): ${
-            err.message || "Failed to import."
+            error.message || "Failed to import."
           }`
         );
         errorCount++;
@@ -285,7 +266,7 @@ const Universities = () => {
 
     setImportResults({ successCount, errorCount, errors });
     if (errorCount > 0) {
-      toast.error(
+      console.log(
         `${errorCount} universit(y/ies) failed to import. ${successCount} imported.`,
         { duration: 5000 }
       );
@@ -341,7 +322,6 @@ const Universities = () => {
           </button>
         </div>
       </div>
-
       {importResults && (
         <div
           className={`p-4 rounded-md ${
@@ -391,8 +371,8 @@ const Universities = () => {
                   <div className="mt-2 text-xs text-red-700 max-h-20 overflow-y-auto">
                     <strong>Errors:</strong>
                     <ul className="list-disc pl-5">
-                      {importResults.errors.slice(0, 5).map((err, idx) => (
-                        <li key={idx}>{err}</li>
+                      {importResults.errors.slice(0, 5).map((error, idx) => (
+                        <li key={idx}>{error}</li>
                       ))}
                       {importResults.errors.length > 5 && (
                         <li>And {importResults.errors.length - 5} more...</li>
@@ -404,13 +384,12 @@ const Universities = () => {
           </div>
         </div>
       )}
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
               <div className="text-blue-600 text-2xl font-bold">
-                {universities?.length || 0}
+                {universities?.length}
               </div>
             </div>
             <div className="ml-3">
@@ -425,7 +404,7 @@ const Universities = () => {
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
               <div className="text-green-600 text-2xl font-bold">
-                {universities?.filter((uni) => uni.Active).length || 0}
+                {universities?.filter((uni) => uni.Active).length}
               </div>
             </div>
             <div className="ml-3">
@@ -472,7 +451,6 @@ const Universities = () => {
           </div>
         </div>
       </div>
-
       <div className="card">
         <UniversitiesTable
           universities={universities || []}
@@ -482,7 +460,6 @@ const Universities = () => {
           onView={handleView}
         />
       </div>
-
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -528,7 +505,8 @@ const Universities = () => {
 
 const UniversityDetails = ({ university }) => {
   const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode; //
+    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
+
   return (
     <div className="space-y-6">
       <div>
@@ -554,24 +532,20 @@ const UniversityDetails = ({ university }) => {
             <label className="block text-sm font-medium text-gray-700">
               Phone
             </label>
-            <p className="text-sm text-gray-900">
-              {university.univ_phone || "Not provided"}
-            </p>
+            <p className="text-sm text-gray-900">{university.univ_phone}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Email
             </label>
-            <p className="text-sm text-gray-900">
-              {university.univ_email || "Not provided"}
-            </p>
+            <p className="text-sm text-gray-900">{university.univ_email}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Website
             </label>
             <p className="text-sm text-gray-900">
-              {university.univ_website ? (
+              {university.univ_website && (
                 <a
                   href={university.univ_website}
                   target="_blank"
@@ -580,8 +554,6 @@ const UniversityDetails = ({ university }) => {
                 >
                   {university.univ_website}
                 </a>
-              ) : (
-                "Not provided"
               )}
             </p>
           </div>
@@ -590,9 +562,7 @@ const UniversityDetails = ({ university }) => {
               Application Fee
             </label>
             <p className="text-sm text-gray-900">
-              {university.Application_fee
-                ? `$${university.Application_fee}`
-                : "Not specified"}
+              {university.Application_fee && `$${university.Application_fee}`}
             </p>
           </div>
           <div className="md:col-span-2">
@@ -600,7 +570,7 @@ const UniversityDetails = ({ university }) => {
               Description
             </label>
             <p className="text-sm text-gray-900 whitespace-pre-wrap">
-              {university.univ_desc || "No description"}
+              {university.univ_desc}
             </p>
           </div>
         </div>
@@ -617,7 +587,7 @@ const UniversityDetails = ({ university }) => {
             <p className="text-sm text-gray-900">
               {Array.isArray(university.levels)
                 ? university.levels.join(", ")
-                : university.levels || "Not specified"}
+                : university.levels}
             </p>
           </div>
           <div>
@@ -625,7 +595,7 @@ const UniversityDetails = ({ university }) => {
               Backlogs Allowed
             </label>
             <p className="text-sm text-gray-900">
-              {university.Backlogs_allowed ?? "Not specified"}
+              {university?.Backlogs_allowed}
             </p>
           </div>
           <div className="md:col-span-2">
@@ -633,7 +603,7 @@ const UniversityDetails = ({ university }) => {
               Admission Requirements
             </label>
             <p className="text-sm text-gray-900 whitespace-pre-wrap">
-              {university.Admission_Requirements || "No requirements"}
+              {university?.Admission_Requirements}
             </p>
           </div>
         </div>

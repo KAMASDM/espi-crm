@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Plus,
-  Download,
-  Upload,
-  BookOpen,
-  AlertTriangle,
-  CheckCircle,
-} from "lucide-react";
-import Modal from "../components/common/Modal";
+import Papa from "papaparse";
+import toast from "react-hot-toast";
+import Modal from "../components/Common/Modal";
+import { useAuth } from "../context/AuthContext";
+import { downloadAsCSV } from "../utils/helpers";
+import { firestoreService } from "../services/firestore";
 import CourseForm from "../components/Courses/CourseForm";
 import CoursesTable from "../components/Courses/CoursesTable";
 import { useCourses, useUniversities } from "../hooks/useFirestore";
-import { useAuth } from "../context/AuthContext";
-import { firestoreService } from "../services/firestore";
 import {
   COUNTRIES,
   COURSE_LEVELS,
@@ -20,42 +15,13 @@ import {
   INTAKES,
   DOCUMENTS_REQUIRED,
 } from "../utils/constants";
-import toast from "react-hot-toast";
-import { downloadAsCSV } from "../utils/helpers";
-import Papa from "papaparse";
-
-const COURSE_CSV_EXPECTED_HEADERS = [
-  "CourseName",
-  "UniversityID",
-  "CourseLevel",
-  "WebsiteURL",
-  "SpecializationTag",
-  "Intakes",
-  "DocumentsRequired",
-  "ApplicationDeadline",
-  "BacklogsAllowed",
-  "ApplicationFee",
-  "ApplicationFeeCurrency",
-  "YearlyTuitionFee",
-  "IsActive",
-  "TenthStdRequirement",
-  "TwelfthStdRequirement",
-  "BachelorRequirement",
-  "MasterRequirement",
-  "IELTSExam",
-  "TOEFLExam",
-  "PTEExam",
-  "DuolingoExam",
-  "GREExam",
-  "GMATExam",
-  "OtherExam",
-  "Notes",
-];
-const COURSE_REQUIRED_FIRESTORE_FIELDS = [
-  "course_name",
-  "university",
-  "course_levels",
-];
+import {
+  Plus,
+  Download,
+  Upload,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 
 const Courses = () => {
   const {
@@ -63,7 +29,6 @@ const Courses = () => {
     loading: coursesLoading,
     error: coursesError,
     remove,
-    update,
     create,
   } = useCourses();
   const { data: universities, loading: universitiesLoading } =
@@ -75,16 +40,15 @@ const Courses = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
+  const fileInputRef = useRef(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
-  const fileInputRef = useRef(null);
 
   const isLoading = coursesLoading || universitiesLoading;
 
   useEffect(() => {
     if (coursesError) {
-      console.error("Error fetching courses:", coursesError);
-      toast.error("Failed to load course data. Check console.");
+      console.log("error", coursesError);
     }
   }, [coursesError]);
 
@@ -107,9 +71,8 @@ const Courses = () => {
       try {
         await remove(courseId);
         toast.success("Course deleted successfully!");
-      } catch (err) {
-        console.error("Error deleting course:", err);
-        toast.error("Failed to delete course.");
+      } catch (error) {
+        console.error("error", error);
       }
     }
   };
@@ -118,11 +81,11 @@ const Courses = () => {
 
   const getUniversityName = (universityId) => {
     const university = universities.find((uni) => uni.id === universityId);
-    return university ? university.univ_name : "Unknown University";
+    return university && university.univ_name;
   };
   const getCountryCodeForUniversity = (universityId) => {
     const university = universities.find((uni) => uni.id === universityId);
-    return university ? university.country : null;
+    return university && university.country;
   };
 
   const handleExport = () => {
@@ -169,7 +132,7 @@ const Courses = () => {
       downloadAsCSV(dataToExport, "courses_export.csv");
       toast.success("Courses data exported successfully!");
     } else {
-      toast.error("No data available to export or universities not loaded.");
+      console.log("No data available to export or universities not loaded.");
     }
   };
 
@@ -205,8 +168,8 @@ const Courses = () => {
           await processCourseImportData(results.data);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
-        error: (err) => {
-          toast.error(`Error parsing CSV: ${err.message}`);
+        error: (error) => {
+          console.log("error", error.message);
           setIsImporting(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
@@ -221,12 +184,12 @@ const Courses = () => {
     const importErrors = [];
 
     if (!user || !user.uid) {
-      toast.error("User not authenticated. Cannot import data.");
+      console.log("User not authenticated. Cannot import data.");
       setIsImporting(false);
       return;
     }
     if (universitiesLoading || !universities || universities.length === 0) {
-      toast.error(
+      console.log(
         "University data is not loaded yet. Please wait and try again."
       );
       setIsImporting(false);
@@ -250,7 +213,7 @@ const Courses = () => {
           );
           if (!universityId) {
             importErrors.push(
-              `Row ${i + 2} (${row.CourseName || "N/A"}): UniversityName "${
+              `Row ${i + 2} (${row.CourseName}): UniversityName "${
                 row.UniversityName
               }" not found.`
             );
@@ -262,7 +225,7 @@ const Courses = () => {
           !universityIdMap.has(universityId.toLowerCase())
         ) {
           importErrors.push(
-            `Row ${i + 2} (${row.CourseName || "N/A"}): UniversityID "${
+            `Row ${i + 2} (${row.CourseName}): UniversityID "${
               row.UniversityID
             }" not found.`
           );
@@ -272,7 +235,7 @@ const Courses = () => {
         if (!universityId) {
           importErrors.push(
             `Row ${i + 2} (${
-              row.CourseName || "N/A"
+              row.CourseName
             }): Missing UniversityID or valid UniversityName.`
           );
           errorCount++;
@@ -392,11 +355,7 @@ const Courses = () => {
         successCount++;
       } catch (err) {
         console.error(`Error importing course row ${i + 2}:`, err, row);
-        importErrors.push(
-          `Row ${i + 2} (${row.CourseName || "N/A"}): ${
-            err.message || "Failed to import."
-          }`
-        );
+        importErrors.push(`Row ${i + 2} (${row.CourseName}): ${err.message}`);
         errorCount++;
       }
     }
@@ -526,13 +485,12 @@ const Courses = () => {
           </div>
         </div>
       )}
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
               <div className="text-purple-600 text-2xl font-bold">
-                {courses?.length || 0}
+                {courses?.length}
               </div>
             </div>
             <div className="ml-3">
@@ -593,7 +551,6 @@ const Courses = () => {
           </div>
         </div>
       </div>
-
       <div className="card">
         <CoursesTable
           courses={courses || []}
@@ -604,7 +561,6 @@ const Courses = () => {
           onView={handleView}
         />
       </div>
-
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -701,9 +657,7 @@ const CourseDetails = ({ course, universities }) => {
             <label className="block text-sm font-medium text-gray-700">
               Specialization
             </label>
-            <p className="text-sm text-gray-900">
-              {course.specialisation_tag || "N/A"}
-            </p>
+            <p className="text-sm text-gray-900">{course.specialisation_tag}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -738,7 +692,7 @@ const CourseDetails = ({ course, universities }) => {
             <p className="text-sm text-gray-900">
               {Array.isArray(course.intake)
                 ? course.intake.join(", ")
-                : course.intake || "N/A"}
+                : course.intake}
             </p>
           </div>
           <div>
@@ -746,9 +700,8 @@ const CourseDetails = ({ course, universities }) => {
               Application Deadline
             </label>
             <p className="text-sm text-gray-900">
-              {course.Application_deadline
-                ? new Date(course.Application_deadline).toLocaleDateString()
-                : "N/A"}
+              {course.Application_deadline &&
+                new Date(course.Application_deadline).toLocaleDateString()}
             </p>
           </div>
           <div>
@@ -766,7 +719,7 @@ const CourseDetails = ({ course, universities }) => {
             <p className="text-sm text-gray-900">
               {Array.isArray(course.documents_required)
                 ? course.documents_required.join(", ")
-                : course.documents_required || "N/A"}
+                : course.documents_required}
             </p>
           </div>
         </div>
@@ -781,11 +734,10 @@ const CourseDetails = ({ course, universities }) => {
               Application Fee
             </label>
             <p className="text-sm text-gray-900">
-              {course.Application_fee
-                ? `${course.Application_fee_currency || "$"}${
-                    course.Application_fee
-                  }`
-                : "N/A"}
+              {course.Application_fee &&
+                `${course.Application_fee_currency || "$"}${
+                  course.Application_fee
+                }`}
             </p>
           </div>
           <div>
@@ -793,11 +745,10 @@ const CourseDetails = ({ course, universities }) => {
               Yearly Tuition Fee
             </label>
             <p className="text-sm text-gray-900">
-              {course.Yearly_Tuition_fee
-                ? `${course.Application_fee_currency || "$"}${
-                    course.Yearly_Tuition_fee
-                  }`
-                : "N/A"}
+              {course.Yearly_Tuition_fee &&
+                `${course.Application_fee_currency || "$"}${
+                  course.Yearly_Tuition_fee
+                }`}
             </p>
           </div>
         </div>

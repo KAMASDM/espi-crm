@@ -1,26 +1,18 @@
-import { useState } from "react";
-import ChatWindow from "../components/chat/ChatWindow";
-import NewChatModal from "../components/chat/NewChatModal";
+import React, { useState } from "react";
 import { useChats } from "../hooks/useChat";
 import { useAuth } from "../context/AuthContext";
+import Loading from "../components/Common/Loading";
 import { formatDistanceToNowStrict } from "date-fns";
-import {
-  Search,
-  Plus,
-  Users,
-  MessageSquare,
-  Hash,
-  MoreVertical,
-  Bell,
-} from "lucide-react";
-import LoadingSpinner from "../components/common/LoadingSpinner";
+import ChatWindow from "../components/Chat/ChatWindow";
+import NewChatModal from "../components/Chat/NewChatModal";
+import { Search, Plus, Users, MessageSquare, Hash } from "lucide-react";
 
 const Chat = () => {
   const { user: currentUser } = useAuth();
-  const { chats, loading: chatsLoading, error: chatsError } = useChats();
-  const [selectedChat, setSelectedChat] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedChat, setSelectedChat] = useState(null);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const { chats, loading: chatsLoading, error: chatsError } = useChats();
 
   const filteredChats = chats.filter((chat) => {
     if (chat.type === "direct") {
@@ -50,16 +42,13 @@ const Chat = () => {
   if (chatsLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-120px)]">
-        <LoadingSpinner />
+        <Loading />
       </div>
     );
   }
+
   if (chatsError) {
-    return (
-      <div className="p-4 text-red-600">
-        Error loading chats: {chatsError.message}
-      </div>
-    );
+    return <div className="p-4 text-red-600">{chatsError.message}</div>;
   }
 
   return (
@@ -96,7 +85,6 @@ const Chat = () => {
             />
           </div>
         </div>
-
         <div className="flex-1 overflow-y-auto">
           {filteredChats.length === 0 ? (
             <div className="p-4 text-center text-gray-500 mt-10">
@@ -131,7 +119,6 @@ const Chat = () => {
                   avatarBg = "bg-blue-100";
                   avatarText = "text-blue-600";
                 }
-
                 return (
                   <button
                     key={chat.id}
@@ -192,7 +179,7 @@ const Chat = () => {
                                 : "text-gray-500"
                             }`}
                           >
-                            {chat.lastMessageText || "No messages yet"}
+                            {chat.lastMessageText}
                           </p>
                           {unreadCount > 0 && (
                             <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
@@ -209,14 +196,12 @@ const Chat = () => {
           )}
         </div>
       </div>
-
       <div className={`flex-1 ${selectedChat ? "flex" : "hidden md:flex"}`}>
         <ChatWindow
           selectedChat={selectedChat}
           onClose={() => setSelectedChat(null)}
         />
       </div>
-
       {showNewChatModal && (
         <NewChatModal
           onClose={() => setShowNewChatModal(false)}

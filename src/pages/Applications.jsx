@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Plus, Download, Upload } from "lucide-react";
-import Modal from "../components/common/Modal";
-import ApplicationForm from "../components/Application/ApplicationForm";
-import ApplicationsTable from "../components/Application/ApplicationsTable";
-import { useApplications, useAssessments } from "../hooks/useFirestore";
 import toast from "react-hot-toast";
+import { Plus, Download, Upload } from "lucide-react";
+import Modal from "../components/Common/Modal";
+import ApplicationForm from "../components/Application/ApplicationForm";
+import { useApplications, useAssessments } from "../hooks/useFirestore";
+import ApplicationsTable from "../components/Application/ApplicationsTable";
 
 const documents = [
   { key: "sop", label: "Statement of Purpose" },
@@ -21,9 +21,10 @@ const documents = [
   { key: "master_marksheet", label: "Master's Marksheet" },
   { key: "other_documents", label: "Other Documents" },
 ];
+
 const Applications = () => {
-  const { data: applications, loading, remove } = useApplications();
   const { data: assessments } = useAssessments();
+  const { data: applications, loading, remove } = useApplications();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -49,8 +50,7 @@ const Applications = () => {
         await remove(applicationId);
         toast.success("Application deleted successfully!");
       } catch (error) {
-        console.error("Error deleting application:", error);
-        toast.error("Failed to delete application. Please try again.");
+        console.log("error", error);
       }
     }
   };
@@ -60,7 +60,7 @@ const Applications = () => {
   };
 
   const handleFormSuccess = () => {
-    // The useApplications hook will automatically update the data
+    toast.success("Application submitted successfully!");
   };
 
   const handleExport = () => {
@@ -93,7 +93,6 @@ const Applications = () => {
             Manage university applications and track submission status
           </p>
         </div>
-
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleImport}
@@ -118,7 +117,6 @@ const Applications = () => {
           </button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <div className="flex items-center">
@@ -135,7 +133,6 @@ const Applications = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-gray-100 rounded-lg">
@@ -149,7 +146,6 @@ const Applications = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
@@ -163,7 +159,6 @@ const Applications = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -178,7 +173,6 @@ const Applications = () => {
           </div>
         </div>
       </div>
-
       <div className="card">
         <ApplicationsTable
           applications={applications}
@@ -190,7 +184,6 @@ const Applications = () => {
           onDownload={handleDownload}
         />
       </div>
-
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -202,7 +195,6 @@ const Applications = () => {
           onSuccess={handleFormSuccess}
         />
       </Modal>
-
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -215,7 +207,6 @@ const Applications = () => {
           onSuccess={handleFormSuccess}
         />
       </Modal>
-
       <Modal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
@@ -299,7 +290,6 @@ const ApplicationDetails = ({ application, assessments }) => {
           </div>
         </div>
       </div>
-
       {assessment && (
         <div>
           <h4 className="text-lg font-semibold text-gray-900 mb-3">
@@ -311,37 +301,32 @@ const ApplicationDetails = ({ application, assessments }) => {
                 Specialization
               </label>
               <p className="text-sm text-gray-900">
-                {assessment.specialisation || "Not specified"}
+                {assessment.specialisation}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Duration
               </label>
-              <p className="text-sm text-gray-900">
-                {assessment.duration || "Not specified"}
-              </p>
+              <p className="text-sm text-gray-900">{assessment.duration}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Application Fee
               </label>
               <p className="text-sm text-gray-900">
-                {assessment.application_fee || "Not specified"}
+                {assessment.application_fee}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Tuition Fee
               </label>
-              <p className="text-sm text-gray-900">
-                {assessment.tution_fee || "Not specified"}
-              </p>
+              <p className="text-sm text-gray-900">{assessment.tution_fee}</p>
             </div>
           </div>
         </div>
       )}
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-3">
           Documents Status
@@ -366,7 +351,6 @@ const ApplicationDetails = ({ application, assessments }) => {
           ))}
         </div>
       </div>
-
       {application.notes && (
         <div>
           <h4 className="text-lg font-semibold text-gray-900 mb-3">Notes</h4>

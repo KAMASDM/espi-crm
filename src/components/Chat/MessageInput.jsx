@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Send } from "lucide-react";
 
 const MessageInput = ({ onSendMessage }) => {
@@ -14,7 +14,7 @@ const MessageInput = ({ onSendMessage }) => {
       await onSendMessage(message);
       setMessage("");
     } catch (error) {
-      console.error("MessageInput: Error sending message", error);
+      console.log("error", error);
     } finally {
       setIsSending(false);
     }
@@ -42,10 +42,9 @@ const MessageInput = ({ onSendMessage }) => {
             disabled={isSending}
           />
         </div>
-
         <button
           type="submit"
-          disabled={!message.trim() || isSending}
+          disabled={!message.trim()}
           className="p-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           title="Send message"
         >

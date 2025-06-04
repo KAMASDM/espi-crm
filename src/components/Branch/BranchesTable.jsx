@@ -1,14 +1,6 @@
-import { useState } from "react";
-import {
-  Edit,
-  Trash2,
-  Search,
-  Home,
-  Users,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import React, { useState } from "react";
 import { format } from "date-fns";
+import { Edit, Home, Trash2, Search, XCircle, CheckCircle } from "lucide-react";
 
 const BranchesTable = ({ branches, onEdit, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,19 +80,14 @@ const BranchesTable = ({ branches, onEdit, onDelete }) => {
                     </div>
                   </td>
                   <td className="table-cell text-xs">{branch.address}</td>
-                  <td className="table-cell">
-                    {branch.contactPerson || "N/A"}
-                  </td>
-                  <td className="table-cell text-xs">
-                    {branch.contactEmail || "N/A"}
-                  </td>
+                  <td className="table-cell">{branch.contactPerson}</td>
+                  <td className="table-cell text-xs">{branch.contactEmail}</td>
                   <td className="table-cell">
                     {getStatusBadge(branch.isActive)}
                   </td>
                   <td className="table-cell text-xs">
-                    {branch.createdAt?.toDate
-                      ? format(branch.createdAt.toDate(), "PP")
-                      : "N/A"}
+                    {branch.createdAt?.toDate &&
+                      format(branch.createdAt.toDate(), "PP")}
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center space-x-2">

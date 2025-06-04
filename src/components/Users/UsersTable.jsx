@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Edit,
   Trash2,
@@ -7,14 +7,14 @@ import {
   XCircle,
   Shield,
 } from "lucide-react";
-import { USER_ROLE_LIST, USER_ROLES } from "../../utils/constants";
 import { branchService } from "../../services/firestore";
+import { USER_ROLE_LIST, USER_ROLES } from "../../utils/constants";
 
 const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [branches, setBranches] = useState([]);
+  const [roleFilter, setRoleFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [branchesLoading, setBranchesLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
         const fetchedBranches = await branchService.getAll();
         setBranches(fetchedBranches || []);
       } catch (error) {
-        console.error("Error fetching branches:", error);
+        console.log("error", error);
         setBranches([]);
       } finally {
         setBranchesLoading(false);
@@ -35,15 +35,14 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
   }, []);
 
   const branchMap = branches.reduce((acc, branch) => {
-    acc[branch.id] =
-      branch.branchName || branch.name || `Branch ${branch.id.slice(0, 8)}`;
+    acc[branch.id] = branch.branchName || branch.name;
     return acc;
   }, {});
 
   const getBranchName = (branchId) => {
     if (!branchId) return "No Branch";
     if (branchesLoading) return "Loading...";
-    return branchMap[branchId] || `Unknown Branch (${branchId.slice(0, 8)}...)`;
+    return branchMap[branchId];
   };
 
   const safeUsers = Array.isArray(users) ? users : [];
@@ -135,11 +134,9 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
   };
 
   const generateAvatarUrl = (displayName) => {
-    const name = displayName?.replace(/\s/g, '+') || 'User';
+    const name = displayName?.replace(/\s/g, "+");
     return `https://ui-avatars.com/api/?name=${name}&background=random&color=fff`;
   };
-
-  console.log("Filtered users:", filteredUsers);
 
   return (
     <div className="space-y-4">
@@ -233,10 +230,7 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
               </tr>
             ) : (
               filteredUsers.map((user, index) => (
-                <tr
-                  key={user.id || user.uid || index}
-                  className="hover:bg-gray-50"
-                >
+                <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
@@ -244,23 +238,23 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                         src={
                           user.photoURL || generateAvatarUrl(user.displayName)
                         }
-                        alt={user.displayName || "User"}
+                        alt={user.displayName}
                         onError={(e) => {
                           e.target.src = generateAvatarUrl(user.displayName);
                         }}
                       />
                       <div>
                         <div className="font-medium text-gray-900">
-                          {user.displayName || "N/A"}
+                          {user.displayName}
                         </div>
                         <div className="text-xs text-gray-500">
-                          ID: {(user.id || user.uid || "").slice(0, 8)}...
+                          ID: {(user.id || user.uid).slice(0, 8)}...
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.email || "N/A"}
+                    {user.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getRoleBadge(user.role)}

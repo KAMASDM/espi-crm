@@ -4,10 +4,6 @@ import toast from "react-hot-toast";
 export const invitationService = {
   async sendInvitation(userEmail, userData, invitedBy) {
     try {
-      console.log("Sending invitation to:", userEmail);
-      console.log("User data:", userData);
-      console.log("Invited by:", invitedBy);
-
       const invitationToken = generateInvitationToken();
       const invitationLink = `${window.location.origin}/accept-invitation?token=${invitationToken}`;
 
@@ -16,10 +12,6 @@ export const invitationService = {
         invitationLink,
         invitedBy
       );
-
-      console.log("Email content to be sent:");
-      console.log("Subject:", emailContent.subject);
-      console.log("Body:", emailContent.body);
 
       toast.success(`Invitation email would be sent to ${userEmail}`);
       toast.info("Check console for email content (development mode)");
@@ -30,8 +22,7 @@ export const invitationService = {
         invitationLink,
       };
     } catch (error) {
-      console.error("Error sending invitation:", error);
-      toast.error("Failed to send invitation email");
+      console.log("error", error);
       throw error;
     }
   },
@@ -82,11 +73,9 @@ export const invitationService = {
 
       const invitedByUser = await userService.getById(user.invitedBy);
       await this.sendInvitation(user.email, user, invitedByUser);
-
       toast.success("Invitation resent successfully");
     } catch (error) {
-      console.error("Error resending invitation:", error);
-      toast.error(`Failed to resend invitation: ${error.message}`);
+      console.log("error", error);
       throw error;
     }
   },
@@ -100,8 +89,7 @@ export const invitationService = {
 
       toast.success("Invitation cancelled successfully");
     } catch (error) {
-      console.error("Error cancelling invitation:", error);
-      toast.error("Failed to cancel invitation");
+      console.log("error", error);
       throw error;
     }
   },

@@ -3,14 +3,14 @@ import {
   Eye,
   Edit,
   Trash2,
-  ExternalLink,
-  Calendar,
   Search,
   Filter,
-  CheckCircle,
   XCircle,
+  Calendar,
   BookOpen,
   DollarSign,
+  CheckCircle,
+  ExternalLink,
   GraduationCap,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -25,9 +25,9 @@ const CoursesTable = ({
   onView,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [countryFilter, setCountryFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [countryFilter, setCountryFilter] = useState("");
   const [sortField, setSortField] = useState("course_name");
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -75,7 +75,7 @@ const CoursesTable = ({
 
   const getUniversityName = (universityId) => {
     const university = universities.find((uni) => uni.id === universityId);
-    return university ? university.univ_name : "Unknown University";
+    return university && university.univ_name;
   };
 
   const getStatusBadge = (isActive) => {

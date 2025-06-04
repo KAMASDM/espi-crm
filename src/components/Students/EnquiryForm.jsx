@@ -1,22 +1,22 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import {
-  COUNTRIES,
-  EDUCATION_LEVELS,
-  ENQUIRY_SOURCES,
-  ENQUIRY_STATUS,
-  INDIAN_STATES,
-  AVAILABLE_SERVICES,
   INTAKES,
+  COUNTRIES,
+  INDIAN_STATES,
+  ENQUIRY_STATUS,
+  ENQUIRY_SOURCES,
+  EDUCATION_LEVELS,
+  AVAILABLE_SERVICES,
 } from "../../utils/constants";
-import { useUniversities } from "../../hooks/useFirestore";
 import {
-  enquiryService,
-  branchService,
   userService,
+  branchService,
+  enquiryService,
 } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
+import { useUniversities } from "../../hooks/useFirestore";
 
 const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -30,16 +30,15 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
   });
   const { user, userProfile } = useAuth();
   const { data: universities } = useUniversities();
-  const [loading, setLoading] = useState(false);
-  const [filteredUniversities, setFilteredUniversities] = useState([]);
-  const [branches, setBranches] = useState([]);
-  console.log("Branches:", branches);
   const [users, setUsers] = useState([]);
-  const [branchesLoading, setBranchesLoading] = useState(true);
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [branchesLoading, setBranchesLoading] = useState(true);
+  const [filteredUniversities, setFilteredUniversities] = useState([]);
 
-  const selectedCountries = watch("country_interested");
   const selectedBranchId = watch("branchId");
+  const selectedCountries = watch("country_interested");
 
   useEffect(() => {
     const fetchReferenceData = async () => {
@@ -52,8 +51,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         const fetchedUsers = await userService.getAll();
         setUsers(fetchedUsers || []);
       } catch (error) {
-        console.error("Error fetching reference data:", error);
-        toast.error("Failed to load branches and users");
+        console.log("error", error);
       } finally {
         setBranchesLoading(false);
         setUsersLoading(false);
@@ -128,7 +126,6 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
       };
 
       if (!enquiryData.branchId && userProfile?.role !== "Superadmin") {
-        toast.error("Branch is required for this enquiry");
         setLoading(false);
         return;
       }
@@ -144,8 +141,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error("Error saving enquiry:", error);
-      toast.error("Failed to save enquiry. Please try again.");
+      console.log("error", error);
     } finally {
       setLoading(false);
     }
@@ -211,7 +207,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               <option value="">Select User</option>
               {getAvailableUsers().map((user) => (
                 <option key={user.id || user.uid} value={user.id || user.uid}>
-                  {user.displayName || user.email || "Unknown User"}
+                  {user.displayName || user.email}
                   {user.role && ` (${user.role})`}
                 </option>
               ))}

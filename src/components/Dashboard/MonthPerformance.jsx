@@ -1,12 +1,14 @@
+import React from "react";
+
 const MonthPerformance = ({
-  newEnquiriesLast7Days,
+  payments,
+  courses,
+  enquiries,
+  assessments,
   applications,
   totalRevenue,
-  enquiries,
   universities,
-  courses,
-  assessments,
-  payments,
+  newEnquiriesLast7Days,
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

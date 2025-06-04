@@ -1,7 +1,9 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const PendingTasks = ({ pendingTasks }) => {
   const navigate = useNavigate();
+
   return (
     <div className="card">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">

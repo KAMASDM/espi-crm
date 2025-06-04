@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import {
-  COUNTRIES,
-  COURSE_LEVELS,
-  CURRENCIES,
   INTAKES,
+  COUNTRIES,
+  CURRENCIES,
+  COURSE_LEVELS,
   DOCUMENTS_REQUIRED,
 } from "../../utils/constants";
-import { useUniversities } from "../../hooks/useFirestore";
-import { courseService } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
+import { courseService } from "../../services/firestore";
+import { useUniversities } from "../../hooks/useFirestore";
 
 const CourseForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -24,11 +24,10 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
     },
   });
   const { user } = useAuth();
+  const selectedCountry = watch("country");
   const { data: universities } = useUniversities();
   const [loading, setLoading] = useState(false);
   const [filteredUniversities, setFilteredUniversities] = useState([]);
-
-  const selectedCountry = watch("country");
 
   useEffect(() => {
     if (selectedCountry) {
@@ -61,8 +60,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error("Error saving course:", error);
-      toast.error("Failed to save course. Please try again.");
+      console.log("error", error);
     } finally {
       setLoading(false);
     }

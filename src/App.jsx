@@ -6,8 +6,8 @@ import {
 } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import Layout from "./components/common/Layout";
-import LoadingSpinner from "./components/common/LoadingSpinner";
+import Layout from "./components/Common/Layout";
+import Loading from "./components/Common/Loading";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, userProfile, loading } = useAuth();
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <Loading />;
   }
 
   if (!user) {
@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (allowedRoles && userProfile && !allowedRoles.includes(userProfile.role)) {
     toast.error("You are not authorized to view this page.");
-    return <Navigate to="/" />; 
+    return <Navigate to="/" />;
   }
 
   return children;
@@ -48,7 +48,7 @@ const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
 
   if (loading && !user) {
-    return <LoadingSpinner />;
+    return <Loading />;
   }
 
   if (!user) {
@@ -61,7 +61,7 @@ const AppRoutes = () => {
   }
 
   if (loading || (user && !userProfile)) {
-    return <LoadingSpinner />;
+    return <Loading />;
   }
 
   return (

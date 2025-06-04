@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { COUNTRIES, COURSE_LEVELS, CURRENCIES } from "../../utils/constants";
-import { universityService } from "../../services/firestore";
-import { useAuth } from "../../context/AuthContext";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { useAuth } from "../../context/AuthContext";
+import { universityService } from "../../services/firestore";
+import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
 
 const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -40,8 +40,7 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error("Error saving university:", error);
-      toast.error("Failed to save university. Please try again.");
+      console.log("error", error);
     } finally {
       setLoading(false);
     }

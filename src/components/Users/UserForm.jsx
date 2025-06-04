@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { USER_ROLE_LIST, USER_ROLES } from "../../utils/constants";
 import { userService, branchService } from "../../services/firestore";
-import toast from "react-hot-toast";
-import { Save, X } from "lucide-react";
 
 const UserForm = ({
   onClose,
@@ -28,45 +28,40 @@ const UserForm = ({
     },
   });
 
-  const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(false);
 
+  const watchedRole = watch("role");
   const isSuperAdmin = currentUserProfile?.role === USER_ROLES.SUPERADMIN;
   const isBranchAdmin = currentUserProfile?.role === USER_ROLES.BRANCH_ADMIN;
-  const watchedRole = watch("role");
 
-  // Get available roles based on current user's permissions
   const getAvailableRoles = () => {
     if (isSuperAdmin) {
-      return USER_ROLE_LIST; // Superadmin can assign any role
+      return USER_ROLE_LIST;
     } else if (isBranchAdmin) {
-      // Branch Admin cannot create Superadmin or other Branch Admin users
       return USER_ROLE_LIST.filter(
         (role) =>
           role !== USER_ROLES.SUPERADMIN && role !== USER_ROLES.BRANCH_ADMIN
       );
     }
-    return []; // Other roles shouldn't be creating users
+    return [];
   };
 
   const availableRoles = getAvailableRoles();
 
   useEffect(() => {
-    // Fetch branches if Superadmin
     if (isSuperAdmin) {
       const fetchBranches = async () => {
         try {
           const fetchedBranches = await branchService.getAll();
           setBranches(fetchedBranches);
         } catch (error) {
-          console.error("Error fetching branches:", error);
-          toast.error("Could not load branches for selection.");
+          console.log("error", error);
         }
       };
       fetchBranches();
     }
 
-    // Set form values for editing
     if (editData) {
       setValue("displayName", editData.displayName || "");
       setValue("email", editData.email || "");
@@ -79,13 +74,11 @@ const UserForm = ({
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      // Validate permissions
       if (!isSuperAdmin && !isBranchAdmin) {
-        toast.error("You don't have permission to manage users.");
+        console.log("You don't have permission to manage users.");
         return;
       }
 
-      // Prepare user data
       const userData = {
         displayName: data.displayName.trim(),
         email: data.email.toLowerCase().trim(),
@@ -94,22 +87,17 @@ const UserForm = ({
         branchId: data.branchId || null,
       };
 
-      // Set branch based on user permissions
       if (isBranchAdmin && !isSuperAdmin) {
-        // Branch Admin can only assign users to their own branch
         userData.branchId = currentUserProfile.branchId;
       } else if (isSuperAdmin) {
-        // Superadmin can assign to any branch or leave null
         userData.branchId = data.branchId || null;
       }
 
-      // Special handling for Superadmin role
       if (userData.role === USER_ROLES.SUPERADMIN) {
-        userData.branchId = null; // Superadmin shouldn't be tied to a specific branch
+        userData.branchId = null;
       }
 
       if (editData) {
-        // Update existing user
         const userId = editData.uid || editData.id;
         if (!userId) {
           throw new Error("User ID not found for update operation");
@@ -118,11 +106,6 @@ const UserForm = ({
         await userService.update(userId, userData);
         toast.success("User updated successfully!");
       } else {
-        // Create new user profile
-        // Note: This creates a user profile document in Firestore
-        // The actual Firebase Auth user should be created separately or this could be for invited users
-
-        // Generate a temporary UID for new users (in a real app, this would come from Firebase Auth)
         const tempUid = `user_${Date.now()}_${Math.random()
           .toString(36)
           .substr(2, 9)}`;
@@ -136,22 +119,17 @@ const UserForm = ({
         });
 
         toast.success("User profile created successfully!");
-        toast.info(
-          "Note: User will need to complete authentication setup separately."
-        );
       }
 
       onSuccess();
     } catch (error) {
-      console.error("Error saving user:", error);
-      toast.error(`Failed to save user: ${error.message}`);
+      console.log("error", error);
     } finally {
       setLoading(false);
     }
   };
 
   const shouldShowBranchSelection = () => {
-    // Show branch selection for Superadmin or when role is not Superadmin
     return (
       isSuperAdmin || (watchedRole && watchedRole !== USER_ROLES.SUPERADMIN)
     );
@@ -166,7 +144,6 @@ const UserForm = ({
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Display Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Display Name *
@@ -190,7 +167,6 @@ const UserForm = ({
               )}
             </div>
 
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email *
@@ -206,7 +182,7 @@ const UserForm = ({
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter email address"
-                readOnly={!!editData} // Email usually not editable after creation
+                readOnly={!!editData}
               />
               {errors.email && (
                 <p className="text-red-600 text-sm mt-1">
@@ -220,7 +196,6 @@ const UserForm = ({
               )}
             </div>
 
-            {/* Role */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Role *
@@ -243,7 +218,6 @@ const UserForm = ({
               )}
             </div>
 
-            {/* Branch Selection */}
             {shouldShowBranchSelection() && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -267,8 +241,7 @@ const UserForm = ({
                   {isSuperAdmin
                     ? branches.map((branch) => (
                         <option key={branch.id} value={branch.id}>
-                          {branch.branchName ||
-                            `Branch ${branch.id.slice(0, 8)}`}
+                          {branch.branchName}
                         </option>
                       ))
                     : currentUserProfile?.branchId && (
@@ -291,7 +264,6 @@ const UserForm = ({
               </div>
             )}
 
-            {/* Active Status */}
             <div className="md:col-span-2">
               <label className="flex items-center">
                 <input
@@ -310,7 +282,6 @@ const UserForm = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
           <button
             type="button"
