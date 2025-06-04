@@ -21,8 +21,8 @@ import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Chat from "./pages/Chat";
 
-import UserManagement from "./pages/UserManagement";
-import BranchManagement from "./pages/BranchManagement";
+import Users from "./pages/Users";
+import BranchManagement from "./pages/Branches";
 import { USER_ROLES } from "./utils/constants";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -210,17 +210,17 @@ const AppRoutes = () => {
         />
 
         <Route
-          path="/user-management"
+          path="/users"
           element={
             <ProtectedRoute
               allowedRoles={[USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN]}
             >
-              <UserManagement />
+              <Users />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/branch-management"
+          path="/branches"
           element={
             <ProtectedRoute allowedRoles={[USER_ROLES.SUPERADMIN]}>
               <BranchManagement />

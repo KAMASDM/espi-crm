@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { Upload, FileText, X } from "lucide-react";
-import app from "../../services/firebase";
+import Loading from "../Common/Loading";
+import app, { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { collection, getDocs } from "firebase/firestore";
 import { useAssessments } from "../../hooks/useFirestore";
 import { APPLICATION_STATUS } from "../../utils/constants";
 import { applicationService } from "../../services/firestore";
@@ -41,10 +43,28 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
   const { user } = useAuth();
   const storage = getStorage(app);
   const [loading, setLoading] = useState(false);
+  const [enquiriesData, setEnquiriesData] = useState([]);
   const { data: assessments, isLoading: assessmentsLoading } = useAssessments();
   const [filesToUpload, setFilesToUpload] = useState({});
   const [fileDisplayNames, setFileDisplayNames] = useState({});
   const [originalFileUrls, setOriginalFileUrls] = useState({});
+
+  useEffect(() => {
+    const fetchEnquiries = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "enquiries"));
+        const data = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setEnquiriesData(data);
+      } catch (error) {
+        console.error("Error fetching enquiries:", error);
+        toast.error("Could not load enquiries data.");
+      }
+    };
+    fetchEnquiries();
+  }, []);
 
   useEffect(() => {
     const defaultFormValues = {};
@@ -155,7 +175,29 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
 
       if (dataFromForm.assessmentId) {
         finalApplicationData.application = dataFromForm.assessmentId;
+
+        const selectedAssessment = (assessments || []).find(
+          (ass) => ass.id === dataFromForm.assessmentId
+        );
+
+        if (selectedAssessment && selectedAssessment.enquiry) {
+          const studentEnquiry = (enquiriesData || []).find(
+            (enq) => enq.id === selectedAssessment.enquiry
+          );
+          if (studentEnquiry) {
+            const firstName = studentEnquiry.student_First_Name || "";
+            const lastName = studentEnquiry.student_Last_Name || "";
+            const fullName = `${firstName} ${lastName}`.trim();
+
+            finalApplicationData.studentDisplayName = fullName || "N/A";
+          } else {
+            finalApplicationData.studentDisplayName = "N/A";
+          }
+        } else {
+          finalApplicationData.studentDisplayName = "N/A";
+        }
       } else if (!editData) {
+        toast.error("Please select an assessment.", { id: toastId });
         setLoading(false);
         return;
       }
@@ -190,6 +232,10 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           const storageRef = ref(storage, uploadPath);
           const uploadTask = uploadBytesResumable(storageRef, file);
 
+          toast.loading(`Uploading ${file.name}...`, {
+            id: `upload-toast-${fieldName}`,
+          });
+
           const promise = uploadTask
             .then((snapshot) => getDownloadURL(snapshot.ref))
             .then((downloadURL) => {
@@ -200,13 +246,12 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
             })
             .catch((error) => {
               console.error(`Error uploading ${file.name}:`, error);
-
+              toast.error(`Failed to upload ${file.name}.`, {
+                id: `upload-toast-${fieldName}`,
+              });
               throw error;
             });
           uploadPromises.push(promise);
-          toast.loading(`Uploading ${file.name}...`, {
-            id: `upload-toast-${fieldName}`,
-          });
         } else if (
           typeof fileOrUrl === "string" &&
           fileOrUrl.startsWith("https://firebasestorage.googleapis.com")
@@ -233,19 +278,23 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
 
       await Promise.all(uploadPromises);
 
-      if (
-        finalApplicationData.assessmentId &&
-        finalApplicationData.application &&
-        finalApplicationData.assessmentId === finalApplicationData.application
-      ) {
-      }
-
       if (editData) {
         finalApplicationData.updatedBy = user.uid;
         if (editData.createdBy) {
           finalApplicationData.createdBy = editData.createdBy;
         }
-        await applicationService.update(editData.id, finalApplicationData);
+        if (
+          !finalApplicationData.studentDisplayName &&
+          editData.studentDisplayName
+        ) {
+          finalApplicationData.studentDisplayName = editData.studentDisplayName;
+        } else if (
+          !finalApplicationData.studentDisplayName &&
+          !editData.studentDisplayName &&
+          !dataFromForm.assessmentId &&
+          editData.application
+        )
+          await applicationService.update(editData.id, finalApplicationData);
         toast.success("Application updated successfully!", { id: toastId });
       } else {
         finalApplicationData.createdBy = user.uid;
@@ -253,10 +302,13 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         toast.success("Application created successfully!", { id: toastId });
       }
 
-      onSuccess?.();
+      onSuccess();
       onClose();
     } catch (error) {
       console.error("Error saving application:", error);
+      toast.error("Failed to save application. Check console for details.", {
+        id: toastId,
+      });
     } finally {
       setLoading(false);
     }
@@ -283,7 +335,9 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
                     className="text-sm text-green-600 truncate max-w-xs"
                     title={currentFileDisplayName}
                   >
-                    {currentFileDisplayName}
+                    {currentFileDisplayName.length > 25
+                      ? `${currentFileDisplayName.slice(0, 22)}...`
+                      : currentFileDisplayName}
                   </span>
                 </div>
                 <button
@@ -337,14 +391,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
   };
 
   if (assessmentsLoading && !editData) {
-    return <div className="p-6 text-center">Loading assessment data...</div>;
-  }
-  if (!user) {
-    return (
-      <div className="p-6 text-center">
-        User not authenticated. Please log in.
-      </div>
-    );
+    return <Loading size="default" />;
   }
 
   return (
@@ -370,13 +417,24 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
               }`}
             >
               <option value="">Select Assessment</option>
-              {(assessments || []).map((assessment) => (
-                <option key={assessment.id} value={assessment.id}>
-                  {`ID: ...${assessment.id.slice(-6)} (For: ${
-                    assessment.studentName || "N/A"
-                  }, Enq: ...${assessment.enquiryId?.slice(-6) || "N/A"})`}
-                </option>
-              ))}
+              {assessments.map((assessment, index) => {
+                const studentEnquiry = enquiriesData.find(
+                  (enq) => enq.id === assessment.enquiry
+                );
+
+                let studentNameToDisplay = "";
+                if (studentEnquiry) {
+                  const firstName = studentEnquiry.student_First_Name;
+                  const lastName = studentEnquiry.student_Last_Name;
+                  const fullName = `${firstName} ${lastName}`.trim();
+                  studentNameToDisplay = fullName;
+                }
+                return (
+                  <option key={index} value={assessment.id}>
+                    {`${index + 1}. ${studentNameToDisplay}`}
+                  </option>
+                );
+              })}
             </select>
             {errors.assessmentId && (
               <p className="text-red-600 text-sm mt-1">
@@ -502,11 +560,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading
-            ? "Saving..."
-            : editData
-            ? "Update Application"
-            : "Create Application"}
+          {loading ? "Saving..." : editData ? "Update " : "Create "}
         </button>
       </div>
     </form>

@@ -121,14 +121,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
   const adminNavigation = [
     {
-      name: "User Management",
-      href: "/user-management",
+      name: "Users",
+      href: "/users",
       icon: UsersIcon,
       roles: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
     },
     {
-      name: "Branch Management",
-      href: "/branch-management",
+      name: "Branches",
+      href: "/branches",
       icon: Briefcase,
       roles: [USER_ROLES.SUPERADMIN],
     },

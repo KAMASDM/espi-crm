@@ -1,34 +1,29 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Download, Upload } from "lucide-react";
+import { Plus, Download, Upload, AlertTriangle } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import ApplicationForm from "../components/Application/ApplicationForm";
 import { useApplications, useAssessments } from "../hooks/useFirestore";
 import ApplicationsTable from "../components/Application/ApplicationsTable";
-
-const documents = [
-  { key: "sop", label: "Statement of Purpose" },
-  { key: "cv", label: "CV/Resume" },
-  { key: "passport", label: "Passport" },
-  { key: "ielts", label: "IELTS Score Report" },
-  { key: "toefl", label: "TOEFL Score Report" },
-  { key: "gre", label: "GRE Score Report" },
-  { key: "gmat", label: "GMAT Score Report" },
-  { key: "pte", label: "PTE Score Report" },
-  { key: "work_experience", label: "Work Experience Letter" },
-  { key: "diploma_marksheet", label: "Diploma Marksheet" },
-  { key: "bachelor_marksheet", label: "Bachelor's Marksheet" },
-  { key: "master_marksheet", label: "Master's Marksheet" },
-  { key: "other_documents", label: "Other Documents" },
-];
+import ApplicationDetail from "../components/Application/ApplicationDetail";
 
 const Applications = () => {
-  const { data: assessments } = useAssessments();
-  const { data: applications, loading, remove } = useApplications();
+  const { data: assessments, loading: assessmentsLoading } = useAssessments();
+  const {
+    data: applications,
+    loading: applicationsLoading,
+    delete: deleteApplication,
+  } = useApplications();
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [applicationToDeleteId, setApplicationToDeleteId] = useState(null);
+
+  const isLoading = applicationsLoading || assessmentsLoading;
 
   const handleEdit = (application) => {
     setSelectedApplication(application);
@@ -40,17 +35,24 @@ const Applications = () => {
     setShowViewModal(true);
   };
 
-  const handleDelete = async (applicationId) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this application? This action cannot be undone."
-      )
-    ) {
+  const handleDelete = (applicationId) => {
+    setApplicationToDeleteId(applicationId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (applicationToDeleteId) {
       try {
-        await remove(applicationId);
+        await deleteApplication(applicationToDeleteId);
         toast.success("Application deleted successfully!");
       } catch (error) {
-        console.log("error", error);
+        console.error("Error deleting application:", error);
+        toast.error(
+          error.message || "Failed to delete application. Please try again."
+        );
+      } finally {
+        setShowDeleteModal(false);
+        setApplicationToDeleteId(null);
       }
     }
   };
@@ -59,8 +61,8 @@ const Applications = () => {
     toast.info("Document download functionality will be implemented soon!");
   };
 
-  const handleFormSuccess = () => {
-    toast.success("Application submitted successfully!");
+  const handleFormSuccess = (action = "submitted") => {
+    toast.success(`Application ${action} successfully!`);
   };
 
   const handleExport = () => {
@@ -71,16 +73,17 @@ const Applications = () => {
     toast.info("Import functionality will be implemented soon!");
   };
 
-  const draftApplications = applications.filter(
+  const safeApplications = Array.isArray(applications) ? applications : [];
+
+  const draftApplications = safeApplications.filter(
     (app) => app.application_status === "Draft"
   ).length;
-  const submittedApplications = applications.filter(
-    (app) => app.application_status === "Submitted"
-  ).length;
-  const acceptedApplications = applications.filter(
+
+  const acceptedApplications = safeApplications.filter(
     (app) => app.application_status === "Accepted"
   ).length;
-  const underReviewApplications = applications.filter(
+
+  const underReviewApplications = safeApplications.filter(
     (app) => app.application_status === "Under Review"
   ).length;
 
@@ -97,6 +100,7 @@ const Applications = () => {
           <button
             onClick={handleImport}
             className="btn-secondary flex items-center"
+            disabled={isLoading}
           >
             <Upload size={20} className="mr-2" />
             Import
@@ -104,6 +108,7 @@ const Applications = () => {
           <button
             onClick={handleExport}
             className="btn-secondary flex items-center"
+            disabled={isLoading || safeApplications.length === 0}
           >
             <Download size={20} className="mr-2" />
             Export
@@ -111,63 +116,64 @@ const Applications = () => {
           <button
             onClick={() => setShowAddModal(true)}
             className="btn-primary flex items-center"
+            disabled={isLoading}
           >
             <Plus size={20} className="mr-2" />
             New Application
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-indigo-100 rounded-lg">
+            <div className="p-2.5 bg-indigo-100 rounded-lg">
               <div className="text-indigo-600 text-2xl font-bold">
-                {applications.length}
+                {isLoading ? "..." : safeApplications.length}
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">
+              <p className="text-sm font-medium text-gray-700">
                 Total Applications
               </p>
               <p className="text-xs text-gray-500">All submissions</p>
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-gray-100 rounded-lg">
+            <div className="p-2.5 bg-gray-100 rounded-lg">
               <div className="text-gray-600 text-2xl font-bold">
-                {draftApplications}
+                {isLoading ? "..." : draftApplications}
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Draft</p>
+              <p className="text-sm font-medium text-gray-700">Draft</p>
               <p className="text-xs text-gray-500">In preparation</p>
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
+            <div className="p-2.5 bg-yellow-100 rounded-lg">
               <div className="text-yellow-600 text-2xl font-bold">
-                {underReviewApplications}
+                {isLoading ? "..." : underReviewApplications}
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Under Review</p>
+              <p className="text-sm font-medium text-gray-700">Under Review</p>
               <p className="text-xs text-gray-500">Being processed</p>
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
+            <div className="p-2.5 bg-green-100 rounded-lg">
               <div className="text-green-600 text-2xl font-bold">
-                {acceptedApplications}
+                {isLoading ? "..." : acceptedApplications}
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Accepted</p>
+              <p className="text-sm font-medium text-gray-700">Accepted</p>
               <p className="text-xs text-gray-500">Successful applications</p>
             </div>
           </div>
@@ -175,9 +181,9 @@ const Applications = () => {
       </div>
       <div className="card">
         <ApplicationsTable
-          applications={applications}
+          applications={safeApplications}
           assessments={assessments}
-          loading={loading}
+          loading={isLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
@@ -191,8 +197,12 @@ const Applications = () => {
         size="large"
       >
         <ApplicationForm
+          assessments={assessments}
           onClose={() => setShowAddModal(false)}
-          onSuccess={handleFormSuccess}
+          onSuccess={() => {
+            handleFormSuccess("created");
+            setShowAddModal(false);
+          }}
         />
       </Modal>
       <Modal
@@ -203,8 +213,13 @@ const Applications = () => {
       >
         <ApplicationForm
           editData={selectedApplication}
+          assessments={assessments}
           onClose={() => setShowEditModal(false)}
-          onSuccess={handleFormSuccess}
+          onSuccess={() => {
+            handleFormSuccess("updated");
+            setShowEditModal(false);
+            setSelectedApplication(null);
+          }}
         />
       </Modal>
       <Modal
@@ -214,151 +229,54 @@ const Applications = () => {
         size="large"
       >
         {selectedApplication && (
-          <ApplicationDetails
+          <ApplicationDetail
             application={selectedApplication}
             assessments={assessments}
           />
         )}
       </Modal>
-    </div>
-  );
-};
-
-const ApplicationDetails = ({ application, assessments }) => {
-  const getAssessment = (assessmentId) => {
-    return assessments.find((assessment) => assessment.id === assessmentId);
-  };
-
-  const assessment = getAssessment(application.application);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Basic Information
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Application ID
-            </label>
-            <p className="text-sm text-gray-900">
-              APP-{application.id.slice(-8)}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setApplicationToDeleteId(null);
+        }}
+        title="Confirm Deletion"
+        size="small"
+      >
+        <div className="p-6">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+              Delete Application?
+            </h3>
+            <p className="text-sm text-gray-500 mb-8">
+              Are you sure you want to delete this application? This action
+              cannot be undone.
             </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Assessment ID
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment ? `ASS-${assessment.id.slice(-8)}` : "Not found"}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Application Status
-            </label>
-            <p className="text-sm text-gray-900">
-              {application.application_status ? (
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    application.application_status === "Accepted"
-                      ? "bg-green-100 text-green-800"
-                      : application.application_status === "Rejected"
-                      ? "bg-red-100 text-red-800"
-                      : application.application_status === "Under Review"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {application.application_status}
-                </span>
-              ) : (
-                "No status set"
-              )}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Created Date
-            </label>
-            <p className="text-sm text-gray-900">
-              {application.createdAt
-                ? new Date(application.createdAt.toDate()).toLocaleDateString()
-                : "Unknown"}
-            </p>
-          </div>
-        </div>
-      </div>
-      {assessment && (
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900 mb-3">
-            Assessment Details
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Specialization
-              </label>
-              <p className="text-sm text-gray-900">
-                {assessment.specialisation}
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Duration
-              </label>
-              <p className="text-sm text-gray-900">{assessment.duration}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Application Fee
-              </label>
-              <p className="text-sm text-gray-900">
-                {assessment.application_fee}
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Tuition Fee
-              </label>
-              <p className="text-sm text-gray-900">{assessment.tution_fee}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Documents Status
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {documents.map((doc) => (
-            <div
-              key={doc.key}
-              className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+          <div className="flex justify-center gap-x-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setApplicationToDeleteId(null);
+              }}
+              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
-              <span className="text-sm text-gray-700">{doc.label}</span>
-              <span
-                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                  application[doc.key]
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {application[doc.key] ? "Uploaded" : "Missing"}
-              </span>
-            </div>
-          ))}
+              Cancel
+            </button>
+            <button
+              disabled
+              type="button"
+              onClick={confirmDelete}
+              className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Delete
+            </button>
+          </div>
         </div>
-      </div>
-      {application.notes && (
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900 mb-3">Notes</h4>
-          <p className="text-sm text-gray-900 whitespace-pre-wrap">
-            {application.notes}
-          </p>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 };

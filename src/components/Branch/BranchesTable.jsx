@@ -75,9 +75,6 @@ const BranchesTable = ({ branches, onEdit, onDelete }) => {
                     <div className="font-medium text-gray-900">
                       {branch.branchName}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      ID: {branch.id.slice(0, 10)}...
-                    </div>
                   </td>
                   <td className="table-cell text-xs">{branch.address}</td>
                   <td className="table-cell">{branch.contactPerson}</td>
