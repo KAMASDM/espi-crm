@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Download, Upload } from "lucide-react";
+import { Plus, Download, Upload, AlertTriangle } from "lucide-react";
 import Modal from "../components/Common/Modal";
-import { COUNTRIES } from "../utils/constants";
 import AssessmentForm from "../components/Assessment/AssessmentForm";
 import AssessmentsTable from "../components/Assessment/AssessmentsTable";
+import AssessmentDetail from "../components/Assessment/AssessmentDetail";
 import {
   useCourses,
   useEnquiries,
@@ -13,15 +13,29 @@ import {
 } from "../hooks/useFirestore";
 
 const Assessments = () => {
-  const { data: courses } = useCourses();
-  const { data: enquiries } = useEnquiries();
-  const { data: universities } = useUniversities();
-  const { data: assessments, loading, remove } = useAssessments();
+  const { data: courses, loading: coursesLoading } = useCourses();
+  const { data: enquiries, loading: enquiriesLoading } = useEnquiries();
+  const { data: universities, loading: universitiesLoading } =
+    useUniversities();
+  const {
+    data: assessments,
+    loading: assessmentsLoading,
+    delete: deleteAssessment,
+  } = useAssessments();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [assessmentToDeleteId, setAssessmentToDeleteId] = useState(null);
+
+  const isLoading =
+    coursesLoading ||
+    enquiriesLoading ||
+    universitiesLoading ||
+    assessmentsLoading;
 
   const handleEdit = (assessment) => {
     setSelectedAssessment(assessment);
@@ -33,23 +47,28 @@ const Assessments = () => {
     setShowViewModal(true);
   };
 
-  const handleDelete = async (assessmentId) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this assessment? This action cannot be undone."
-      )
-    ) {
+  const handleDelete = (assessmentId) => {
+    setAssessmentToDeleteId(assessmentId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (assessmentToDeleteId) {
       try {
-        await remove(assessmentId);
+        await deleteAssessment(assessmentToDeleteId);
         toast.success("Assessment deleted successfully!");
       } catch (error) {
-        console.log("error", error);
+        console.error("Error deleting assessment:", error);
+        toast.error("Failed to delete assessment. Please try again.");
+      } finally {
+        setShowDeleteModal(false);
+        setAssessmentToDeleteId(null);
       }
     }
   };
 
-  const handleFormSuccess = () => {
-    toast.success("Assessment submitted successfully!");
+  const handleFormSuccess = (action = "submitted") => {
+    toast.success(`Assessment ${action} successfully!`);
   };
 
   const handleExport = () => {
@@ -60,13 +79,15 @@ const Assessments = () => {
     toast.info("Import functionality will be implemented soon!");
   };
 
-  const pendingAssessments = assessments.filter(
+  const safeAssessments = Array.isArray(assessments) ? assessments : [];
+
+  const pendingAssessments = safeAssessments.filter(
     (a) => a.ass_status === "Pending"
   ).length;
-  const inProgressAssessments = assessments.filter(
+  const inProgressAssessments = safeAssessments.filter(
     (a) => a.ass_status === "In Progress"
   ).length;
-  const completedAssessments = assessments.filter(
+  const completedAssessments = safeAssessments.filter(
     (a) => a.ass_status === "Completed"
   ).length;
 
@@ -83,6 +104,7 @@ const Assessments = () => {
           <button
             onClick={handleImport}
             className="btn-secondary flex items-center"
+            disabled={isLoading}
           >
             <Upload size={20} className="mr-2" />
             Import
@@ -90,6 +112,7 @@ const Assessments = () => {
           <button
             onClick={handleExport}
             className="btn-secondary flex items-center"
+            disabled={isLoading || safeAssessments.length === 0}
           >
             <Download size={20} className="mr-2" />
             Export
@@ -97,63 +120,64 @@ const Assessments = () => {
           <button
             onClick={() => setShowAddModal(true)}
             className="btn-primary flex items-center"
+            disabled={isLoading}
           >
             <Plus size={20} className="mr-2" />
             New Assessment
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
+            <div className="p-2.5 bg-purple-100 rounded-lg">
               <div className="text-purple-600 text-2xl font-bold">
-                {assessments.length}
+                {isLoading ? "..." : safeAssessments.length}
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">
+              <p className="text-sm font-medium text-gray-700">
                 Total Assessments
               </p>
               <p className="text-xs text-gray-500">All evaluations</p>
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
+            <div className="p-2.5 bg-yellow-100 rounded-lg">
               <div className="text-yellow-600 text-2xl font-bold">
-                {pendingAssessments}
+                {isLoading ? "..." : pendingAssessments}
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-sm font-medium text-gray-700">Pending</p>
               <p className="text-xs text-gray-500">Awaiting review</p>
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
+            <div className="p-2.5 bg-blue-100 rounded-lg">
               <div className="text-blue-600 text-2xl font-bold">
-                {inProgressAssessments}
+                {isLoading ? "..." : inProgressAssessments}
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">In Progress</p>
+              <p className="text-sm font-medium text-gray-700">In Progress</p>
               <p className="text-xs text-gray-500">Being evaluated</p>
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
+            <div className="p-2.5 bg-green-100 rounded-lg">
               <div className="text-green-600 text-2xl font-bold">
-                {completedAssessments}
+                {isLoading ? "..." : completedAssessments}
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Completed</p>
+              <p className="text-sm font-medium text-gray-700">Completed</p>
               <p className="text-xs text-gray-500">Ready for application</p>
             </div>
           </div>
@@ -161,11 +185,11 @@ const Assessments = () => {
       </div>
       <div className="card">
         <AssessmentsTable
-          assessments={assessments}
+          assessments={safeAssessments}
           enquiries={enquiries}
           universities={universities}
           courses={courses}
-          loading={loading}
+          loading={isLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
@@ -178,8 +202,14 @@ const Assessments = () => {
         size="large"
       >
         <AssessmentForm
+          enquiries={enquiries}
+          universities={universities}
+          courses={courses}
           onClose={() => setShowAddModal(false)}
-          onSuccess={handleFormSuccess}
+          onSuccess={() => {
+            handleFormSuccess("created");
+            setShowAddModal(false);
+          }}
         />
       </Modal>
       <Modal
@@ -190,8 +220,15 @@ const Assessments = () => {
       >
         <AssessmentForm
           editData={selectedAssessment}
+          enquiries={enquiries}
+          universities={universities}
+          courses={courses}
           onClose={() => setShowEditModal(false)}
-          onSuccess={handleFormSuccess}
+          onSuccess={() => {
+            handleFormSuccess("updated");
+            setShowEditModal(false);
+            setSelectedAssessment(null);
+          }}
         />
       </Modal>
       <Modal
@@ -201,7 +238,7 @@ const Assessments = () => {
         size="large"
       >
         {selectedAssessment && (
-          <AssessmentDetails
+          <AssessmentDetail
             assessment={selectedAssessment}
             enquiries={enquiries}
             universities={universities}
@@ -209,231 +246,48 @@ const Assessments = () => {
           />
         )}
       </Modal>
-    </div>
-  );
-};
-
-const AssessmentDetails = ({
-  assessment,
-  enquiries,
-  universities,
-  courses,
-}) => {
-  const getStudentName = (enquiryId) => {
-    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return (
-      enquiry && `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
-    );
-  };
-
-  const getStudentEmail = (enquiryId) => {
-    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return enquiry && enquiry.student_email;
-  };
-
-  const getUniversityName = (universityId) => {
-    const university = universities.find((uni) => uni.id === universityId);
-    return university && university.univ_name;
-  };
-
-  const getCourseName = (courseId) => {
-    const course = courses.find((c) => c.id === courseId);
-    return course && course.course_name;
-  };
-
-  const getCountryName = (countryCode) => {
-    const country = COUNTRIES.find((c) => c.code === countryCode);
-    return country ? country.name : countryCode;
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Student Information
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Student Name
-            </label>
-            <p className="text-sm text-gray-900">
-              {getStudentName(assessment.enquiry)}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setAssessmentToDeleteId(null);
+        }}
+        title="Confirm Deletion"
+        size="small"
+      >
+        <div className="p-6">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+              Delete Assessment?
+            </h3>
+            <p className="text-sm text-gray-500 mb-8">
+              Are you sure you want to delete this assessment? This action
+              cannot be undone.
             </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Student Email
-            </label>
-            <p className="text-sm text-gray-900">
-              {getStudentEmail(assessment.enquiry)}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Country of Interest
-            </label>
-            <p className="text-sm text-gray-900">
-              {getCountryName(assessment.student_country)}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Level Applying For
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.level_applying_for}
-            </p>
+          <div className="flex justify-center gap-x-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setAssessmentToDeleteId(null);
+              }}
+              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Cancel
+            </button>
+            <button
+              disabled
+              type="button"
+              onClick={confirmDelete}
+              className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Delete
+            </button>
           </div>
         </div>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          University & Course Information
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              University
-            </label>
-            <p className="text-sm text-gray-900">
-              {getUniversityName(assessment.university)}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Course
-            </label>
-            <p className="text-sm text-gray-900">
-              {getCourseName(assessment.course_interested)}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Specialization
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.specialisation}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Duration
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.duration}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Intake Interested
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.intake_interested}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Course Link
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.course_link ? (
-                <a
-                  href={assessment.course_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  {assessment.course_link}
-                </a>
-              ) : (
-                "Not provided"
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Financial Information
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Application Fee
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.application_fee}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Tuition Fee
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.tution_fee}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Currency
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.fee_currency}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Assessment Status & Notes
-        </h4>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <p className="text-sm text-gray-900">
-              {assessment.ass_status ? (
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    assessment.ass_status === "Completed"
-                      ? "bg-green-100 text-green-800"
-                      : assessment.ass_status === "In Progress"
-                      ? "bg-blue-100 text-blue-800"
-                      : assessment.ass_status === "Pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {assessment.ass_status}
-                </span>
-              ) : (
-                "Not specified"
-              )}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Assessment Notes
-            </label>
-            <p className="text-sm text-gray-900 whitespace-pre-wrap">
-              {assessment.notes}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Created Date
-        </label>
-        <p className="text-sm text-gray-900">
-          {assessment.createdAt
-            ? new Date(assessment.createdAt.toDate()).toLocaleDateString()
-            : "Unknown"}
-        </p>
-      </div>
+      </Modal>
     </div>
   );
 };

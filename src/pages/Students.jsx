@@ -30,9 +30,9 @@ const Students = () => {
     data: students,
     loading,
     error,
-    remove,
-    update,
     create,
+    update,
+    delete: deleteEnquiry,
   } = useEnquiries();
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
@@ -41,13 +41,17 @@ const Students = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [studentToDeleteId, setStudentToDeleteId] = useState(null);
+
   const fileInputRef = useRef(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
 
   useEffect(() => {
     if (error) {
-      console.log("error", error);
+      console.error("Error fetching enquiries:", error);
+      toast.error("Failed to load student enquiries.");
     }
   }, [error]);
 
@@ -60,43 +64,47 @@ const Students = () => {
     navigate(`/students/${student.id}/details`);
   };
 
-  const handleDelete = async (studentId) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this student enquiry? This action cannot be undone."
-      )
-    ) {
-      try {
-        await remove(studentId);
-        toast.success("Student enquiry deleted successfully!");
-      } catch (error) {
-        console.log("error", error);
-      }
-    }
+  const handleDelete = (studentId) => {
+    setStudentToDeleteId(studentId);
+    setShowDeleteModal(true);
   };
 
-  const handleFormSuccess = () => {
-    toast.success("Student enquiry submitted successfully!");
+  const confirmDelete = async () => {
+    if (studentToDeleteId) {
+      try {
+        await deleteEnquiry(studentToDeleteId);
+        toast.success("Student enquiry deleted successfully!");
+      } catch (err) {
+        console.error("Error deleting student enquiry:", err);
+        toast.error("Failed to delete student enquiry. Please try again.");
+      } finally {
+        setShowDeleteModal(false);
+        setStudentToDeleteId(null);
+      }
+    }
   };
 
   const handleUpdateStudentStatus = async (studentId, newStatus) => {
     try {
       await update(studentId, {
         enquiry_status: newStatus,
-        updatedAt: new Date(),
       });
       toast.success("Status updated successfully!");
-    } catch (error) {
-      console.log("error", error);
+    } catch (err) {
+      console.error("Error updating status:", err);
+      toast.error("Failed to update status.");
     }
   };
 
   const handleUpdateStudentNote = async (studentId, newNote) => {
     try {
-      await update(studentId, { notes: newNote, updatedAt: new Date() });
+      await update(studentId, {
+        notes: newNote,
+      });
       toast.success("Note updated successfully!");
-    } catch (error) {
-      console.log("error", error);
+    } catch (err) {
+      console.error("Error updating note:", err);
+      toast.error("Failed to update note.");
     }
   };
 
@@ -108,11 +116,11 @@ const Students = () => {
       await update(studentId, {
         assignedUserId: newAssignedUserId,
         assigned_users: newAssignedUserId,
-        updatedAt: new Date(),
       });
       toast.success("Assignment updated successfully!");
-    } catch (error) {
-      console.log("error", error);
+    } catch (err) {
+      console.error("Error updating assignment:", err);
+      toast.error(err.message || "Failed to update assignment.");
     }
   };
 
@@ -149,7 +157,7 @@ const Students = () => {
       downloadAsCSV(dataToExport, "students_export.csv");
       toast.success("Students data exported successfully!");
     } else {
-      console.log("No data available to export.");
+      toast.info("No data available to export.");
     }
   };
 
@@ -176,11 +184,11 @@ const Students = () => {
           );
 
           if (missingEssentialHeaders.length > 0) {
-            console.log(
-              `CSV is missing essential headers: ${missingEssentialHeaders.join(
-                ", "
-              )}.`
-            );
+            const message = `CSV is missing essential headers: ${missingEssentialHeaders.join(
+              ", "
+            )}. Required: ${essentialCsvHeaders.join(", ")}`;
+            toast.error(message, { duration: 5000 });
+            console.error(message);
             setIsImporting(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
@@ -188,8 +196,9 @@ const Students = () => {
           await processImportedData(results.data);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
-        error: (error) => {
-          console.log("error", error.message);
+        error: (err) => {
+          toast.error(`Error parsing CSV: ${err.message}`);
+          console.error("Error parsing CSV:", err);
           setIsImporting(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
@@ -203,7 +212,7 @@ const Students = () => {
     const errors = [];
 
     if (!user || !user.uid) {
-      console.log("User not authenticated. Cannot import data.");
+      toast.error("User not authenticated. Cannot import data.");
       setIsImporting(false);
       return;
     }
@@ -218,7 +227,7 @@ const Students = () => {
           student_phone: row.Phone?.replace(/\D/g, "") || "",
           current_education: row.CurrentEducation?.trim() || "",
           country_interested:
-            row.CountriesInterested?.split(",")
+            row.CountriesInterested?.split(/[,|]/)
               .map((c) => c.trim())
               .filter((c) => c) || [],
           Source_Enquiry: row.EnquirySource?.trim() || "CSV Import",
@@ -231,13 +240,11 @@ const Students = () => {
           student_address: row.Address?.trim() || "",
           intake_interested: row.IntakeInterested?.trim() || "",
           Interested_Services:
-            row.ServicesInterested?.split(",")
+            row.ServicesInterested?.split(/[,|]/)
               .map((s) => s.trim())
               .filter((s) => s) || [],
           branchId: userProfile?.branchId || null,
           assignedUserId: userProfile?.uid || null,
-          assigned_users: userProfile?.uid || null,
-          createdBy: user.uid,
         };
 
         let missingField = false;
@@ -248,9 +255,9 @@ const Students = () => {
               studentData[field].length === 0)
           ) {
             errors.push(
-              `Row ${i + 2}: Missing required field '${field}' for student ${
-                studentData.student_First_Name
-              }.`
+              `Row ${
+                i + 2
+              }: Missing required field '${field}' for student ${studentData.student_First_Name?.trim()} ${studentData.student_Last_Name?.trim()}.`
             );
             missingField = true;
             break;
@@ -263,16 +270,20 @@ const Students = () => {
 
         await create(studentData);
         successCount++;
-      } catch (error) {
-        console.log(`Error importing row ${i + 2}:`, error, row);
-        errors.push(`Row ${i + 2}: ${error.message || "Failed to import."}`);
+      } catch (err) {
+        console.error(`Error importing row ${i + 2}:`, err, row);
+        errors.push(
+          `Row ${i + 2} (${row.FirstName} ${row.LastName}): ${
+            err.message || "Failed to import."
+          }`
+        );
         errorCount++;
       }
     }
 
     setImportResults({ successCount, errorCount, errors });
     if (errorCount > 0) {
-      console.log(
+      toast.error(
         `${errorCount} record(s) failed to import. ${successCount} imported.`,
         { duration: 5000 }
       );
@@ -292,15 +303,6 @@ const Students = () => {
           <p className="text-gray-600">
             Manage student enquiries and track their progress
           </p>
-          {userProfile && (
-            <div className="text-sm text-gray-500 mt-1">
-              {userProfile.role === "Superadmin"
-                ? "Viewing all enquiries across all branches"
-                : `Viewing enquiries from ${
-                    userProfile.branchId ? "your branch" : "all branches"
-                  }`}
-            </div>
-          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <input
@@ -339,6 +341,7 @@ const Students = () => {
           </button>
         </div>
       </div>
+
       {importResults && (
         <div
           className={`p-4 rounded-md ${
@@ -403,71 +406,59 @@ const Students = () => {
           </div>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <div className="text-blue-600 text-2xl font-bold">
-                {students?.length}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            title: "Total Students",
+            value: students?.length,
+            color: "blue",
+            subtext: "All enquiries",
+          },
+          {
+            title: "New Enquiries",
+            value: students?.filter((s) => s.enquiry_status === "New").length,
+            color: "green",
+            subtext: "Require attention",
+          },
+          {
+            title: "In Progress",
+            value: students?.filter((s) => s.enquiry_status === "In Progress")
+              .length,
+            color: "yellow",
+            subtext: "Active cases",
+          },
+          {
+            title: "Admitted",
+            value: students?.filter((s) => s.enquiry_status === "Admitted")
+              .length,
+            color: "purple",
+            subtext: "Success stories",
+          },
+        ].map((card) => (
+          <div
+            key={card.title}
+            className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+          >
+            <div className="flex items-center">
+              <div className={`p-2.5 bg-${card.color}-100 rounded-lg`}>
+                <div className={`text-${card.color}-600 text-2xl font-bold`}>
+                  {loading ? "..." : card.value}
+                </div>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">
+                  {card.title}
+                </p>
+                <p className="text-xs text-gray-500">{card.subtext}</p>
               </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">
-                Total Students
-              </p>
-              <p className="text-xs text-gray-500">All enquiries</p>
-            </div>
           </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <div className="text-green-600 text-2xl font-bold">
-                {students?.filter((s) => s.enquiry_status === "New").length}
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">New Enquiries</p>
-              <p className="text-xs text-gray-500">Require attention</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <div className="text-yellow-600 text-2xl font-bold">
-                {
-                  students?.filter((s) => s.enquiry_status === "In Progress")
-                    .length
-                }
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">In Progress</p>
-              <p className="text-xs text-gray-500">Active cases</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <div className="text-purple-600 text-2xl font-bold">
-                {
-                  students?.filter((s) => s.enquiry_status === "Admitted")
-                    .length
-                }
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Admitted</p>
-              <p className="text-xs text-gray-500">Success stories</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
       <div className="card">
         <StudentsTable
-          students={students || []}
+          students={students}
           loading={loading || isImporting}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -481,13 +472,12 @@ const Students = () => {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Add New Student"
+        title="Add New Student Enquiry"
         size="large"
       >
         <EnquiryForm
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
-            handleFormSuccess();
             setShowAddModal(false);
           }}
         />
@@ -495,17 +485,59 @@ const Students = () => {
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Edit Student"
+        title="Edit Student Enquiry"
         size="large"
       >
         <EnquiryForm
           editData={selectedStudent}
           onClose={() => setShowEditModal(false)}
           onSuccess={() => {
-            handleFormSuccess();
             setShowEditModal(false);
+            setSelectedStudent(null);
           }}
         />
+      </Modal>
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setStudentToDeleteId(null);
+        }}
+        title="Confirm Deletion"
+        size="small"
+      >
+        <div className="p-6">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />{" "}
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+              Delete Student Enquiry?
+            </h3>
+            <p className="text-sm text-gray-500 mb-8">
+              Are you sure you want to delete this student enquiry? This action
+              cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-center gap-x-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setStudentToDeleteId(null);
+              }}
+              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Cancel
+            </button>
+            <button
+              disabled
+              type="button"
+              onClick={confirmDelete}
+              className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

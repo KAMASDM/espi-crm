@@ -17,9 +17,9 @@ import {
   UserCheck,
 } from "lucide-react";
 import { format } from "date-fns";
-import toast from "react-hot-toast";
 import { ENQUIRY_STATUS } from "../../utils/constants";
 import { branchService, userService } from "../../services/firestore";
+import Loading from "../Common/Loading";
 
 const InlineNoteEditor = ({
   initialNote = "",
@@ -92,7 +92,6 @@ const StudentsTable = ({
 
   const [users, setUsers] = useState([]);
   const [branches, setBranches] = useState([]);
-  const [usersLoading, setUsersLoading] = useState(true);
   const [branchesLoading, setBranchesLoading] = useState(true);
 
   useEffect(() => {
@@ -100,15 +99,13 @@ const StudentsTable = ({
       try {
         setBranchesLoading(true);
         const fetchedBranches = await branchService.getAll();
-        setBranches(fetchedBranches || []);
-        setUsersLoading(true);
+        setBranches(fetchedBranches);
         const fetchedUsers = await userService.getAll();
-        setUsers(fetchedUsers || []);
+        setUsers(fetchedUsers);
       } catch (error) {
         console.log("error", error);
       } finally {
         setBranchesLoading(false);
-        setUsersLoading(false);
       }
     };
 
@@ -116,12 +113,7 @@ const StudentsTable = ({
   }, []);
 
   const branchMap = branches.reduce((acc, branch) => {
-    acc[branch.id] = branch.branchName || branch.name;
-    return acc;
-  }, {});
-
-  const userMap = users.reduce((acc, user) => {
-    acc[user.id || user.uid] = user.displayName || user.email;
+    acc[branch.id] = branch.branchName;
     return acc;
   }, {});
 
@@ -129,12 +121,6 @@ const StudentsTable = ({
     if (!branchId) return "No Branch";
     if (branchesLoading) return "Loading...";
     return branchMap[branchId];
-  };
-
-  const getUserName = (userId) => {
-    if (!userId) return "Unassigned";
-    if (usersLoading) return "Loading...";
-    return userMap[userId];
   };
 
   const getAvailableUsers = () => {
@@ -236,11 +222,7 @@ const StudentsTable = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <Loading size="default" />;
   }
 
   return (
@@ -293,7 +275,7 @@ const StudentsTable = ({
               <option value="">All Branches</option>
               {branches.map((branch) => (
                 <option key={branch.id} value={branch.id}>
-                  {branch.branchName || branch.name}
+                  {branch.branchName}
                 </option>
               ))}
             </select>
@@ -310,11 +292,9 @@ const StudentsTable = ({
               className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Assignments</option>
-              <option value="unassigned">Unassigned</option>
-              <option value="assigned">Assigned</option>
               {getAvailableUsers().map((user) => (
-                <option key={user.id || user.uid} value={user.id || user.uid}>
-                  {user.displayName || user.email}
+                <option key={user.id} value={user.id}>
+                  {user.displayName}
                 </option>
               ))}
             </select>
@@ -387,11 +367,6 @@ const StudentsTable = ({
                 >
                   <User className="mx-auto mb-2 text-gray-300" size={48} />
                   <p>No students found</p>
-                  {searchTerm && (
-                    <p className="text-sm">
-                      Try adjusting your search terms or filters.
-                    </p>
-                  )}
                 </td>
               </tr>
             ) : (
@@ -406,8 +381,8 @@ const StudentsTable = ({
                       student.createdAt.toDate(),
                       "MMM dd, yyyy"
                     );
-                  } catch (e) {
-                    formattedDate = "Invalid Date";
+                  } catch (error) {
+                    console.log("error", error);
                   }
                 } else if (student.createdAt) {
                   try {
@@ -417,8 +392,8 @@ const StudentsTable = ({
                     } else {
                       formattedDate = "Invalid Date";
                     }
-                  } catch (e) {
-                    formattedDate = "Error Parsing Date";
+                  } catch (error) {
+                    console.log("error", error);
                   }
                 }
 
@@ -436,11 +411,8 @@ const StudentsTable = ({
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {student.student_First_Name}
+                            {student.student_First_Name}{" "}
                             {student.student_Last_Name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {student.id && student.id.slice(-8)}
                           </div>
                         </div>
                       </div>
@@ -474,18 +446,8 @@ const StudentsTable = ({
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-900">
                         <Building2 size={14} className="mr-2 text-gray-400" />
-                        <div>
-                          <div className="font-medium">
-                            {getBranchName(student.branchId)}
-                          </div>
-                          {student.branchId && (
-                            <div
-                              className="text-xs text-gray-400"
-                              title={student.branchId}
-                            >
-                              ID: {student.branchId.slice(0, 8)}...
-                            </div>
-                          )}
+                        <div className="font-medium">
+                          {getBranchName(student.branchId)}
                         </div>
                       </div>
                     </td>
@@ -500,12 +462,9 @@ const StudentsTable = ({
                         onClick={(e) => e.stopPropagation()}
                       >
                         <option value="">Unassigned</option>
-                        {getAvailableUsers().map((user) => (
-                          <option
-                            key={user.id || user.uid}
-                            value={user.id || user.uid}
-                          >
-                            {user.displayName || user.email}
+                        {getAvailableUsers().map((user, index) => (
+                          <option key={index} value={user.id}>
+                            {user.displayName}
                           </option>
                         ))}
                       </select>
@@ -577,7 +536,7 @@ const StudentsTable = ({
                         />
                       )}
                     </td>
-
+                    
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar size={14} className="mr-2 text-gray-400" />

@@ -345,75 +345,20 @@ const ExperienceTimeline = ({ experiences }) => {
   );
 };
 
-const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
-  const mockDetailEnquiry = detailEnquiry || {
-    current_education_details: {
-      level: "Master's",
-      stream: "Computer Science",
-      percentage: "85.5",
-      year: "2024",
-      institute: "ABC University",
-      medium: "English",
-      board: "University Board",
-    },
-    tenth_education_details: {
-      percentage: "92.0",
-      year: "2018",
-      institute: "XYZ School",
-      board: "CBSE",
-    },
-    twelveth_education_details: {
-      stream: "Science",
-      percentage: "88.5",
-      year: "2020",
-      institute: "XYZ School",
-      board: "CBSE",
-    },
-    workExperiences: [
-      {
-        companyName: "Tech Corp",
-        designation: "Software Developer",
-        startDate: "2022-06-01",
-        endDate: "2024-01-31",
-      },
-    ],
-    ielts_exam: {
-      listening: "8.0",
-      reading: "7.5",
-      writing: "7.0",
-      speaking: "8.5",
-      overall: "7.5",
-    },
-    toefl_exam: {},
-    father_Occupation: "Engineer",
-    father_Annual_Income: 1200000,
-    confirmed_services: ["University Selection", "Application Support"],
-    enquiry_status: "Profile Under Review",
-    updatedAt: new Date(),
-    tenth_Document: "10th_certificate.pdf",
-    ielts_Result: "ielts_report.pdf",
-  };
+const EnquiryDetail = ({ detailEnquiry, onDownload }) => {
+  const getCountryName = (countryCode) =>
+    COUNTRIES.find((c) => c.code === countryCode)?.name;
 
-  const data = mockDetailEnquiry;
-
-  if (!data) {
+  if (!detailEnquiry) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center">
-          <AlertTriangle className="mx-auto text-amber-500 mb-4" size={48} />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            No Profile Data Found
-          </h3>
-          <p className="text-gray-600">
-            The detailed profile information is not available.
-          </p>
-        </div>
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-8 rounded-xl shadow-lg text-center">
+        <AlertTriangle className="mx-auto text-amber-500 mb-4" size={48} />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          No Profile Data Found
+        </h3>
       </div>
     );
   }
-
-  const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
 
   const {
     current_education_details = {},
@@ -447,7 +392,7 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
     duolingo_Result,
     gre_Result,
     gmat_Result,
-  } = data;
+  } = detailEnquiry;
 
   return (
     <div className="min-h-screen  from-blue-50 via-white to-purple-50">
@@ -674,91 +619,76 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
               label="10th Certificate"
               docNameValue={tenth_Document}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="12th Certificate"
               docNameValue={twelveth_Document}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="Graduation Marksheet"
               docNameValue={graduation_Marksheet}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="Graduation Certificate"
               docNameValue={graduation_Certificate}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="UG Marksheet"
               docNameValue={ug_Marksheet}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="UG Certificate"
               docNameValue={ug_Certificate}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="Work Experience Letter"
               docNameValue={work_Experience_Document}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="Passport"
               docNameValue={passport_Document}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="Offer Letter"
               docNameValue={offer_Letter}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="IELTS TRF"
               docNameValue={ielts_Result}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="TOEFL Report"
               docNameValue={toefl_Result}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="PTE Report"
               docNameValue={pte_Result}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="Duolingo Report"
               docNameValue={duolingo_Result}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="GRE Report"
               docNameValue={gre_Result}
               onDownload={onDownload}
-              onView={onView}
             />
             <ModernDocumentCard
               label="GMAT Report"
               docNameValue={gmat_Result}
               onDownload={onDownload}
-              onView={onView}
             />
           </div>
         </ModernSection>
@@ -797,24 +727,4 @@ const DetailEnquiryView = ({ detailEnquiry, onEdit, onDownload, onView }) => {
   );
 };
 
-export default function App() {
-  const handleEdit = () => {
-    alert("Edit profile functionality would be implemented here");
-  };
-
-  const handleDownload = (label, file) => {
-    alert(`Download ${label}: ${file}`);
-  };
-
-  const handleView = (label, file) => {
-    alert(`View ${label}: ${file}`);
-  };
-
-  return (
-    <DetailEnquiryView
-      onEdit={handleEdit}
-      onDownload={handleDownload}
-      onView={handleView}
-    />
-  );
-}
+export default EnquiryDetail;

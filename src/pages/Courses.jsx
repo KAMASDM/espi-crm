@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
 import toast from "react-hot-toast";
+import { where } from "firebase/firestore";
 import Modal from "../components/Common/Modal";
 import { useAuth } from "../context/AuthContext";
 import { downloadAsCSV } from "../utils/helpers";
@@ -8,8 +9,8 @@ import { firestoreService } from "../services/firestore";
 import CourseForm from "../components/Courses/CourseForm";
 import CoursesTable from "../components/Courses/CoursesTable";
 import { useCourses, useUniversities } from "../hooks/useFirestore";
+import CourseDetail from "../components/Courses/CourseDetail";
 import {
-  COUNTRIES,
   COURSE_LEVELS,
   CURRENCIES,
   INTAKES,
@@ -28,8 +29,8 @@ const Courses = () => {
     data: courses,
     loading: coursesLoading,
     error: coursesError,
-    remove,
     create,
+    delete: deleteCourse,
   } = useCourses();
   const { data: universities, loading: universitiesLoading } =
     useUniversities();
@@ -40,6 +41,9 @@ const Courses = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [courseToDeleteId, setCourseToDeleteId] = useState(null);
+
   const fileInputRef = useRef(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
@@ -48,7 +52,8 @@ const Courses = () => {
 
   useEffect(() => {
     if (coursesError) {
-      console.log("error", coursesError);
+      console.error("Error fetching courses:", coursesError);
+      toast.error("Failed to load courses.");
     }
   }, [coursesError]);
 
@@ -62,34 +67,49 @@ const Courses = () => {
     setShowViewModal(true);
   };
 
-  const handleDelete = async (courseId) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this course? This action cannot be undone."
-      )
-    ) {
+  const handleDelete = (courseId) => {
+    setCourseToDeleteId(courseId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (courseToDeleteId) {
       try {
-        await remove(courseId);
+        await deleteCourse(courseToDeleteId);
         toast.success("Course deleted successfully!");
-      } catch (error) {
-        console.error("error", error);
+      } catch (err) {
+        console.error("Error deleting course:", err);
+        toast.error("Failed to delete course. Please try again.");
+      } finally {
+        setShowDeleteModal(false);
+        setCourseToDeleteId(null);
       }
     }
   };
 
-  const handleFormSuccess = () => {};
+  const handleFormSuccess = (action = "added") => {
+    toast.success(`Course ${action} successfully!`);
+  };
 
   const getUniversityName = (universityId) => {
+    if (!universities || universities.length === 0) return "N/A";
     const university = universities.find((uni) => uni.id === universityId);
-    return university && university.univ_name;
+    return university?.univ_name || "Unknown University";
   };
+
   const getCountryCodeForUniversity = (universityId) => {
+    if (!universities || universities.length === 0) return null;
     const university = universities.find((uni) => uni.id === universityId);
-    return university && university.country;
+    return university?.country || null;
   };
 
   const handleExport = () => {
-    if (courses && courses.length > 0 && universities.length > 0) {
+    if (
+      courses &&
+      courses.length > 0 &&
+      universities &&
+      universities.length > 0
+    ) {
       const dataToExport = courses.map((course) => ({
         CourseID: course.id,
         CourseName: course.course_name,
@@ -132,7 +152,9 @@ const Courses = () => {
       downloadAsCSV(dataToExport, "courses_export.csv");
       toast.success("Courses data exported successfully!");
     } else {
-      console.log("No data available to export or universities not loaded.");
+      toast.info(
+        "No course data available to export or universities not loaded."
+      );
     }
   };
 
@@ -146,11 +168,7 @@ const Courses = () => {
         skipEmptyLines: true,
         complete: async (results) => {
           const csvHeaders = results.meta.fields;
-          const essentialCsvHeaders = [
-            "CourseName",
-            "UniversityID",
-            "CourseLevel",
-          ];
+          const essentialCsvHeaders = ["CourseName", "CourseLevel"];
           const missingEssentialHeaders = essentialCsvHeaders.filter(
             (h) => !csvHeaders.includes(h)
           );
@@ -159,7 +177,20 @@ const Courses = () => {
             toast.error(
               `CSV is missing essential headers: ${missingEssentialHeaders.join(
                 ", "
-              )}.`
+              )}.`,
+              { duration: 5000 }
+            );
+            setIsImporting(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+          }
+          if (
+            !csvHeaders.includes("UniversityID") &&
+            !csvHeaders.includes("UniversityName")
+          ) {
+            toast.error(
+              "CSV must include either 'UniversityID' or 'UniversityName' header.",
+              { duration: 5000 }
             );
             setIsImporting(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -168,8 +199,9 @@ const Courses = () => {
           await processCourseImportData(results.data);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
-        error: (error) => {
-          console.log("error", error.message);
+        error: (err) => {
+          toast.error(`Error parsing CSV: ${err.message}`);
+          console.error("Error parsing CSV:", err);
           setIsImporting(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
@@ -184,12 +216,12 @@ const Courses = () => {
     const importErrors = [];
 
     if (!user || !user.uid) {
-      console.log("User not authenticated. Cannot import data.");
+      toast.error("User not authenticated. Cannot import data.");
       setIsImporting(false);
       return;
     }
     if (universitiesLoading || !universities || universities.length === 0) {
-      console.log(
+      toast.warn(
         "University data is not loaded yet. Please wait and try again."
       );
       setIsImporting(false);
@@ -200,65 +232,68 @@ const Courses = () => {
       universities.map((uni) => [uni.id.toLowerCase(), uni.id])
     );
     const universityNameMap = new Map(
-      universities.map((uni) => [uni.univ_name.toLowerCase(), uni.id])
+      universities.map((uni) => [uni.univ_name.trim().toLowerCase(), uni.id])
     );
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       try {
-        let universityId = row.UniversityID?.trim();
-        if (!universityId && row.UniversityName) {
-          universityId = universityNameMap.get(
+        let universityIdFromRow = row.UniversityID?.trim();
+        let resolvedUniversityId = null;
+
+        if (universityIdFromRow) {
+          resolvedUniversityId = universityIdMap.get(
+            universityIdFromRow.toLowerCase()
+          );
+          if (!resolvedUniversityId) {
+            importErrors.push(
+              `Row ${i + 2} (${
+                row.CourseName || "N/A"
+              }): UniversityID "${universityIdFromRow}" not found.`
+            );
+            errorCount++;
+            continue;
+          }
+        } else if (row.UniversityName) {
+          resolvedUniversityId = universityNameMap.get(
             row.UniversityName.trim().toLowerCase()
           );
-          if (!universityId) {
+          if (!resolvedUniversityId) {
             importErrors.push(
-              `Row ${i + 2} (${row.CourseName}): UniversityName "${
+              `Row ${i + 2} (${row.CourseName || "N/A"}): UniversityName "${
                 row.UniversityName
               }" not found.`
             );
             errorCount++;
             continue;
           }
-        } else if (
-          universityId &&
-          !universityIdMap.has(universityId.toLowerCase())
-        ) {
-          importErrors.push(
-            `Row ${i + 2} (${row.CourseName}): UniversityID "${
-              row.UniversityID
-            }" not found.`
-          );
-          errorCount++;
-          continue;
-        }
-        if (!universityId) {
+        } else {
           importErrors.push(
             `Row ${i + 2} (${
-              row.CourseName
-            }): Missing UniversityID or valid UniversityName.`
+              row.CourseName || "N/A"
+            }): Missing UniversityID or UniversityName.`
           );
           errorCount++;
           continue;
         }
-        universityId =
-          universityIdMap.get(universityId.toLowerCase()) || universityId;
 
         const courseData = {
           course_name: row.CourseName?.trim() || "",
-          university: universityId,
-          country: getCountryCodeForUniversity(universityId) || "",
+          university: resolvedUniversityId,
+          country: getCountryCodeForUniversity(resolvedUniversityId) || "",
           course_levels: row.CourseLevel?.trim() || "",
           website_url: row.WebsiteURL?.trim() || null,
           specialisation_tag: row.SpecializationTag?.trim() || null,
           intake:
-            row.Intakes?.split(",")
+            row.Intakes?.split(/[,|]/)
               .map((s) => s.trim())
-              .filter((s) => INTAKES.some((intake) => intake.name === s)) || [],
+              .filter((s) => INTAKES.map((it) => it.value).includes(s)) || [],
           documents_required:
-            row.DocumentsRequired?.split(",")
+            row.DocumentsRequired?.split(/[,|]/)
               .map((s) => s.trim())
-              .filter((s) => DOCUMENTS_REQUIRED.includes(s)) || [],
+              .filter((s) =>
+                DOCUMENTS_REQUIRED.map((dr) => dr.value).includes(s)
+              ) || [],
           Application_deadline: row.ApplicationDeadline
             ? new Date(row.ApplicationDeadline).toISOString().split("T")[0]
             : null,
@@ -268,18 +303,16 @@ const Courses = () => {
           Application_fee: row.ApplicationFee
             ? parseFloat(row.ApplicationFee)
             : null,
-          Application_fee_currency: CURRENCIES.find(
-            (c) => c.code === row.ApplicationFeeCurrency?.trim().toUpperCase()
-          )
-            ? row.ApplicationFeeCurrency.trim().toUpperCase()
-            : null, //
+          Application_fee_currency:
+            CURRENCIES.find(
+              (c) => c.code === row.ApplicationFeeCurrency?.trim().toUpperCase()
+            )?.code || null,
           Yearly_Tuition_fee: row.YearlyTuitionFee
             ? parseFloat(row.YearlyTuitionFee)
             : null,
-          Active:
-            row.IsActive?.toLowerCase() === "true" ||
-            row.IsActive === "1" ||
-            true,
+          Active: !(
+            row.IsActive?.toLowerCase() === "false" || row.IsActive === "0"
+          ),
           tenth_std_percentage_requirement:
             row.TenthStdRequirement?.trim() || null,
           twelfth_std_percentage_requirement:
@@ -294,7 +327,6 @@ const Courses = () => {
           Gmat_Exam: row.GMATExam?.trim() || null,
           other_exam: row.OtherExam?.trim() || null,
           Remark: row.Notes?.trim() || null,
-          createdBy: user.uid,
         };
 
         let missingOrInvalidField = false;
@@ -302,22 +334,15 @@ const Courses = () => {
           importErrors.push(`Row ${i + 2}: Missing 'CourseName'.`);
           missingOrInvalidField = true;
         }
-        if (!courseData.university) {
-          importErrors.push(
-            `Row ${i + 2} (${
-              courseData.course_name
-            }): Missing or invalid 'UniversityID'.`
-          );
-          missingOrInvalidField = true;
-        }
         if (
-          !courseData.course_levels ||
-          !COURSE_LEVELS.includes(courseData.course_levels)
+          !COURSE_LEVELS.map((cl) => cl.value).includes(
+            courseData.course_levels
+          )
         ) {
           importErrors.push(
-            `Row ${i + 2} (${
-              courseData.course_name
-            }): Missing or invalid 'CourseLevel'.`
+            `Row ${i + 2} (${courseData.course_name}): Invalid 'CourseLevel' "${
+              courseData.course_levels
+            }".`
           );
           missingOrInvalidField = true;
         }
@@ -325,20 +350,23 @@ const Courses = () => {
           importErrors.push(
             `Row ${i + 2} (${
               courseData.course_name
-            }): Could not determine country from UniversityID.`
+            }): Could not determine country from University.`
           );
           missingOrInvalidField = true;
         }
-
         if (missingOrInvalidField) {
           errorCount++;
           continue;
         }
 
-        const existingCourses = await firestoreService.getAll("courses", [
-          firestoreService.where("course_name", "==", courseData.course_name),
-          firestoreService.where("university", "==", courseData.university),
-        ]);
+        const qConstraints = [
+          where("course_name", "==", courseData.course_name),
+          where("university", "==", courseData.university),
+        ];
+        const existingCourses = await firestoreService.getAll(
+          "courses",
+          qConstraints
+        );
 
         if (existingCourses.length > 0) {
           importErrors.push(
@@ -355,7 +383,11 @@ const Courses = () => {
         successCount++;
       } catch (err) {
         console.error(`Error importing course row ${i + 2}:`, err, row);
-        importErrors.push(`Row ${i + 2} (${row.CourseName}): ${err.message}`);
+        importErrors.push(
+          `Row ${i + 2} (${row.CourseName || "N/A"}): ${
+            err.message || "Unknown error"
+          }`
+        );
         errorCount++;
       }
     }
@@ -368,15 +400,13 @@ const Courses = () => {
     });
     if (errorCount > 0) {
       toast.error(
-        `${errorCount} record(s) failed (duplicates: ${duplicateCount}). ${successCount} imported.`,
+        `${errorCount} record(s) failed (includes ${duplicateCount} duplicate(s)). ${successCount} imported.`,
         { duration: 6000 }
       );
     } else if (successCount > 0) {
       toast.success(`${successCount} course(s) imported successfully!`);
     } else {
-      toast.info(
-        "No new courses were imported (or all were duplicates/had errors)."
-      );
+      toast.info("No new courses were imported.");
     }
     setIsImporting(false);
   };
@@ -412,7 +442,9 @@ const Courses = () => {
             onClick={handleExport}
             className="btn-secondary flex items-center"
             title="Export Courses to CSV"
-            disabled={isImporting || isLoading}
+            disabled={
+              isImporting || isLoading || !courses || courses.length === 0
+            }
           >
             <Download size={20} className="mr-2" /> Export
           </button>
@@ -463,7 +495,7 @@ const Courses = () => {
                 {importResults.errorCount > 0 && (
                   <p>
                     {importResults.errorCount} record(s) failed (includes{" "}
-                    {importResults.duplicateCount} duplicates).
+                    {importResults.duplicateCount} duplicate(s)).
                   </p>
                 )}
               </div>
@@ -485,76 +517,74 @@ const Courses = () => {
           </div>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <div className="text-purple-600 text-2xl font-bold">
-                {courses?.length}
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Courses</p>
-              <p className="text-xs text-gray-500">All programs</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <div className="text-green-600 text-2xl font-bold">
-                {courses?.filter((c) => c.Active).length || 0}
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-xs text-gray-500">Available</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <div className="text-blue-600 text-2xl font-bold">
-                {
-                  [...new Set(courses?.map((c) => c.course_levels) || [])]
-                    .length
-                }
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">
-                Levels Offered
-              </p>
-              <p className="text-xs text-gray-500">Degree types</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <div className="text-yellow-600 text-2xl font-bold">
-                $
-                {(
-                  courses?.reduce(
-                    (sum, c) => sum + parseFloat(c.Application_fee || 0),
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            title: "Total Courses",
+            value: courses?.length,
+            color: "purple",
+            subtext: "All programs",
+          },
+          {
+            title: "Active Courses",
+            value: courses?.filter((c) => c.Active).length,
+            color: "green",
+            subtext: "Currently available",
+          },
+          {
+            title: "Course Levels",
+            value: [...new Set(courses?.map((c) => c.course_levels))].length,
+            color: "blue",
+            subtext: "Unique degree types",
+          },
+          {
+            title: "Avg. App Fee",
+            value:
+              courses?.length > 0
+                ? courses.reduce(
+                    (sum, c) => sum + parseFloat(c.Application_fee),
                     0
-                  ) / (courses?.filter((c) => c.Application_fee).length || 1) ||
-                  0
-                ).toFixed(0)}
+                  ) / courses.filter((c) => c.Application_fee).length
+                : 0,
+            color: "yellow",
+            subtext: "Est. application cost",
+            prefix: "$",
+          },
+        ].map((card) => (
+          <div
+            key={card.title}
+            className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+          >
+            <div className="flex items-center">
+              <div className={`p-2.5 bg-${card.color}-100 rounded-lg`}>
+                <div className={`text-${card.color}-600 text-2xl font-bold`}>
+                  {isLoading
+                    ? "..."
+                    : `${card.prefix || ""}${
+                        card.value % 1 !== 0
+                          ? card.value.toFixed(
+                              card.title === "Avg. App Fee" ? 0 : 0
+                            )
+                          : card.value
+                      }`}
+                </div>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">
+                  {card.title}
+                </p>
+                <p className="text-xs text-gray-500">{card.subtext}</p>
               </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Avg App Fee</p>
-              <p className="text-xs text-gray-500">Application cost</p>
-            </div>
           </div>
-        </div>
+        ))}
       </div>
+
       <div className="card">
         <CoursesTable
-          courses={courses || []}
-          universities={universities || []}
+          courses={courses}
+          universities={universities}
           loading={isLoading || isImporting}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -568,9 +598,10 @@ const Courses = () => {
         size="large"
       >
         <CourseForm
+          universities={universities}
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
-            handleFormSuccess();
+            handleFormSuccess("added");
             setShowAddModal(false);
           }}
         />
@@ -583,10 +614,12 @@ const Courses = () => {
       >
         <CourseForm
           editData={selectedCourse}
+          universities={universities}
           onClose={() => setShowEditModal(false)}
           onSuccess={() => {
-            handleFormSuccess();
+            handleFormSuccess("updated");
             setShowEditModal(false);
+            setSelectedCourse(null);
           }}
         />
       </Modal>
@@ -597,195 +630,51 @@ const Courses = () => {
         size="large"
       >
         {selectedCourse && (
-          <CourseDetails
-            course={selectedCourse}
-            universities={universities || []}
-          />
+          <CourseDetail course={selectedCourse} universities={universities} />
         )}
       </Modal>
-    </div>
-  );
-};
-
-const CourseDetails = ({ course, universities }) => {
-  const getUniversityName = (universityId) =>
-    universities.find((uni) => uni.id === universityId)?.univ_name ||
-    "Unknown University";
-  const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode; //
-  const getCountryCodeForUniversity = (universityId) =>
-    universities.find((uni) => uni.id === universityId)?.country;
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Basic Information
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Course Name
-            </label>
-            <p className="text-sm text-gray-900">{course.course_name}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Course Level
-            </label>
-            <p className="text-sm text-gray-900">{course.course_levels}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              University
-            </label>
-            <p className="text-sm text-gray-900">
-              {getUniversityName(course.university)}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setCourseToDeleteId(null);
+        }}
+        title="Confirm Deletion"
+        size="small"
+      >
+        <div className="p-6">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+              Delete Course?
+            </h3>
+            <p className="text-sm text-gray-500 mb-8">
+              Are you sure you want to delete this course? This action cannot be
+              undone.
             </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Country
-            </label>
-            <p className="text-sm text-gray-900">
-              {getCountryName(
-                getCountryCodeForUniversity(course.university) || course.country
-              )}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Specialization
-            </label>
-            <p className="text-sm text-gray-900">{course.specialisation_tag}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Website
-            </label>
-            <p className="text-sm text-gray-900">
-              {course.website_url ? (
-                <a
-                  href={course.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  {course.website_url}
-                </a>
-              ) : (
-                "N/A"
-              )}
-            </p>
+          <div className="flex justify-center gap-x-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setCourseToDeleteId(null);
+              }}
+              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Cancel
+            </button>
+            <button
+              disabled
+              type="button"
+              onClick={confirmDelete}
+              className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Delete
+            </button>
           </div>
         </div>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Academic Details
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Intakes
-            </label>
-            <p className="text-sm text-gray-900">
-              {Array.isArray(course.intake)
-                ? course.intake.join(", ")
-                : course.intake}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Application Deadline
-            </label>
-            <p className="text-sm text-gray-900">
-              {course.Application_deadline &&
-                new Date(course.Application_deadline).toLocaleDateString()}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Backlogs Allowed
-            </label>
-            <p className="text-sm text-gray-900">
-              {course.Backlogs_allowed ?? "N/A"}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Documents Required
-            </label>
-            <p className="text-sm text-gray-900">
-              {Array.isArray(course.documents_required)
-                ? course.documents_required.join(", ")
-                : course.documents_required}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Financial Information
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Application Fee
-            </label>
-            <p className="text-sm text-gray-900">
-              {course.Application_fee &&
-                `${course.Application_fee_currency || "$"}${
-                  course.Application_fee
-                }`}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Yearly Tuition Fee
-            </label>
-            <p className="text-sm text-gray-900">
-              {course.Yearly_Tuition_fee &&
-                `${course.Application_fee_currency || "$"}${
-                  course.Yearly_Tuition_fee
-                }`}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Status & Notes
-        </h4>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <p className="text-sm text-gray-900">
-              {course.Active ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Active
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                  Inactive
-                </span>
-              )}
-            </p>
-          </div>
-          {course.Remark && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Notes
-              </label>
-              <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                {course.Remark}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      </Modal>
     </div>
   );
 };

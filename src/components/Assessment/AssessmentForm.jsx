@@ -13,6 +13,7 @@ import {
   useEnquiries,
   useUniversities,
 } from "../../hooks/useFirestore";
+import Loading from "../Common/Loading";
 import { useAuth } from "../../context/AuthContext";
 import { assessmentService } from "../../services/firestore";
 
@@ -111,7 +112,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         await assessmentService.create(assessmentPayload);
         toast.success("Assessment created successfully!");
       }
-      
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -122,7 +123,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
   };
 
   if (enquiriesLoading || universitiesLoading || coursesLoading) {
-    return <div className="p-4 text-center">Loading form data...</div>;
+    return <Loading size="default" />;
   }
 
   return (
@@ -156,7 +157,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               </p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Country of Interest *
@@ -180,7 +180,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               </p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               University *
@@ -204,7 +203,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               </p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Level Applying For *
@@ -228,7 +226,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               </p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Course Interested
@@ -242,7 +239,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               ))}
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Intake Interested
@@ -258,7 +254,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
         </div>
       </div>
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           Course Details
@@ -275,7 +270,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               placeholder="e.g., Computer Science, Data Analytics"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Duration
@@ -287,7 +281,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               placeholder="e.g., 2 years, 18 months"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Course Link
@@ -301,7 +294,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
         </div>
       </div>
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           Financial Information
@@ -318,7 +310,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               placeholder="e.g., $100, €75"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tuition Fee
@@ -330,7 +321,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               placeholder="e.g., $25,000/year"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Fee Currency
@@ -346,7 +336,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
         </div>
       </div>
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           Assessment Status & Notes
@@ -365,7 +354,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               ))}
             </select>
           </div>
-
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Assessment Notes
@@ -379,7 +367,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
         </div>
       </div>
-
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
         <button
           type="button"
@@ -390,11 +377,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading
-            ? "Saving..."
-            : editData
-            ? "Update Assessment"
-            : "Create Assessment"}
+          {loading ? "Saving..." : editData ? "Update" : "Create"}
         </button>
       </div>
     </form>

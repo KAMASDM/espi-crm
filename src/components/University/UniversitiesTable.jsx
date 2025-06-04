@@ -15,6 +15,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { format } from "date-fns";
+import Loading from "../Common/Loading";
 import { COUNTRIES, CURRENCIES } from "../../utils/constants";
 
 const countryToCurrencyCodeMap = {
@@ -108,11 +109,7 @@ const UniversitiesTable = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <Loading size="default" />;
   }
 
   return (
@@ -250,8 +247,8 @@ const UniversitiesTable = ({
                       university.createdAt.toDate(),
                       "MMM dd, yyyy"
                     );
-                  } catch (e) {
-                    formattedDate = "Invalid Date";
+                  } catch (error) {
+                    console.error("Error formatting date:", error);
                   }
                 } else if (university.createdAt) {
                   try {
@@ -261,8 +258,8 @@ const UniversitiesTable = ({
                     } else {
                       formattedDate = "Invalid Date";
                     }
-                  } catch (e) {
-                    formattedDate = "Error Parsing Date";
+                  } catch (error) {
+                    console.error("Error parsing date:", error);
                   }
                 }
 
@@ -282,9 +279,6 @@ const UniversitiesTable = ({
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
                             {university.univ_name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {university.id.slice(-8)}
                           </div>
                         </div>
                       </div>

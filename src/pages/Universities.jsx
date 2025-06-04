@@ -15,20 +15,25 @@ import { useUniversities } from "../hooks/useFirestore";
 import { COUNTRIES, COURSE_LEVELS } from "../utils/constants";
 import UniversityForm from "../components/University/UniversityForm";
 import UniversitiesTable from "../components/University/UniversitiesTable";
+import UniversityDetail from "../components/University/UniversityDetail";
 
 const Universities = () => {
   const {
     data: universities,
     loading,
     error,
-    remove,
     create,
+    delete: deleteUniversity,
   } = useUniversities();
   const { user } = useAuth();
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedUniversity, setSelectedUniversity] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [universityToDeleteId, setUniversityToDeleteId] = useState(null);
 
   const fileInputRef = useRef(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -36,7 +41,8 @@ const Universities = () => {
 
   useEffect(() => {
     if (error) {
-      console.log("error", error);
+      console.error("Error fetching universities:", error);
+      toast.error("Failed to load universities.");
     }
   }, [error]);
 
@@ -50,24 +56,28 @@ const Universities = () => {
     setShowViewModal(true);
   };
 
-  const handleDelete = async (universityId) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this university? This action cannot be undone."
-      )
-    ) {
+  const handleDelete = (universityId) => {
+    setUniversityToDeleteId(universityId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (universityToDeleteId) {
       try {
-        await remove(universityId);
+        await deleteUniversity(universityToDeleteId);
         toast.success("University deleted successfully!");
-      } catch (error) {
-        console.error("Error deleting university:", error);
-        console.log("Failed to delete university. Please try again.");
+      } catch (err) {
+        console.error("Error deleting university:", err);
+        toast.error("Failed to delete university. Please try again.");
+      } finally {
+        setShowDeleteModal(false);
+        setUniversityToDeleteId(null);
       }
     }
   };
 
-  const handleFormSuccess = () => {
-    toast.success("University added successfully!");
+  const handleFormSuccess = (action = "added") => {
+    toast.success(`University ${action} successfully!`);
   };
 
   const handleExport = () => {
@@ -102,7 +112,7 @@ const Universities = () => {
       downloadAsCSV(dataToExport, "universities_export.csv");
       toast.success("Universities data exported successfully!");
     } else {
-      console.log("No data available to export.");
+      toast.info("No data available to export.");
     }
   };
 
@@ -122,11 +132,11 @@ const Universities = () => {
           );
 
           if (missingEssentialHeaders.length > 0) {
-            console.log(
-              `CSV is missing essential headers: ${missingEssentialHeaders.join(
-                ", "
-              )}.`
-            );
+            const message = `CSV is missing essential headers: ${missingEssentialHeaders.join(
+              ", "
+            )}. Required: ${essentialCsvHeaders.join(", ")}`;
+            toast.error(message, { duration: 5000 });
+            console.error(message);
             setIsImporting(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
@@ -134,8 +144,9 @@ const Universities = () => {
           await processUniversityImportData(results.data);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
-        error: (error) => {
-          console.log(`Error parsing CSV: ${error.message}`);
+        error: (err) => {
+          toast.error(`Error parsing CSV: ${err.message}`);
+          console.error("Error parsing CSV:", err);
           setIsImporting(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
@@ -149,7 +160,7 @@ const Universities = () => {
     const errors = [];
 
     if (!user || !user.uid) {
-      console.log("User not authenticated. Cannot import data.");
+      toast.error("User not authenticated. Cannot import data.");
       setIsImporting(false);
       return;
     }
@@ -168,31 +179,27 @@ const Universities = () => {
           Application_fee: row.ApplicationFee
             ? parseFloat(row.ApplicationFee)
             : null,
-          Active:
-            row.IsActive?.toLowerCase() === "true" ||
-            row.IsActive === "1" ||
-            true,
+          Active: !(
+            row.IsActive?.toLowerCase() === "false" || row.IsActive === "0"
+          ),
           deadline: row.ApplicationDeadline
             ? new Date(row.ApplicationDeadline).toISOString().split("T")[0]
             : null,
           levels:
-            row.CourseLevels?.split(",")
+            row.CourseLevels?.split(/[,|]/)
               .map((l) => l.trim())
-              .filter((l) => COURSE_LEVELS.includes(l)) || [], //
+              .filter((l) => COURSE_LEVELS.map((cl) => cl.value).includes(l)) ||
+            [],
           Backlogs_allowed: row.BacklogsAllowed
             ? parseInt(row.BacklogsAllowed, 10)
             : null,
           moi_accepted:
             row.MOIAccepted?.toLowerCase() === "true" ||
-            row.MOIAccepted === "1" ||
-            false,
+            row.MOIAccepted === "1",
           univ_desc: row.Description?.trim() || null,
           Remark: row.Notes?.trim() || null,
           Admission_Requirements: row.AdmissionRequirements?.trim() || null,
           Application_form_link: row.ApplicationFormLink?.trim() || null,
-
-          createdBy: user.uid,
-          assigned_users: user.uid,
         };
 
         let missingOrInvalidField = false;
@@ -266,7 +273,7 @@ const Universities = () => {
 
     setImportResults({ successCount, errorCount, errors });
     if (errorCount > 0) {
-      console.log(
+      toast.error(
         `${errorCount} universit(y/ies) failed to import. ${successCount} imported.`,
         { duration: 5000 }
       );
@@ -277,7 +284,7 @@ const Universities = () => {
     }
     setIsImporting(false);
   };
-
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -309,7 +316,12 @@ const Universities = () => {
             onClick={handleExport}
             className="btn-secondary flex items-center"
             title="Export Universities to CSV"
-            disabled={isImporting}
+            disabled={
+              isImporting ||
+              loading ||
+              !universities ||
+              universities.length === 0
+            }
           >
             <Download size={20} className="mr-2" /> Export
           </button>
@@ -322,6 +334,7 @@ const Universities = () => {
           </button>
         </div>
       </div>
+
       {importResults && (
         <div
           className={`p-4 rounded-md ${
@@ -384,76 +397,72 @@ const Universities = () => {
           </div>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <div className="text-blue-600 text-2xl font-bold">
-                {universities?.length}
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">
-                Total Universities
-              </p>
-              <p className="text-xs text-gray-500">All partnerships</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <div className="text-green-600 text-2xl font-bold">
-                {universities?.filter((uni) => uni.Active).length}
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-xs text-gray-500">Currently accepting</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <div className="text-purple-600 text-2xl font-bold">
-                {
-                  [...new Set(universities?.map((uni) => uni.country) || [])]
-                    .length
-                }
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Countries</p>
-              <p className="text-xs text-gray-500">Geographic spread</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <div className="text-yellow-600 text-2xl font-bold">
-                $
-                {(
-                  universities?.reduce(
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            title: "Total Universities",
+            value: universities?.length,
+            color: "blue",
+            subtext: "All partnerships",
+          },
+          {
+            title: "Active",
+            value: universities?.filter((uni) => uni.Active).length,
+            color: "green",
+            subtext: "Currently accepting",
+          },
+          {
+            title: "Countries",
+            value: [...new Set(universities?.map((uni) => uni.country))].length,
+            color: "purple",
+            subtext: "Geographic spread",
+          },
+          {
+            title: "Avg. App Fee",
+            value:
+              universities?.length > 0
+                ? universities.reduce(
                     (sum, uni) => sum + parseFloat(uni.Application_fee || 0),
                     0
-                  ) || 0
-                ).toFixed(0)}
+                  ) /
+                    universities.filter((uni) => uni.Application_fee).length ||
+                  0
+                : 0,
+            color: "yellow",
+            subtext: "Average per uni",
+            prefix: "$",
+          },
+        ].map((card) => (
+          <div
+            key={card.title}
+            className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+          >
+            <div className="flex items-center">
+              <div className={`p-2.5 bg-${card.color}-100 rounded-lg`}>
+                <div className={`text-${card.color}-600 text-2xl font-bold`}>
+                  {loading
+                    ? "..."
+                    : `${card.prefix || ""}${
+                        card.value % 1 !== 0
+                          ? card.value.toFixed(2)
+                          : card.value
+                      }`}
+                </div>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">
+                  {card.title}
+                </p>
+                <p className="text-xs text-gray-500">{card.subtext}</p>
               </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">
-                Total App Fees
-              </p>
-              <p className="text-xs text-gray-500">Estimated sum</p>
-            </div>
           </div>
-        </div>
+        ))}
       </div>
       <div className="card">
         <UniversitiesTable
-          universities={universities || []}
+          universities={universities}
           loading={loading || isImporting}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -469,7 +478,7 @@ const Universities = () => {
         <UniversityForm
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
-            handleFormSuccess();
+            handleFormSuccess("added");
             setShowAddModal(false);
           }}
         />
@@ -484,8 +493,9 @@ const Universities = () => {
           editData={selectedUniversity}
           onClose={() => setShowEditModal(false)}
           onSuccess={() => {
-            handleFormSuccess();
+            handleFormSuccess("updated");
             setShowEditModal(false);
+            setSelectedUniversity(null);
           }}
         />
       </Modal>
@@ -496,157 +506,51 @@ const Universities = () => {
         size="large"
       >
         {selectedUniversity && (
-          <UniversityDetails university={selectedUniversity} />
+          <UniversityDetail university={selectedUniversity} />
         )}
       </Modal>
-    </div>
-  );
-};
-
-const UniversityDetails = ({ university }) => {
-  const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Basic Information
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              University Name
-            </label>
-            <p className="text-sm text-gray-900">{university.univ_name}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Country
-            </label>
-            <p className="text-sm text-gray-900">
-              {getCountryName(university.country)}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setUniversityToDeleteId(null);
+        }}
+        title="Confirm Deletion"
+        size="small"
+      >
+        <div className="p-6">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+              Delete University?
+            </h3>
+            <p className="text-sm text-gray-500 mb-8">
+              Are you sure you want to delete this university? This action
+              cannot be undone.
             </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Phone
-            </label>
-            <p className="text-sm text-gray-900">{university.univ_phone}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <p className="text-sm text-gray-900">{university.univ_email}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Website
-            </label>
-            <p className="text-sm text-gray-900">
-              {university.univ_website && (
-                <a
-                  href={university.univ_website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  {university.univ_website}
-                </a>
-              )}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Application Fee
-            </label>
-            <p className="text-sm text-gray-900">
-              {university.Application_fee && `$${university.Application_fee}`}
-            </p>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <p className="text-sm text-gray-900 whitespace-pre-wrap">
-              {university.univ_desc}
-            </p>
+          <div className="flex justify-center gap-x-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setUniversityToDeleteId(null);
+              }}
+              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled
+              onClick={confirmDelete}
+              className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Delete
+            </button>
           </div>
         </div>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Academic Information
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Course Levels
-            </label>
-            <p className="text-sm text-gray-900">
-              {Array.isArray(university.levels)
-                ? university.levels.join(", ")
-                : university.levels}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Backlogs Allowed
-            </label>
-            <p className="text-sm text-gray-900">
-              {university?.Backlogs_allowed}
-            </p>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Admission Requirements
-            </label>
-            <p className="text-sm text-gray-900 whitespace-pre-wrap">
-              {university?.Admission_Requirements}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-          Status & Settings
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <p className="text-sm text-gray-900">
-              {university.Active ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Active
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                  Inactive
-                </span>
-              )}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              MOI Accepted
-            </label>
-            <p className="text-sm text-gray-900">
-              {university.moi_accepted ? "Yes" : "No"}
-            </p>
-          </div>
-        </div>
-      </div>
-      {university.Remark && (
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900 mb-3">Notes</h4>
-          <p className="text-sm text-gray-900 whitespace-pre-wrap">
-            {university.Remark}
-          </p>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 };
