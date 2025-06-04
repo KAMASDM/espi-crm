@@ -37,6 +37,13 @@ const PaymentsTable = ({
   const [sortField, setSortField] = useState("payment_date");
   const [sortDirection, setSortDirection] = useState("desc");
 
+  const getStudentName = (enquiryId) => {
+    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
+    return enquiry
+      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
+      : "Unknown Student";
+  };
+
   const filteredPayments = payments
     .filter((payment) => {
       const studentName = getStudentName(payment.Memo_For);
@@ -81,13 +88,6 @@ const PaymentsTable = ({
       setSortField(field);
       setSortDirection("asc");
     }
-  };
-
-  const getStudentName = (enquiryId) => {
-    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return enquiry
-      ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
-      : "Unknown Student";
   };
 
   const getStudentEmail = (enquiryId) => {
