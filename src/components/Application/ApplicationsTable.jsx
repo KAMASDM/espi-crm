@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Eye,
   Edit,
@@ -14,7 +14,23 @@ import {
   Download,
 } from "lucide-react";
 import { format } from "date-fns";
-import { APPLICATION_STATUS } from "../../utils/constants"; // Assuming this path is correct
+import { APPLICATION_STATUS } from "../../utils/constants";
+
+const DOCUMENT_KEYS_FOR_COUNT = [
+  "sop",
+  "cv",
+  "passport",
+  "ielts",
+  "toefl",
+  "gre",
+  "gmat",
+  "pte",
+  "work_experience",
+  "diploma_marksheet",
+  "bachelor_marksheet",
+  "master_marksheet",
+  "other_documents",
+];
 
 const ApplicationsTable = ({
   applications,
@@ -30,23 +46,21 @@ const ApplicationsTable = ({
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
 
-  // Moved getAssessment function definition before its usage
   const getAssessment = (assessmentId) => {
-    if (!assessments || !assessmentId) return null; // Add guard for assessments being undefined or null
+    if (!assessments || !assessmentId) return null;
     return assessments.find((assessment) => assessment.id === assessmentId);
   };
 
   const filteredApplications = applications
     .filter((application) => {
       const assessment = getAssessment(application.application);
-      // Ensure searchableText is robust against undefined assessment or properties
       const searchableText = `${assessment?.specialisation || ""} ${
         assessment?.university_name || ""
       }`.toLowerCase();
 
       const matchesSearch =
         searchableText.includes(searchTerm.toLowerCase()) ||
-        (application.id && application.id.includes(searchTerm)); // Add guard for application.id
+        (application.id && application.id.includes(searchTerm));
 
       const matchesStatus =
         !statusFilter || application.application_status === statusFilter;
@@ -57,13 +71,11 @@ const ApplicationsTable = ({
       let aValue = a[sortField];
       let bValue = b[sortField];
 
-      // Handle cases where values might be undefined or null for sorting
-      if (aValue == null) aValue = ""; // Treat null/undefined as empty string or a specific value
+      if (aValue == null) aValue = "";
       if (bValue == null) bValue = "";
 
-      // Date sorting for 'createdAt'
       if (sortField === "createdAt") {
-        aValue = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0); // Fallback for invalid dates
+        aValue = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
         bValue = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
       }
 
@@ -104,10 +116,9 @@ const ApplicationsTable = ({
       Rejected: { color: "bg-red-100 text-red-800", icon: XCircle },
       Waitlisted: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
       Deferred: { color: "bg-gray-100 text-gray-800", icon: Clock },
-      // Add other statuses from APPLICATION_STATUS if they are not covered
     };
 
-    const config = statusConfig[status] || statusConfig["Draft"]; // Fallback to Draft
+    const config = statusConfig[status] || statusConfig["Draft"];
     const Icon = config.icon;
 
     return (
@@ -115,27 +126,10 @@ const ApplicationsTable = ({
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
       >
         <Icon size={12} className="mr-1" />
-        {status || "N/A"} {/* Display N/A if status is undefined */}
+        {status}
       </span>
     );
   };
-
-  // Define the list of document keys consistently
-  const DOCUMENT_KEYS_FOR_COUNT = [
-    "sop",
-    "cv",
-    "passport",
-    "ielts",
-    "toefl",
-    "gre",
-    "gmat",
-    "pte",
-    "work_experience",
-    "diploma_marksheet",
-    "bachelor_marksheet",
-    "master_marksheet",
-    "other_documents",
-  ];
 
   const getDocumentCount = (application) => {
     if (!application) return 0;
@@ -146,7 +140,7 @@ const ApplicationsTable = ({
   const getCompletionPercentage = (application) => {
     if (!application) return 0;
     const totalFields = DOCUMENT_KEYS_FOR_COUNT.length;
-    if (totalFields === 0) return 0; // Avoid division by zero
+    if (totalFields === 0) return 0;
     const completedFields = getDocumentCount(application);
     return Math.round((completedFields / totalFields) * 100);
   };
@@ -358,12 +352,11 @@ const ApplicationsTable = ({
                           size={14}
                           className="mr-1.5 text-gray-400 flex-shrink-0"
                         />
-                        {application.createdAt?.toDate
-                          ? format(
-                              application.createdAt.toDate(),
-                              "MMM dd, yyyy"
-                            )
-                          : "N/A"}
+                        {application.createdAt?.toDate &&
+                          format(
+                            application.createdAt.toDate(),
+                            "MMM dd, yyyy"
+                          )}
                       </div>
                     </td>
 

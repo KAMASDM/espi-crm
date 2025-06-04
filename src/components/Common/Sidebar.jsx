@@ -1,21 +1,22 @@
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   X,
   Home,
   Users,
-  Building2,
   BookOpen,
-  ClipboardList,
   FileText,
-  CreditCard,
+  Building2,
   BarChart3,
+  Briefcase,
+  CreditCard,
+  ClipboardList,
   MessageCircle,
   GraduationCap,
   Users as UsersIcon,
-  Briefcase,
 } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
 import { USER_ROLES } from "../../utils/constants";
+import { useAuth } from "../../context/AuthContext";
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
@@ -170,7 +171,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
           </button>
         </div>
         <nav className="mt-6 px-3 flex-1 overflow-y-auto pb-20">
-          {" "}
           <div className="space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon;
@@ -201,7 +201,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
           </div>
         </nav>
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-          {" "}
           <div className="text-xs text-gray-500 text-center">ESPI CRM v1.1</div>
         </div>
       </div>

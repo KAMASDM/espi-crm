@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { format, isToday, isYesterday } from "date-fns";
 
 const MessageList = ({ messages, currentUser }) => {
@@ -44,12 +44,7 @@ const MessageList = ({ messages, currentUser }) => {
             >
               {!isOwn && showSenderInfo && (
                 <img
-                  src={
-                    message.senderPhotoURL ||
-                    `https://ui-avatars.com/api/?name=${
-                      message.senderName || "U"
-                    }&background=random`
-                  }
+                  src={message.senderPhotoURL}
                   alt={message.senderName}
                   className="w-6 h-6 rounded-full self-start"
                 />

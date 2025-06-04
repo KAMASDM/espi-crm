@@ -1,29 +1,28 @@
+import React from "react";
 import { X } from "lucide-react";
 
+const sizeClasses = {
+  small: "max-w-md",
+  default: "max-w-2xl",
+  large: "max-w-4xl",
+  full: "max-w-6xl",
+};
+
 const Modal = ({
+  title,
   isOpen,
   onClose,
-  title,
   children,
   size = "default",
   showCloseButton = true,
 }) => {
   if (!isOpen) return null;
-
-  const sizeClasses = {
-    small: "max-w-md",
-    default: "max-w-2xl",
-    large: "max-w-4xl",
-    full: "max-w-6xl",
-  };
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div
         className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity"
         onClick={onClose}
       />
-
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
           className={`
@@ -46,7 +45,6 @@ const Modal = ({
               )}
             </div>
           )}
-
           <div className="px-6 py-4">{children}</div>
         </div>
       </div>

@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import {
+  INTAKES,
   COUNTRIES,
+  CURRENCIES,
   COURSE_LEVELS,
   ASSESSMENT_STATUS,
-  INTAKES,
-  CURRENCIES,
 } from "../../utils/constants";
 import {
+  useCourses,
   useEnquiries,
   useUniversities,
-  useCourses,
 } from "../../hooks/useFirestore";
-import { assessmentService } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
+import { assessmentService } from "../../services/firestore";
 
 const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -24,16 +24,15 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
     formState: { errors },
     reset,
   } = useForm({});
-
   const { user } = useAuth();
   const { data: enquiries, loading: enquiriesLoading } = useEnquiries();
+  const { data: courses, loading: coursesLoading } = useCourses();
   const { data: universities, loading: universitiesLoading } =
     useUniversities();
-  const { data: courses, loading: coursesLoading } = useCourses();
 
   const [loading, setLoading] = useState(false);
-  const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
+  const [filteredUniversities, setFilteredUniversities] = useState([]);
 
   const selectedCountry = watch("student_country");
   const selectedUniversity = watch("university");
@@ -93,17 +92,12 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
   }, [selectedUniversity, selectedLevel, courses, coursesLoading]);
 
   const onSubmit = async (dataFromForm) => {
-    console.log("Raw data from form:", dataFromForm);
-
     if (!user || !user.uid) {
-      toast.error("User not authenticated. Cannot save assessment.");
       setLoading(false);
       return;
     }
-
     try {
       setLoading(true);
-
       const assessmentPayload = {
         ...dataFromForm,
         assigned_users: user.uid,
@@ -117,14 +111,11 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         await assessmentService.create(assessmentPayload);
         toast.success("Assessment created successfully!");
       }
-
+      
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error("Error saving assessment:", error);
-      toast.error(
-        error.message || "Failed to save assessment. Please try again."
-      );
+      console.log("error", error);
     } finally {
       setLoading(false);
     }

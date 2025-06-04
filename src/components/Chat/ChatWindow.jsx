@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
-import MessageList from "./MessageList";
-import MessageInput from "./MessageInput";
+import React, { useState, useEffect } from "react";
 import UserList from "./UserList";
+import MessageList from "./MessageList";
+import Loading from "../Common/Loading";
+import MessageInput from "./MessageInput";
 import { useMessages } from "../../hooks/useChat";
-import { chatService } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
+import { chatService } from "../../services/firestore";
 import { Users, X, User as UserIcon, Hash, MessageSquare } from "lucide-react";
-import LoadingSpinner from "../common/LoadingSpinner";
 
 const ChatWindow = ({ selectedChat, onClose }) => {
   const { user: currentUser } = useAuth();
@@ -32,7 +32,7 @@ const ChatWindow = ({ selectedChat, onClose }) => {
     try {
       await chatService.sendMessage(selectedChat.id, messageText);
     } catch (error) {
-      console.error("Failed to send message:", error);
+      console.log("error", error);
     }
   };
 
@@ -48,14 +48,14 @@ const ChatWindow = ({ selectedChat, onClose }) => {
         (id) => id !== currentUser.uid
       );
       const otherMemberInfo = selectedChat.memberInfo?.[otherMemberId];
-      chatDisplayName = otherMemberInfo?.displayName || "Direct Message";
-      chatSubtitle = otherMemberInfo?.email || "User";
+      chatDisplayName = otherMemberInfo?.displayName;
+      chatSubtitle = otherMemberInfo?.email;
       AvatarComponent = UserIcon;
       avatarBg = "bg-blue-100";
       avatarText = "text-blue-600";
     } else {
-      chatDisplayName = selectedChat.name || "Group Chat";
-      chatSubtitle = `${selectedChat.members?.length || 0} members`;
+      chatDisplayName = selectedChat.name;
+      chatSubtitle = `${selectedChat.members?.length} members`;
       AvatarComponent = Hash;
     }
   }
@@ -77,11 +77,7 @@ const ChatWindow = ({ selectedChat, onClose }) => {
   }
 
   if (messagesError) {
-    return (
-      <div className="p-4 text-red-500">
-        Error loading messages: {messagesError.message}
-      </div>
-    );
+    return <div className="p-4 text-red-500">{messagesError.message}</div>;
   }
 
   return (
@@ -139,7 +135,7 @@ const ChatWindow = ({ selectedChat, onClose }) => {
         <div className="flex-1 flex flex-col">
           {messagesLoading && messages.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
-              <LoadingSpinner />
+              <Loading />
             </div>
           ) : (
             <MessageList messages={messages} currentUser={currentUser} />
@@ -158,7 +154,7 @@ const ChatWindow = ({ selectedChat, onClose }) => {
                 id: uid,
                 name:
                   selectedChat.memberInfo?.[uid]?.displayName || "Unknown User",
-                status: "online", 
+                status: "online",
                 avatar: selectedChat.memberInfo?.[uid]?.photoURL,
               }))}
             />

@@ -1,24 +1,25 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   X,
+  Check,
+  Search,
   Users as GroupIcon,
   User as DirectIcon,
-  Search,
-  Check,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useChatUsers } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { chatService } from "../../services/firestore";
-import toast from "react-hot-toast";
 
 const NewChatModal = ({ onClose, onChatCreated }) => {
   const { user: currentUser } = useAuth();
   const { users: availableUsers, loading: usersLoading } = useChatUsers();
-  const [chatType, setChatType] = useState("direct");
-  const [selectedUsers, setSelectedUsers] = useState([]);
+
   const [groupName, setGroupName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [chatType, setChatType] = useState("direct");
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   const handleUserSelect = (userId) => {
     if (chatType === "direct") {
@@ -41,15 +42,15 @@ const NewChatModal = ({ onClose, onChatCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!currentUser) {
-      toast.error("Authentication error.");
+      console.log("Authentication error.");
       return;
     }
     if (selectedUsers.length === 0) {
-      toast.error("Please select at least one user.");
+      console.log("Please select at least one user.");
       return;
     }
     if (chatType === "group" && !groupName.trim()) {
-      toast.error("Please enter a group name.");
+      console.log("Please enter a group name.");
       return;
     }
 
@@ -60,7 +61,7 @@ const NewChatModal = ({ onClose, onChatCreated }) => {
 
       if (chatType === "direct") {
         if (selectedUsers.length !== 1) {
-          toast.error("Please select exactly one user for a direct chat.");
+          console.log("Please select exactly one user for a direct chat.");
           setIsCreating(false);
           return;
         }
@@ -109,8 +110,7 @@ const NewChatModal = ({ onClose, onChatCreated }) => {
       onChatCreated(result);
       onClose();
     } catch (error) {
-      console.error("Error creating chat:", error);
-      toast.error(`Failed to create chat: ${error.message}`);
+      console.log("error", error);
     } finally {
       setIsCreating(false);
     }
@@ -226,18 +226,13 @@ const NewChatModal = ({ onClose, onChatCreated }) => {
                     >
                       <div className="flex items-center">
                         <img
-                          src={
-                            user.photoURL ||
-                            `https://ui-avatars.com/api/?name=${
-                              user.displayName || "User"
-                            }&background=random`
-                          }
+                          src={user.photoURL}
                           alt={user.displayName}
                           className="w-8 h-8 rounded-full mr-3 object-cover"
                         />
                         <div>
                           <p className="text-sm font-medium text-gray-800">
-                            {user.displayName || "Unnamed User"}
+                            {user.displayName}
                           </p>
                           <p className="text-xs text-gray-500">{user.email}</p>
                         </div>
@@ -251,7 +246,6 @@ const NewChatModal = ({ onClose, onChatCreated }) => {
               </div>
             </div>
           </div>
-
           <div className="px-6 py-4 border-t flex justify-end space-x-3">
             <button
               type="button"

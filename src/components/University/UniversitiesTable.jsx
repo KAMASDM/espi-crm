@@ -1,35 +1,35 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Eye,
   Edit,
-  Trash2,
-  Phone,
   Mail,
+  Phone,
   Globe,
   MapPin,
-  Building2,
-  Calendar,
+  Trash2,
   Search,
   Filter,
-  CheckCircle,
   XCircle,
+  Calendar,
+  Building2,
+  CheckCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { COUNTRIES, CURRENCIES } from "../../utils/constants";
 
-const getCurrencySymbolForCountry = (countryCode) => {
-  const countryToCurrencyCodeMap = {
-    US: "USD",
-    CA: "CAD",
-    GB: "GBP",
-    AU: "AUD",
-    DE: "EUR",
-    FR: "EUR",
-    NL: "EUR",
-    SG: "SGD",
-    IN: "INR",
-  };
+const countryToCurrencyCodeMap = {
+  US: "USD",
+  CA: "CAD",
+  GB: "GBP",
+  AU: "AUD",
+  DE: "EUR",
+  FR: "EUR",
+  NL: "EUR",
+  SG: "SGD",
+  IN: "INR",
+};
 
+const getCurrencySymbolForCountry = (countryCode) => {
   const targetCurrencyCode = countryToCurrencyCodeMap[countryCode];
   if (targetCurrencyCode) {
     const currency = CURRENCIES.find((c) => c.code === targetCurrencyCode); //
@@ -48,8 +48,8 @@ const UniversitiesTable = ({
   onView,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [countryFilter, setCountryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [countryFilter, setCountryFilter] = useState("");
   const [sortField, setSortField] = useState("univ_name");
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -89,7 +89,7 @@ const UniversitiesTable = ({
   };
 
   const getCountryName = (countryCode) => {
-    const country = COUNTRIES.find((c) => c.code === countryCode); //
+    const country = COUNTRIES.find((c) => c.code === countryCode);
     return country ? country.name : countryCode;
   };
 
@@ -144,15 +144,11 @@ const UniversitiesTable = ({
               className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Countries</option>
-              {COUNTRIES.map(
-                (
-                  country //
-                ) => (
-                  <option key={country.code} value={country.code}>
-                    {country.name}
-                  </option>
-                )
-              )}
+              {COUNTRIES.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
             </select>
           </div>
 

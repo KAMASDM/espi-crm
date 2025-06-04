@@ -39,7 +39,6 @@ export const signInWithGoogle = async () => {
         updatedAt: new Date().toISOString(),
       };
       localStorage.setItem("userProfile", JSON.stringify(profileForStorage));
-      console.log("New user profile created and stored:", profileForStorage);
     } else {
       const existingData = userSnap.data();
       const updates = { updatedAt: serverTimestamp() };
@@ -73,15 +72,10 @@ export const signInWithGoogle = async () => {
           new Date().toISOString(),
       };
       localStorage.setItem("userProfile", JSON.stringify(profileForStorage));
-      console.log(
-        "Existing user profile loaded and stored:",
-        profileForStorage
-      );
     }
 
     return user;
   } catch (error) {
-    console.log("Error signing in with Google:", error);
     localStorage.removeItem("userProfile");
     throw error;
   }
@@ -92,7 +86,6 @@ export const signOutUser = async () => {
     await signOut(auth);
     localStorage.removeItem("userProfile");
   } catch (error) {
-    console.log("Error signing out:", error);
     throw error;
   }
 };
@@ -102,7 +95,6 @@ export const getCurrentUserProfile = () => {
     const profile = localStorage.getItem("userProfile");
     return profile ? JSON.parse(profile) : null;
   } catch (error) {
-    console.log("Error getting user profile from localStorage:", error);
     return null;
   }
 };

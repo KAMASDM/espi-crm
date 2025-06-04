@@ -1,19 +1,19 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
-import Modal from "../components/common/Modal";
+import toast from "react-hot-toast";
+import Modal from "../components/Common/Modal";
+import { USER_ROLES } from "../utils/constants";
+import { useAuth } from "../context/AuthContext";
+import Loading from "../components/Common/Loading";
+import { branchService } from "../services/firestore";
 import BranchForm from "../components/Branch/BranchForm";
 import BranchesTable from "../components/Branch/BranchesTable";
-import { branchService } from "../services/firestore";
-import { useAuth } from "../context/AuthContext";
-import { USER_ROLES } from "../utils/constants";
-import toast from "react-hot-toast";
-import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const BranchManagement = () => {
   const { userProfile } = useAuth();
+  const [error, setError] = useState(null);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
@@ -24,10 +24,9 @@ const BranchManagement = () => {
       const fetchedBranches = await branchService.getAll();
       setBranches(fetchedBranches);
       setError(null);
-    } catch (err) {
-      console.error("Error fetching branches:", err);
-      setError(err);
-      toast.error("Failed to load branches.");
+    } catch (error) {
+      console.log("error", error);
+      setError(error);
     } finally {
       setLoading(false);
     }
@@ -52,9 +51,8 @@ const BranchManagement = () => {
         await branchService.delete(branchId);
         toast.success("Branch deleted successfully!");
         fetchBranches();
-      } catch (err) {
-        console.error("Error deleting branch:", err);
-        toast.error("Failed to delete branch.");
+      } catch (error) {
+        console.log("Error deleting branch:", error);
       }
     }
   };
@@ -62,16 +60,12 @@ const BranchManagement = () => {
   const handleFormSuccess = () => {
     setShowAddModal(false);
     setShowEditModal(false);
-    fetchBranches(); 
+    fetchBranches();
   };
 
-  if (loading) return <LoadingSpinner />;
-  if (error)
-    return (
-      <div className="text-red-500">
-        Error loading branches: {error.message}
-      </div>
-    );
+  if (loading) return <Loading />;
+
+  if (error) return <div className="text-red-500">{error.message}</div>;
 
   if (userProfile?.role !== USER_ROLES.SUPERADMIN) {
     return (
@@ -102,7 +96,6 @@ const BranchManagement = () => {
           <Plus size={20} className="mr-2" /> Add Branch
         </button>
       </div>
-
       <div className="card">
         <BranchesTable
           branches={branches}
@@ -110,7 +103,6 @@ const BranchManagement = () => {
           onDelete={handleDelete}
         />
       </div>
-
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}

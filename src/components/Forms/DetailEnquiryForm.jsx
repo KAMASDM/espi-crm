@@ -1,32 +1,31 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useForm, useFieldArray } from "react-hook-form";
+import app from "../../services/firebase";
+import { useAuth } from "../../context/AuthContext";
+import { firestoreService } from "../../services/firestore";
 import {
+  COUNTRIES,
+  ENQUIRY_STATUS,
   EDUCATION_LEVELS,
   AVAILABLE_SERVICES,
-  ENQUIRY_STATUS,
-  COUNTRIES,
-} from "../../utils/constants"; // Assuming these constants are correctly defined
-import { firestoreService } from "../../services/firestore";
-import { useAuth } from "../../context/AuthContext"; // Assuming this context provides user
+} from "../../utils/constants";
 import {
-  Upload,
-  FileText,
   X,
   Plus,
+  Upload,
   Trash2,
-  ArrowRight,
+  FileText,
   ArrowLeft,
+  ArrowRight,
   CheckCircle,
 } from "lucide-react";
-import toast from "react-hot-toast";
-
 import {
   getStorage,
   ref,
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import app from "../../services/firebase"; // Assuming 'app' is your initialized Firebase app
 
 const storage = getStorage(app);
 
@@ -63,7 +62,6 @@ const STEPS = [
     id: 5,
     name: "Document Uploads",
     fields: [
-      // These are RHF field names, not necessarily all required for validation trigger
       "tenth_Document",
       "twelveth_Document",
       "graduation_Marksheet",
@@ -106,10 +104,6 @@ const DOCUMENT_FIELD_KEYS = [
   "gre_Result",
   "gmat_Result",
 ];
-
-// --- Step Components (Step1Academics, Step2TestScores, etc.) remain the same as provided by the user ---
-// For brevity, I'm not repeating them here. Assume they are defined as in your original file.
-// Make sure they correctly use `register` and `errors` props.
 
 const Step1Academics = ({ register, errors }) => (
   <div className="space-y-6">
@@ -1013,7 +1007,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
       <h6 className="text-sm font-semibold text-gray-600">{title}</h6>
       {Object.entries(obj || {}).map(
         ([key, value]) =>
-          (value || value === 0 || typeof value === "boolean") && ( // Show false booleans too
+          (value || value === 0 || typeof value === "boolean") && (
             <p key={key} className="text-xs text-gray-700 ml-2">
               <span className="capitalize font-medium">
                 {key
@@ -1024,7 +1018,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
               </span>{" "}
               {typeof value === "object" &&
               value !== null &&
-              !Array.isArray(value) // Check for non-null objects
+              !Array.isArray(value)
                 ? JSON.stringify(value)
                 : String(value)}
             </p>
@@ -1063,7 +1057,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
       {(!arr ||
         arr.length === 0 ||
         (arr.length === 1 &&
-          !Object.values(arr[0]).some((v) => v || v === 0))) && ( // Check if all values in first item are falsy (excluding 0)
+          !Object.values(arr[0]).some((v) => v || v === 0))) && (
         <p className="text-xs text-gray-500 ml-2 italic">Not provided</p>
       )}
     </div>
@@ -1100,7 +1094,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
               Father's Occupation:
             </h6>
             <p className="text-xs text-gray-700 ml-2">
-              {formData.father_Occupation || "N/A"}
+              {formData.father_Occupation}
             </p>
           </div>
           <div>
@@ -1118,7 +1112,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
               Confirmed Services:
             </h6>
             <p className="text-xs text-gray-700 ml-2">
-              {(formData.confirmed_services || []).join(", ") || "N/A"}
+              {formData.confirmed_services.join(", ")}
             </p>
           </div>
           <div>
@@ -1126,7 +1120,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
               Profile Status:
             </h6>
             <p className="text-xs text-gray-700 ml-2">
-              {formData.enquiry_status || "N/A"}
+              {formData.enquiry_status}
             </p>
           </div>
         </div>
@@ -1137,9 +1131,8 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
         </h5>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
           {DOCUMENT_FIELD_KEYS.map((key) => {
-            const documentName = uploadedDocumentsDisplay[key] || formData[key]; // formData[key] is display name from RHF
+            const documentName = uploadedDocumentsDisplay[key] || formData[key];
             if (documentName) {
-              // Check if there's a display name or an old URL string
               return (
                 <div
                   key={key}
@@ -1147,7 +1140,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
                   title={
                     typeof documentName === "string"
                       ? documentName
-                      : "File selected" // Should be display name if it's a file object
+                      : "File selected"
                   }
                 >
                   <FileText size={14} className="text-gray-600 flex-shrink-0" />
@@ -1164,8 +1157,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
                     :
                   </span>
                   <span className="text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
-                    {/* Display the name from uploadedDocumentsDisplay which is more reliable */}
-                    {uploadedDocumentsDisplay[key] || "File ready for upload"}
+                    {uploadedDocumentsDisplay[key]}
                   </span>
                 </div>
               );
@@ -1173,7 +1165,7 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
             return null;
           })}
           {Object.keys(uploadedDocumentsDisplay).length === 0 &&
-            !DOCUMENT_FIELD_KEYS.some((key) => getValues(key)) && ( // Check RHF values directly
+            !DOCUMENT_FIELD_KEYS.some((key) => getValues(key)) && (
               <p className="text-xs text-gray-500 italic col-span-full">
                 No documents selected for upload.
               </p>
@@ -1190,13 +1182,11 @@ const DetailEnquiryForm = ({
   selectedEnquiry,
   editData = null,
 }) => {
-  const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = STEPS.length;
+  const [currentStep, setCurrentStep] = useState(1);
+  const [filesToUpload, setFilesToUpload] = useState({});
+  const [uploadedDocumentsDisplay, setUploadedDocumentsDisplay] = useState({});
 
-  const [filesToUpload, setFilesToUpload] = useState({}); // Stores File objects or existing URLs
-  const [uploadedDocumentsDisplay, setUploadedDocumentsDisplay] = useState({}); // Stores display names for UI
-
-  // Define defaultValues carefully
   const defaultValues = {
     Current_Enquiry: selectedEnquiry?.id || "",
     current_education_details: editData?.current_education_details || {
@@ -1274,10 +1264,7 @@ const DetailEnquiryForm = ({
       reason: "",
     },
     ...DOCUMENT_FIELD_KEYS.reduce((acc, key) => {
-      // Initialize document fields for RHF
-      acc[key] = editData?.[key]
-        ? uploadedDocumentsDisplay[key] || "Attached Document"
-        : ""; // Use display name if available, or generic
+      acc[key] = editData?.[key] ? uploadedDocumentsDisplay[key] : "";
       return acc;
     }, {}),
     confirmed_services:
@@ -1301,7 +1288,7 @@ const DetailEnquiryForm = ({
     reset,
   } = useForm({
     defaultValues,
-    mode: "onTouched", // Or "onChange" if preferred
+    mode: "onTouched",
   });
 
   const {
@@ -1313,20 +1300,18 @@ const DetailEnquiryForm = ({
     name: "workExperiences",
   });
 
-  const { user } = useAuth(); // Make sure useAuth provides a user object with uid
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const initialFormValues = { ...defaultValues }; // Start with base defaults
+    const initialFormValues = { ...defaultValues };
 
     if (editData) {
-      // Deep merge editData into initialFormValues
       Object.keys(editData).forEach((key) => {
         if (DOCUMENT_FIELD_KEYS.includes(key)) {
-          // For document fields, handle separately to set display names and filesToUpload
           if (editData[key] && typeof editData[key] === "string") {
             const fileUrlOrName = editData[key];
-            let displayName = "Attached Document"; // Default display name
+            let displayName = "Attached Document";
             if (
               fileUrlOrName.startsWith("https://firebasestorage.googleapis.com")
             ) {
@@ -1339,7 +1324,7 @@ const DetailEnquiryForm = ({
                 const actualEncodedName = encodedNameWithStoragePath
                   .split("%2F")
                   .pop();
-                displayName = actualEncodedName.split("?")[0]; // Remove query params
+                displayName = actualEncodedName.split("?")[0];
                 if (
                   displayName.includes("_") &&
                   /^\d+_/.test(displayName.split("/").pop())
@@ -1356,23 +1341,21 @@ const DetailEnquiryForm = ({
                 );
               }
             } else {
-              displayName = fileUrlOrName; // If it's not a URL, it might be an old name
+              displayName = fileUrlOrName;
             }
-            initialFormValues[key] = displayName; // RHF value is display name
+            initialFormValues[key] = displayName;
             setUploadedDocumentsDisplay((prev) => ({
               ...prev,
               [key]: displayName,
             }));
-            setFilesToUpload((prev) => ({ ...prev, [key]: fileUrlOrName })); // Store the actual URL
+            setFilesToUpload((prev) => ({ ...prev, [key]: fileUrlOrName }));
           } else {
-            initialFormValues[key] = ""; // Clear if no URL
+            initialFormValues[key] = "";
           }
         } else if (editData[key] !== undefined) {
-          // For non-document fields
           initialFormValues[key] = editData[key];
         }
       });
-      // Ensure workExperiences is correctly populated for edit mode
       if (editData.workExperiences && editData.workExperiences.length > 0) {
         initialFormValues.workExperiences = editData.workExperiences;
       } else {
@@ -1381,7 +1364,6 @@ const DetailEnquiryForm = ({
         ];
       }
     } else if (selectedEnquiry) {
-      // For new form, prefill from selectedEnquiry
       initialFormValues.current_education_details.level =
         selectedEnquiry.current_education || "";
       initialFormValues.confirmed_services =
@@ -1389,19 +1371,14 @@ const DetailEnquiryForm = ({
       initialFormValues.enquiry_status =
         selectedEnquiry.enquiry_status || "Profile Under Review";
     }
-    reset(initialFormValues); // Reset the form with the processed values
-  }, [editData, selectedEnquiry, reset]); // Removed defaultValues from deps as it's complex and might cause loops
+    reset(initialFormValues);
+  }, [editData, selectedEnquiry, reset]);
 
   const nextStep = async () => {
-    const currentStepConfig = STEPS.find((step) => step.id === currentStep);
-    let fieldsToValidate = currentStepConfig?.fields || [];
-
-    // More robust field validation trigger
     const stepFields = STEPS.find((s) => s.id === currentStep)?.fields || [];
     const validationPromises = [];
     if (stepFields.length > 0) {
       stepFields.forEach((field) => {
-        // For nested fields like 'current_education_details.level'
         if (
           typeof getValues(field) === "object" &&
           getValues(field) !== null &&
@@ -1434,12 +1411,11 @@ const DetailEnquiryForm = ({
     if (isValid && currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     } else if (!isValid) {
-      toast.error(
+      console.log(
         "Please fill all required fields in this section correctly.",
         { id: "validationError" }
       );
     }
-    // Removed redundant else if (currentStep < totalSteps)
   };
 
   const prevStep = () => {
@@ -1450,12 +1426,12 @@ const DetailEnquiryForm = ({
 
   const onSubmitHandler = async (formDataFromHook) => {
     if (!user || !user.uid) {
-      toast.error("User not authenticated. Cannot save profile.");
+      console.log("User not authenticated. Cannot save profile.");
       setLoading(false);
       return;
     }
     if (!selectedEnquiry || !selectedEnquiry.id) {
-      toast.error("Associated enquiry ID is missing. Cannot save profile.");
+      console.log("Associated enquiry ID is missing. Cannot save profile.");
       setLoading(false);
       return;
     }
@@ -1475,9 +1451,9 @@ const DetailEnquiryForm = ({
           const file = fileOrUrl;
           const uploadToastId = toast.loading(`Uploading ${file.name}...`, {
             duration: 10000,
-          }); // Increased duration
+          });
 
-          const enquiryIdForPath = selectedEnquiry.id; // Must have selectedEnquiry.id
+          const enquiryIdForPath = selectedEnquiry.id;
           const storageFilePath = `detailEnquiries/${enquiryIdForPath}/${fieldName}/${Date.now()}_${
             file.name
           }`;
@@ -1489,16 +1465,10 @@ const DetailEnquiryForm = ({
             new Promise((resolve, reject) => {
               uploadTask.on(
                 "state_changed",
-                (snapshot) => {
-                  /* Progress handling (optional) */
-                },
+                (snapshot) => {},
                 (error) => {
-                  // Handle unsuccessful uploads
-                  console.error(
-                    `Error uploading ${fieldName} (${file.name}):`,
-                    error
-                  );
-                  toast.error(`Failed to upload ${file.name}.`, {
+                  console.log("error", error);
+                  console.log("error", {
                     id: uploadToastId,
                   });
                   reject(
@@ -1508,7 +1478,6 @@ const DetailEnquiryForm = ({
                   );
                 },
                 () => {
-                  // Handle successful uploads on complete
                   getDownloadURL(uploadTask.snapshot.ref)
                     .then((downloadURL) => {
                       newDocumentURLs[fieldName] = downloadURL;
@@ -1518,11 +1487,8 @@ const DetailEnquiryForm = ({
                       resolve();
                     })
                     .catch((error) => {
-                      console.error(
-                        `Error getting download URL for ${file.name}:`,
-                        error
-                      );
-                      toast.error(`Failed to get URL for ${file.name}.`, {
+                      console.log("error", error);
+                      console.log("error", {
                         id: uploadToastId,
                       });
                       reject(error);
@@ -1538,28 +1504,23 @@ const DetailEnquiryForm = ({
         await Promise.all(uploadPromises);
       }
 
-      // Prepare data for Firestore, ensuring RHF's file names are replaced by URLs or cleared
       const dataToSave = { ...formDataFromHook };
 
       DOCUMENT_FIELD_KEYS.forEach((fieldName) => {
-        let urlToSave = ""; // Default to empty string for the document field
+        let urlToSave = "";
         if (newDocumentURLs[fieldName]) {
-          urlToSave = newDocumentURLs[fieldName]; // Use new URL if upload was successful
+          urlToSave = newDocumentURLs[fieldName];
         } else if (
           filesToUpload[fieldName] &&
           typeof filesToUpload[fieldName] === "string"
         ) {
-          // If it's a string in filesToUpload, it's an existing URL that wasn't changed
           urlToSave = filesToUpload[fieldName];
         }
-        // If filesToUpload[fieldName] was a File but no newDocumentURL (failed upload), it remains ""
-        // If filesToUpload[fieldName] is undefined (cleared field), it remains ""
         dataToSave[fieldName] = urlToSave;
       });
 
-      dataToSave.Current_Enquiry = selectedEnquiry.id; // Ensure this is always set
+      dataToSave.Current_Enquiry = selectedEnquiry.id;
       dataToSave.lastUpdatedBy = user.uid;
-      // Timestamps (createdAt, updatedAt) will be handled by firestoreService
 
       if (editData && editData.id) {
         await firestoreService.update(
@@ -1572,20 +1533,16 @@ const DetailEnquiryForm = ({
         });
       } else {
         dataToSave.createdBy = user.uid;
-        await firestoreService.create("detailEnquiries", dataToSave); // Call create for new entries
+        await firestoreService.create("detailEnquiries", dataToSave);
         toast.success("Detailed profile created successfully!", {
           id: toastIdSubmit,
         });
       }
 
-      onSuccess?.(); // Call parent's success handler (e.g., to reload data)
-      onClose(); // Close the modal
+      onSuccess?.();
+      onClose();
     } catch (error) {
-      console.error("Error saving detailed profile:", error);
-      toast.error(
-        error.message || "Failed to save detailed profile. Please try again.",
-        { id: toastIdSubmit }
-      );
+      console.log("error", error);
     } finally {
       setLoading(false);
     }
@@ -1599,7 +1556,6 @@ const DetailEnquiryForm = ({
         [fieldName]: file.name,
       }));
       setValue(fieldName, file.name, {
-        // Set RHF value to filename for display/validation
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
@@ -1620,7 +1576,6 @@ const DetailEnquiryForm = ({
       return updated;
     });
     setValue(fieldName, "", {
-      // Clear RHF value
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true,
@@ -1633,7 +1588,7 @@ const DetailEnquiryForm = ({
   };
 
   const FileUploadFieldComponent = ({ name, label, accept = "*/*" }) => {
-    const displayFileName = uploadedDocumentsDisplay[name]; // Prioritize display state
+    const displayFileName = uploadedDocumentsDisplay[name];
 
     return (
       <div>
@@ -1672,7 +1627,6 @@ const DetailEnquiryForm = ({
                     <span>Upload a file</span>
                     <input
                       id={name}
-                      // name={name} // RHF handles name via register, but direct onChange is used here
                       type="file"
                       className="sr-only"
                       accept={accept}
@@ -1700,7 +1654,7 @@ const DetailEnquiryForm = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmitHandler)}
-      className="space-y-6 p-1 sm:p-4 max-h-[calc(100vh-150px)] overflow-y-auto" // Adjust max-h as needed
+      className="space-y-6 p-1 sm:p-4 max-h-[calc(100vh-150px)] overflow-y-auto"
       noValidate
     >
       <div className="sticky top-0 bg-white py-3 px-1 sm:px-0 z-10 border-b mb-6">
@@ -1792,8 +1746,7 @@ const DetailEnquiryForm = ({
                 "Submitting..."
               ) : (
                 <>
-                  {" "}
-                  <CheckCircle size={18} className="mr-1" /> Confirm & Submit{" "}
+                  <CheckCircle size={18} className="mr-1" /> Confirm & Submit
                 </>
               )}
             </button>

@@ -1,33 +1,31 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { Plus, Users as UsersIcon, UserCheck, UserX } from "lucide-react";
-import Modal from "../components/common/Modal";
+import Modal from "../components/Common/Modal";
+import { USER_ROLES } from "../utils/constants";
+import { useAuth } from "../context/AuthContext";
+import { userService } from "../services/firestore";
 import UserForm from "../components/Users/UserForm";
 import UsersTable from "../components/Users/UsersTable";
-import { userService } from "../services/firestore";
-import { useAuth } from "../context/AuthContext";
-import { USER_ROLES } from "../utils/constants";
-import toast from "react-hot-toast";
 
 const UserManagement = () => {
   const { userProfile } = useAuth();
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const fetchedUsers = await userService.getAll();
-      console.log("Fetched users:", fetchedUsers);
-      setUsers(fetchedUsers || []);
+      setUsers(fetchedUsers);
       setError(null);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      setError(err);
-      toast.error("Failed to load users.");
+    } catch (error) {
+      console.log("error", error);
+      setError(error);
     } finally {
       setLoading(false);
     }
@@ -38,7 +36,6 @@ const UserManagement = () => {
   }, []);
 
   const handleEdit = (userToEdit) => {
-    console.log("Editing user:", userToEdit);
     setSelectedUser(userToEdit);
     setShowEditModal(true);
   };
@@ -47,7 +44,7 @@ const UserManagement = () => {
     const userToDelete = users.find((user) => (user.id || user.uid) === userId);
 
     if (!userToDelete) {
-      toast.error("User not found");
+      console.log("User not found");
       return;
     }
 
@@ -63,9 +60,8 @@ const UserManagement = () => {
         });
         toast.success("User deactivated successfully!");
         fetchUsers();
-      } catch (err) {
-        console.error("Error deactivating user:", err);
-        toast.error("Failed to deactivate user.");
+      } catch (error) {
+        console.log("error", error);
       }
     }
   };
@@ -95,9 +91,7 @@ const UserManagement = () => {
   if (error) {
     return (
       <div className="text-center py-12">
-        <div className="text-red-500 mb-4">
-          Error loading users: {error.message}
-        </div>
+        <div className="text-red-500 mb-4">{error.message}</div>
         <button
           onClick={fetchUsers}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -126,8 +120,6 @@ const UserManagement = () => {
     );
   }
 
-  console.log("Rendering UserManagement with users:", allUsers);
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -143,7 +135,6 @@ const UserManagement = () => {
           Add User
         </button>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
@@ -156,7 +147,6 @@ const UserManagement = () => {
             </div>
           </div>
         </div>
-
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -168,7 +158,6 @@ const UserManagement = () => {
             </div>
           </div>
         </div>
-
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="p-2 bg-red-100 rounded-lg">
@@ -183,7 +172,6 @@ const UserManagement = () => {
           </div>
         </div>
       </div>
-
       {process.env.NODE_ENV === "development" && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
           <p className="text-sm text-yellow-800">
@@ -192,7 +180,6 @@ const UserManagement = () => {
           </p>
         </div>
       )}
-
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
@@ -213,7 +200,6 @@ const UserManagement = () => {
           )}
         </div>
       </div>
-
       {showAddModal && (
         <Modal
           isOpen={showAddModal}
@@ -228,7 +214,6 @@ const UserManagement = () => {
           />
         </Modal>
       )}
-
       {showEditModal && selectedUser && (
         <Modal
           isOpen={showEditModal}

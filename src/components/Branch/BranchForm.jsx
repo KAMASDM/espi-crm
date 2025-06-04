@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { branchService, userService } from "../../services/firestore"; //
-import { USER_ROLES } from "../../utils/constants"; //
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { USER_ROLES } from "../../utils/constants";
+import { branchService, userService } from "../../services/firestore";
 
 const BranchForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -31,7 +31,7 @@ const BranchForm = ({ onClose, onSuccess, editData = null }) => {
           )
         );
       } catch (error) {
-        console.error("Error fetching potential admins:", error);
+        console.log("error", error);
       }
     };
     fetchPotentialAdmins();
@@ -89,8 +89,7 @@ const BranchForm = ({ onClose, onSuccess, editData = null }) => {
       }
       onSuccess();
     } catch (error) {
-      console.error("Error saving branch:", error);
-      toast.error(`Failed to save branch: ${error.message}`);
+      console.log("error", error);
     } finally {
       setLoading(false);
     }

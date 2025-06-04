@@ -19,7 +19,7 @@ const getUserProfile = () => {
     const profile = localStorage.getItem("userProfile");
     return profile ? JSON.parse(profile) : null;
   } catch (error) {
-    console.warn("Error parsing user profile from localStorage:", error);
+    console.log("error", error);
     return null;
   }
 };
@@ -34,14 +34,14 @@ export const firestoreService = {
       });
       return docRef.id;
     } catch (error) {
-      console.error(`Error creating document in ${collectionName}:`, error);
+      console.log("error", error);
       throw error;
     }
   },
 
   async getAll(collectionName, constraints = []) {
     try {
-      let q = collection(db, collectionName); // Changed from q_ to q for consistency
+      let q = collection(db, collectionName);
 
       const validConstraints = constraints.filter(
         (constraint) => constraint != null && typeof constraint === "object"
@@ -57,7 +57,7 @@ export const firestoreService = {
         ...docSnapshot.data(),
       }));
     } catch (error) {
-      console.error(`Error getting documents from ${collectionName}:`, error);
+      console.log("error", error);
       throw error;
     }
   },
@@ -65,19 +65,14 @@ export const firestoreService = {
   async getById(collectionName, id) {
     try {
       if (!id) {
-        console.warn(
-          `Attempted to get document from ${collectionName} with undefined ID.`
-        );
+        console.log("undefined ID.");
         return null;
       }
       const docRef = doc(db, collectionName, id);
       const docSnap = await getDoc(docRef);
       return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
     } catch (error) {
-      console.error(
-        `Error getting document ${id} from ${collectionName}:`,
-        error
-      );
+      console.log("error", error);
       throw error;
     }
   },
@@ -85,21 +80,16 @@ export const firestoreService = {
   async update(collectionName, id, data) {
     try {
       if (!id) {
-        console.warn(
-          `Attempted to update document in ${collectionName} with undefined ID.`
-        );
+        console.log("undefined ID.");
         throw new Error("Document ID is undefined for update operation.");
       }
       const docRef = doc(db, collectionName, id);
       await updateDoc(docRef, {
         ...data,
-        updatedAt: serverTimestamp(), // Automatically updates server-side timestamp
+        updatedAt: serverTimestamp(),
       });
     } catch (error) {
-      console.error(
-        `Error updating document ${id} in ${collectionName}:`,
-        error
-      );
+      console.log("error", error);
       throw error;
     }
   },
@@ -107,22 +97,16 @@ export const firestoreService = {
   async delete(collectionName, id) {
     try {
       if (!id) {
-        console.warn(
-          `Attempted to delete document in ${collectionName} with undefined ID.`
-        );
+        console.log("undefined ID.");
         throw new Error("Document ID is undefined for delete operation.");
       }
       await deleteDoc(doc(db, collectionName, id));
     } catch (error) {
-      console.error(
-        `Error deleting document ${id} from ${collectionName}:`,
-        error
-      );
+      console.log("error", error);
       throw error;
     }
   },
 
-  // Realtime subscription
   subscribe(collectionName, callback, constraints = [], onErrorCallback) {
     try {
       let qRef = collection(db, collectionName);
@@ -135,7 +119,6 @@ export const firestoreService = {
         qRef = query(qRef, ...validConstraints);
       }
 
-      // Return the unsubscribe function
       const unsubscribe = onSnapshot(
         qRef,
         (querySnapshot) => {
@@ -146,11 +129,7 @@ export const firestoreService = {
           callback(documents);
         },
         (error) => {
-          // Handle errors in the subscription
-          console.error(
-            `Firestore Subscription Error for ${collectionName}:`,
-            error
-          );
+          console.log("error", error);
           if (onErrorCallback) {
             onErrorCallback(error);
           }
@@ -158,36 +137,34 @@ export const firestoreService = {
       );
       return unsubscribe;
     } catch (error) {
-      // Handle errors setting up the subscription
-      console.error(
-        `Error setting up subscription for ${collectionName}:`,
-        error
-      );
+      console.log("error", error);
       if (onErrorCallback) {
         onErrorCallback(error);
       }
-      return () => {}; // Return a no-op unsubscribe function on setup error
+      return () => {};
     }
   },
 };
 
-// --- Specific services (enquiryService, universityService, etc.) remain the same as provided ---
-// For brevity, I'm not repeating them here. They use the generic firestoreService.
 export const enquiryService = {
   create: (data) => {
     const currentUser = auth.currentUser;
-    const userProfile = getUserProfile(); // You might want to get this from auth context or props instead of localStorage directly in services
+    const userProfile = getUserProfile();
     return firestoreService.create("enquiries", {
       ...data,
-      createdBy: currentUser?.uid, // Add creator UID
-      branchId: data.branchId || userProfile?.branchId || null, // Example of adding branchId
+      createdBy: currentUser?.uid,
+      branchId: data.branchId || userProfile?.branchId || null,
     });
   },
+
+  update: (id, data) => firestoreService.update("enquiries", id, data),
+
+  delete: (id) => firestoreService.delete("enquiries", id),
   getAll: (constraints = []) =>
     firestoreService.getAll("enquiries", constraints),
+
   getById: (id) => firestoreService.getById("enquiries", id),
-  update: (id, data) => firestoreService.update("enquiries", id, data),
-  delete: (id) => firestoreService.delete("enquiries", id),
+
   subscribe: (callback, constraints = [], onError) =>
     firestoreService.subscribe("enquiries", callback, constraints, onError),
 };
@@ -200,11 +177,16 @@ export const universityService = {
       createdBy: currentUser?.uid,
     });
   },
+
+  update: (id, data) => firestoreService.update("universities", id, data),
+
+  delete: (id) => firestoreService.delete("universities", id),
+
   getAll: (constraints = []) =>
     firestoreService.getAll("universities", constraints),
+
   getById: (id) => firestoreService.getById("universities", id),
-  update: (id, data) => firestoreService.update("universities", id, data),
-  delete: (id) => firestoreService.delete("universities", id),
+
   subscribe: (callback, constraints = [], onError) =>
     firestoreService.subscribe("universities", callback, constraints, onError),
 };
@@ -217,10 +199,15 @@ export const courseService = {
       createdBy: currentUser?.uid,
     });
   },
-  getAll: (constraints = []) => firestoreService.getAll("courses", constraints),
-  getById: (id) => firestoreService.getById("courses", id),
+
   update: (id, data) => firestoreService.update("courses", id, data),
+
   delete: (id) => firestoreService.delete("courses", id),
+
+  getAll: (constraints = []) => firestoreService.getAll("courses", constraints),
+
+  getById: (id) => firestoreService.getById("courses", id),
+
   subscribe: (callback, constraints = [], onError) =>
     firestoreService.subscribe("courses", callback, constraints, onError),
 };
@@ -235,11 +222,15 @@ export const assessmentService = {
       branchId: userProfile.branchId || null,
     });
   },
+
+  update: (id, data) => firestoreService.update("assessments", id, data),
+
+  delete: (id) => firestoreService.delete("assessments", id),
+
   getAll: (constraints = []) =>
     firestoreService.getAll("assessments", constraints),
   getById: (id) => firestoreService.getById("assessments", id),
-  update: (id, data) => firestoreService.update("assessments", id, data),
-  delete: (id) => firestoreService.delete("assessments", id),
+
   subscribe: (callback, constraints = [], onError) =>
     firestoreService.subscribe("assessments", callback, constraints, onError),
 };
@@ -254,11 +245,16 @@ export const applicationService = {
       branchId: data.branchId || userProfile?.branchId || null,
     });
   },
+
+  update: (id, data) => firestoreService.update("applications", id, data),
+
+  delete: (id) => firestoreService.delete("applications", id),
+
   getAll: (constraints = []) =>
     firestoreService.getAll("applications", constraints),
+
   getById: (id) => firestoreService.getById("applications", id),
-  update: (id, data) => firestoreService.update("applications", id, data),
-  delete: (id) => firestoreService.delete("applications", id),
+
   subscribe: (callback, constraints = [], onError) =>
     firestoreService.subscribe("applications", callback, constraints, onError),
 };
@@ -274,11 +270,16 @@ export const paymentService = {
       branchId: data.branchId || userProfile?.branchId || null,
     });
   },
+
+  update: (id, data) => firestoreService.update("payments", id, data),
+
+  delete: (id) => firestoreService.delete("payments", id),
+
   getAll: (constraints = []) =>
     firestoreService.getAll("payments", constraints),
+
   getById: (id) => firestoreService.getById("payments", id),
-  update: (id, data) => firestoreService.update("payments", id, data),
-  delete: (id) => firestoreService.delete("payments", id),
+
   subscribe: (callback, constraints = [], onError) =>
     firestoreService.subscribe("payments", callback, constraints, onError),
 };
@@ -291,10 +292,15 @@ export const userService = {
       createdBy: currentUser?.uid,
     });
   },
-  getAll: (constraints = []) => firestoreService.getAll("users", constraints),
-  getById: (id) => firestoreService.getById("users", id),
+
   update: (id, data) => firestoreService.update("users", id, data),
+
   delete: (id) => firestoreService.delete("users", id),
+
+  getAll: (constraints = []) => firestoreService.getAll("users", constraints),
+
+  getById: (id) => firestoreService.getById("users", id),
+
   subscribe: (callback, constraints = [], onError) =>
     firestoreService.subscribe("users", callback, constraints, onError),
 };
@@ -307,11 +313,16 @@ export const branchService = {
       createdBy: currentUser?.uid,
     });
   },
+
+  update: (id, data) => firestoreService.update("branches", id, data),
+
+  delete: (id) => firestoreService.delete("branches", id),
+
   getAll: (constraints = []) =>
     firestoreService.getAll("branches", constraints),
+
   getById: (id) => firestoreService.getById("branches", id),
-  update: (id, data) => firestoreService.update("branches", id, data),
-  delete: (id) => firestoreService.delete("branches", id),
+
   subscribe: (callback, constraints = [], onError) =>
     firestoreService.subscribe("branches", callback, constraints, onError),
 };
@@ -320,9 +331,7 @@ export const chatService = {
   async sendMessage(chatId, messageText) {
     const currentUser = auth.currentUser;
     if (!currentUser || !chatId || !messageText?.trim()) {
-      throw new Error(
-        "User not authenticated, chat ID missing, or message empty."
-      );
+      throw new Error("User chat ID or message missing.");
     }
 
     const messagesRef = collection(db, "chats", chatId, "messages");
@@ -330,15 +339,14 @@ export const chatService = {
 
     try {
       await addDoc(messagesRef, {
-        chatId: chatId, // Good for querying messages by chatId if needed, though subcollection implies it
+        chatId: chatId,
         text: messageText.trim(),
         senderId: currentUser.uid,
-        senderName: currentUser.displayName || "Anonymous", // Fallback for senderName
-        senderPhotoURL: currentUser.photoURL || "", // Fallback for photoURL
+        senderName: currentUser.displayName,
+        senderPhotoURL: currentUser.photoURL,
         timestamp: serverTimestamp(),
       });
 
-      // Update chat document with last message info and unread counts
       const chatSnap = await getDoc(chatDocRef);
       if (chatSnap.exists()) {
         const chatData = chatSnap.data();
@@ -347,10 +355,8 @@ export const chatService = {
         if (chatData.members && Array.isArray(chatData.members)) {
           chatData.members.forEach((memberId) => {
             if (memberId !== currentUser.uid) {
-              // Increment for other members
               newUnreadCount[memberId] = (newUnreadCount[memberId] || 0) + 1;
             } else {
-              // Reset for sender
               newUnreadCount[memberId] = 0;
             }
           });
@@ -364,7 +370,7 @@ export const chatService = {
         });
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.log("error", error);
       throw error;
     }
   },
@@ -373,7 +379,7 @@ export const chatService = {
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error("User not authenticated.");
 
-    const { type, name, members, memberInfo } = chatData; // memberInfo for storing names/photos
+    const { type, name, members, memberInfo } = chatData;
 
     if (
       !type ||
@@ -384,14 +390,13 @@ export const chatService = {
       throw new Error("Invalid chat data: type or members missing/invalid.");
     }
 
-    // For direct chats, check if a chat already exists between the two members
     if (type === "direct" && members.length === 2) {
-      const sortedMembers = [...members].sort(); // Ensure consistent member order for querying
+      const sortedMembers = [...members].sort();
       try {
         const q = query(
           collection(db, "chats"),
           where("type", "==", "direct"),
-          where("members", "==", sortedMembers) // Firestore allows equality check on arrays
+          where("members", "==", sortedMembers)
         );
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
@@ -400,11 +405,10 @@ export const chatService = {
             id: existingChatDoc.id,
             ...existingChatDoc.data(),
             existing: true,
-          }; // Return existing chat
+          };
         }
       } catch (error) {
-        console.warn("Error checking for existing direct chat:", error);
-        // Proceed to create if check fails, or handle error as needed
+        console.log("error", error);
       }
     }
 
@@ -415,13 +419,13 @@ export const chatService = {
 
     try {
       const docRef = await addDoc(collection(db, "chats"), {
-        name: type === "group" ? name || "New Group" : "", // Name for group chats
+        name: type === "group" ? name || "New Group" : "",
         type: type,
-        members: type === "direct" ? [...members].sort() : members, // Sort members for direct chats for consistency
-        memberInfo: memberInfo || {}, // Store display names, photoURLs keyed by UID
+        members: type === "direct" ? [...members].sort() : members,
+        memberInfo: memberInfo,
         lastMessageText: type === "group" ? "Group created" : "Chat started",
         lastMessageTimestamp: serverTimestamp(),
-        lastMessageSenderId: currentUser.uid, // Or a system ID for "Group created"
+        lastMessageSenderId: currentUser.uid,
         unreadCount: initialUnreadCount,
         createdBy: currentUser.uid,
         createdAt: serverTimestamp(),
@@ -429,7 +433,7 @@ export const chatService = {
       const newChatSnap = await getDoc(docRef);
       return { id: newChatSnap.id, ...newChatSnap.data(), created: true };
     } catch (error) {
-      console.error("Error creating chat:", error);
+      console.log("error", error);
       throw error;
     }
   },
@@ -444,15 +448,14 @@ export const chatService = {
       if (chatSnap.exists()) {
         const chatData = chatSnap.data();
         const newUnreadCount = { ...(chatData.unreadCount || {}) };
-        newUnreadCount[currentUser.uid] = 0; // Set current user's unread count to 0
+        newUnreadCount[currentUser.uid] = 0;
 
         await updateDoc(chatDocRef, {
           unreadCount: newUnreadCount,
         });
       }
     } catch (error) {
-      console.error("Error marking chat as read:", error);
-      // Optionally re-throw or handle
+      console.log("error", error);
     }
   },
 
@@ -460,7 +463,7 @@ export const chatService = {
     if (!userId) {
       if (onError)
         onError(new Error("User ID is required for chat subscription."));
-      return () => {}; // Return a no-op unsubscribe function
+      return () => {};
     }
     try {
       const q = query(
@@ -468,10 +471,9 @@ export const chatService = {
         where("members", "array-contains", userId),
         orderBy("lastMessageTimestamp", "desc")
       );
-      // The callback for onSnapshot should handle the snapshot directly
       return onSnapshot(q, callback, onError);
     } catch (error) {
-      console.error("Error subscribing to user chats:", error);
+      console.log("error", error);
       if (onError) onError(error);
       return () => {};
     }
@@ -486,9 +488,8 @@ export const chatService = {
     try {
       const q = query(
         collection(db, "chats", chatId, "messages"),
-        orderBy("timestamp", "asc") // Order messages chronologically
+        orderBy("timestamp", "asc")
       );
-      // The callback for onSnapshot receives the QuerySnapshot
       return onSnapshot(
         q,
         (querySnapshot) => {
@@ -501,7 +502,7 @@ export const chatService = {
         onError
       );
     } catch (error) {
-      console.error("Error subscribing to messages:", error);
+      console.log("error", error);
       if (onError) onError(error);
       return () => {};
     }

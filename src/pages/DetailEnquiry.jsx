@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Plus, FileText } from "lucide-react"; // Removed Download as it's not used in this file directly for DetailEnquiryView props
-import Modal from "../components/common/Modal";
-import DetailEnquiryForm from "../components/forms/DetailEnquiryForm";
-import DetailEnquiryView from "../components/views/DetailEnquiryView";
-import { useDocument } from "../hooks/useFirestore"; // Assuming this hook exists and works
-import { firestoreService } from "../services/firestore";
-import { where } from "firebase/firestore";
-import LoadingSpinner from "../components/common/LoadingSpinner";
+import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Edit, Plus, FileText } from "lucide-react";
+import { where } from "firebase/firestore";
+import Modal from "../components/Common/Modal";
+import Loading from "../components/Common/Loading";
+import { useDocument } from "../hooks/useFirestore";
+import { firestoreService } from "../services/firestore";
+import DetailEnquiryForm from "../components/Forms/DetailEnquiryForm";
+import DetailEnquiryView from "../components/Views/DetailEnquiryView";
 
 const DetailedEnquiry = () => {
   const { enquiryId } = useParams();
@@ -18,20 +18,16 @@ const DetailedEnquiry = () => {
   const [detailEnquiry, setDetailEnquiry] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
 
-  // console.log("---detailEnquiry--->", detailEnquiry);
-
   const {
     data: enquiry,
     loading: enquiryLoading,
     error: enquiryError,
-  } = useDocument("enquiries", enquiryId); // Fetches the basic enquiry
-
-  // console.log("--enquiry-->", enquiry);
+  } = useDocument("enquiries", enquiryId);
 
   const loadDetailEnquiry = useCallback(async () => {
     if (!enquiryId) {
       setLoadingDetail(false);
-      setDetailEnquiry(null); // Ensure detailEnquiry is nulled if no enquiryId
+      setDetailEnquiry(null);
       return;
     }
     try {
@@ -40,16 +36,13 @@ const DetailedEnquiry = () => {
         where("Current_Enquiry", "==", enquiryId),
       ]);
 
-      // console.log("--detailEnquiries-->", detailEnquiries);
-
       if (detailEnquiries.length > 0) {
         setDetailEnquiry(detailEnquiries[0]);
       } else {
         setDetailEnquiry(null);
       }
     } catch (error) {
-      console.error("Error loading detail enquiry:", error);
-      toast.error("Failed to load detailed profile");
+      console.log("error", error);
       setDetailEnquiry(null);
     } finally {
       setLoadingDetail(false);
@@ -62,17 +55,14 @@ const DetailedEnquiry = () => {
 
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
-    loadDetailEnquiry(); // Reloads the detailed enquiry data
-    // Toast for creation success is now handled within DetailEnquiryForm
+    loadDetailEnquiry();
   };
 
   const handleEditSuccess = () => {
     setShowEditModal(false);
-    loadDetailEnquiry(); // Reloads the detailed enquiry data
-    // Toast for update success is now handled within DetailEnquiryForm
+    loadDetailEnquiry();
   };
 
-  // This function is passed to DetailEnquiryView, ensure it's correctly implemented there or here if needed.
   const handleDownload = (documentField, documentUrl) => {
     if (
       documentUrl &&
@@ -82,17 +72,11 @@ const DetailedEnquiry = () => {
       window.open(documentUrl, "_blank");
     } else {
       toast.info(`Download for ${documentField} - URL missing or invalid.`);
-      console.warn(
-        "Attempted download with missing/invalid URL:",
-        documentUrl,
-        "for field:",
-        documentField
-      );
     }
   };
 
   if (enquiryLoading || loadingDetail) {
-    return <LoadingSpinner />;
+    return <Loading />;
   }
 
   if (enquiryError) {
@@ -107,7 +91,7 @@ const DetailedEnquiry = () => {
           </p>
           <p className="text-xs text-red-500 mt-1">{enquiryError.message}</p>
           <button
-            onClick={() => navigate("/students")} // Ensure this route is correct
+            onClick={() => navigate("/students")}
             className="btn-secondary mt-4"
           >
             Back to Students
@@ -128,7 +112,7 @@ const DetailedEnquiry = () => {
             The enquiry (ID: {enquiryId}) you're looking for doesn't exist.
           </p>
           <button
-            onClick={() => navigate("/students")} // Ensure this route is correct
+            onClick={() => navigate("/students")}
             className="btn-primary mt-4"
           >
             Back to Students
@@ -143,7 +127,7 @@ const DetailedEnquiry = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
           <button
-            onClick={() => navigate("/students")} // Ensure this route is correct
+            onClick={() => navigate("/students")}
             className="mr-3 sm:mr-4 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Back to Students"
           >
@@ -179,7 +163,6 @@ const DetailedEnquiry = () => {
           )}
         </div>
       </div>
-
       <div className="card">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
           Basic Enquiry Information
@@ -233,15 +216,14 @@ const DetailedEnquiry = () => {
           </div>
         </div>
       </div>
-
       {detailEnquiry ? (
         <DetailEnquiryView
           detailEnquiry={detailEnquiry}
           onEdit={() => setShowEditModal(true)}
-          onDownload={handleDownload} // Make sure DetailEnquiryView uses this prop
+          onDownload={handleDownload}
         />
       ) : (
-        !loadingDetail && ( // Only show "No Detailed Profile" if not loading
+        !loadingDetail && (
           <div className="card">
             <div className="text-center py-10 sm:py-12">
               <FileText
@@ -267,29 +249,27 @@ const DetailedEnquiry = () => {
           </div>
         )
       )}
-
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Create Detailed Student Profile"
-        size="full" // Or appropriate size
+        size="full"
       >
         <DetailEnquiryForm
-          selectedEnquiry={enquiry} // Pass the basic enquiry data
+          selectedEnquiry={enquiry}
           onClose={() => setShowCreateModal(false)}
           onSuccess={handleCreateSuccess}
-          // editData will be null for creation
         />
       </Modal>
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         title="Edit Detailed Student Profile"
-        size="full" // Or appropriate size
+        size="full"
       >
         <DetailEnquiryForm
-          selectedEnquiry={enquiry} // Pass the basic enquiry data
-          editData={detailEnquiry} // Pass existing detail enquiry for editing
+          selectedEnquiry={enquiry}
+          editData={detailEnquiry}
           onClose={() => setShowEditModal(false)}
           onSuccess={handleEditSuccess}
         />

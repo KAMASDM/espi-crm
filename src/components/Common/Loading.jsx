@@ -1,4 +1,5 @@
-const LoadingSpinner = ({ size = "default" }) => {
+const Loading = ({ size = "default" }) => {
+  
   const sizeClasses = {
     small: "w-4 h-4",
     default: "w-8 h-8",
@@ -14,4 +15,4 @@ const LoadingSpinner = ({ size = "default" }) => {
   );
 };
 
-export default LoadingSpinner;
+export default Loading;

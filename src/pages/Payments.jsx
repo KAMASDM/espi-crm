@@ -1,10 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { Plus, Download, Upload } from "lucide-react";
-import Modal from "../components/common/Modal";
+import Modal from "../components/Common/Modal";
 import PaymentForm from "../components/Payment/PaymentForm";
 import PaymentsTable from "../components/Payment/PaymentsTable";
 import { usePayments, useEnquiries } from "../hooks/useFirestore";
-import toast from "react-hot-toast";
 
 const Payments = () => {
   const { data: payments, loading, remove } = usePayments();
@@ -34,8 +34,7 @@ const Payments = () => {
         await remove(paymentId);
         toast.success("Payment deleted successfully!");
       } catch (error) {
-        console.error("Error deleting payment:", error);
-        toast.error("Failed to delete payment. Please try again.");
+        console.log("error", error);
       }
     }
   };
@@ -44,7 +43,9 @@ const Payments = () => {
     toast.info("Receipt download functionality will be implemented soon!");
   };
 
-  const handleFormSuccess = () => {};
+  const handleFormSuccess = () => {
+    toast.info("Payment added successfully!");
+  };
 
   const handleExport = () => {
     toast.info("Export functionality will be implemented soon!");
@@ -79,7 +80,6 @@ const Payments = () => {
             Track payments, invoices, and financial transactions
           </p>
         </div>
-
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleImport}
@@ -104,7 +104,6 @@ const Payments = () => {
           </button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <div className="flex items-center">
@@ -119,7 +118,6 @@ const Payments = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -133,7 +131,6 @@ const Payments = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
@@ -147,7 +144,6 @@ const Payments = () => {
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -164,7 +160,6 @@ const Payments = () => {
           </div>
         </div>
       </div>
-
       <div className="card">
         <PaymentsTable
           payments={payments}
@@ -176,7 +171,6 @@ const Payments = () => {
           onDownload={handleDownload}
         />
       </div>
-
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -188,7 +182,6 @@ const Payments = () => {
           onSuccess={handleFormSuccess}
         />
       </Modal>
-
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -201,7 +194,6 @@ const Payments = () => {
           onSuccess={handleFormSuccess}
         />
       </Modal>
-
       <Modal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
@@ -219,13 +211,13 @@ const Payments = () => {
 const PaymentDetails = ({ payment, enquiries }) => {
   const getStudentInfo = (enquiryId) => {
     const enquiry = enquiries.find((enq) => enq.id === enquiryId);
-    return enquiry
-      ? {
-          name: `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`,
-          email: enquiry.student_email,
-          phone: enquiry.student_phone,
-        }
-      : { name: "Unknown Student", email: "Unknown", phone: "Unknown" };
+    return (
+      enquiry && {
+        name: `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`,
+        email: enquiry.student_email,
+        phone: enquiry.student_phone,
+      }
+    );
   };
 
   const studentInfo = getStudentInfo(payment.Memo_For);
@@ -241,9 +233,7 @@ const PaymentDetails = ({ payment, enquiries }) => {
             <label className="block text-sm font-medium text-gray-700">
               Payment ID
             </label>
-            <p className="text-sm text-gray-900">
-              {payment.payment_id || `PAY-${payment.id.slice(-8)}`}
-            </p>
+            <p className="text-sm text-gray-900">{payment.payment_id}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -256,7 +246,7 @@ const PaymentDetails = ({ payment, enquiries }) => {
               Amount
             </label>
             <p className="text-lg font-semibold text-gray-900">
-              ₹{parseFloat(payment.payment_amount || 0).toLocaleString()}
+              ₹{parseFloat(payment.payment_amount).toLocaleString()}
             </p>
           </div>
           <div>
@@ -264,9 +254,8 @@ const PaymentDetails = ({ payment, enquiries }) => {
               Payment Date
             </label>
             <p className="text-sm text-gray-900">
-              {payment.payment_date
-                ? new Date(payment.payment_date).toLocaleDateString()
-                : "Not specified"}
+              {payment.payment_date &&
+                new Date(payment.payment_date).toLocaleDateString()}
             </p>
           </div>
           <div>
@@ -299,9 +288,7 @@ const PaymentDetails = ({ payment, enquiries }) => {
             <label className="block text-sm font-medium text-gray-700">
               Payment Reference
             </label>
-            <p className="text-sm text-gray-900">
-              {payment.payment_reference || "Not provided"}
-            </p>
+            <p className="text-sm text-gray-900">{payment.payment_reference}</p>
           </div>
         </div>
       </div>
@@ -331,7 +318,6 @@ const PaymentDetails = ({ payment, enquiries }) => {
           </div>
         </div>
       </div>
-
       {payment.Payment_For && Array.isArray(payment.Payment_For) && (
         <div>
           <h4 className="text-lg font-semibold text-gray-900 mb-3">Services</h4>
@@ -348,7 +334,6 @@ const PaymentDetails = ({ payment, enquiries }) => {
           </div>
         </div>
       )}
-
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-3">
           Additional Information
@@ -366,7 +351,6 @@ const PaymentDetails = ({ payment, enquiries }) => {
               </p>
             </div>
           )}
-
           {payment.payment_remarks && (
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -377,15 +361,13 @@ const PaymentDetails = ({ payment, enquiries }) => {
               </p>
             </div>
           )}
-
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Created Date
             </label>
             <p className="text-sm text-gray-900">
-              {payment.createdAt
-                ? new Date(payment.createdAt.toDate()).toLocaleDateString()
-                : "Unknown"}
+              {payment.createdAt &&
+                new Date(payment.createdAt.toDate()).toLocaleDateString()}
             </p>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, Building2, TrendingUp, Clock } from "lucide-react";
 

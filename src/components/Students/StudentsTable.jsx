@@ -17,9 +17,9 @@ import {
   UserCheck,
 } from "lucide-react";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 import { ENQUIRY_STATUS } from "../../utils/constants";
 import { branchService, userService } from "../../services/firestore";
-import toast from "react-hot-toast";
 
 const InlineNoteEditor = ({
   initialNote = "",
@@ -85,15 +85,15 @@ const StudentsTable = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
-  const [assignmentFilter, setAssignmentFilter] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [assignmentFilter, setAssignmentFilter] = useState("");
   const [editingNoteForStudentId, setEditingNoteForStudentId] = useState(null);
 
-  const [branches, setBranches] = useState([]);
   const [users, setUsers] = useState([]);
-  const [branchesLoading, setBranchesLoading] = useState(true);
+  const [branches, setBranches] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [branchesLoading, setBranchesLoading] = useState(true);
 
   useEffect(() => {
     const fetchReferenceData = async () => {
@@ -101,12 +101,11 @@ const StudentsTable = ({
         setBranchesLoading(true);
         const fetchedBranches = await branchService.getAll();
         setBranches(fetchedBranches || []);
-
         setUsersLoading(true);
         const fetchedUsers = await userService.getAll();
         setUsers(fetchedUsers || []);
       } catch (error) {
-        console.error("Error fetching reference data:", error);
+        console.log("error", error);
       } finally {
         setBranchesLoading(false);
         setUsersLoading(false);
@@ -117,26 +116,25 @@ const StudentsTable = ({
   }, []);
 
   const branchMap = branches.reduce((acc, branch) => {
-    acc[branch.id] =
-      branch.branchName || branch.name || `Branch ${branch.id.slice(0, 8)}`;
+    acc[branch.id] = branch.branchName || branch.name;
     return acc;
   }, {});
 
   const userMap = users.reduce((acc, user) => {
-    acc[user.id || user.uid] = user.displayName || user.email || "Unknown User";
+    acc[user.id || user.uid] = user.displayName || user.email;
     return acc;
   }, {});
 
   const getBranchName = (branchId) => {
     if (!branchId) return "No Branch";
     if (branchesLoading) return "Loading...";
-    return branchMap[branchId] || `Unknown Branch (${branchId.slice(0, 8)}...)`;
+    return branchMap[branchId];
   };
 
   const getUserName = (userId) => {
     if (!userId) return "Unassigned";
     if (usersLoading) return "Loading...";
-    return userMap[userId] || `Unknown User (${userId.slice(0, 8)}...)`;
+    return userMap[userId];
   };
 
   const getAvailableUsers = () => {
@@ -213,8 +211,7 @@ const StudentsTable = ({
         setEditingNoteForStudentId(null);
       }
     } catch (error) {
-      console.error("Error updating note:", error);
-      toast.error("Failed to update note");
+      console.log("error", error);
     }
   };
 
@@ -224,8 +221,7 @@ const StudentsTable = ({
         await onUpdateAssignment(studentId, newAssignedUserId);
       }
     } catch (error) {
-      console.error("Error updating assignment:", error);
-      toast.error("Failed to update assignment");
+      console.log("error", error);
     }
   };
 
@@ -235,8 +231,7 @@ const StudentsTable = ({
         await onUpdateStatus(studentId, newStatus);
       }
     } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update status");
+      console.log("error", error);
     }
   };
 
@@ -298,9 +293,7 @@ const StudentsTable = ({
               <option value="">All Branches</option>
               {branches.map((branch) => (
                 <option key={branch.id} value={branch.id}>
-                  {branch.branchName ||
-                    branch.name ||
-                    `Branch ${branch.id.slice(0, 8)}`}
+                  {branch.branchName || branch.name}
                 </option>
               ))}
             </select>
@@ -321,7 +314,7 @@ const StudentsTable = ({
               <option value="assigned">Assigned</option>
               {getAvailableUsers().map((user) => (
                 <option key={user.id || user.uid} value={user.id || user.uid}>
-                  {user.displayName || user.email || "Unknown User"}
+                  {user.displayName || user.email}
                 </option>
               ))}
             </select>
@@ -436,18 +429,18 @@ const StudentsTable = ({
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
                             <span className="text-sm font-medium text-primary-700">
-                              {student.student_First_Name?.[0] || ""}
-                              {student.student_Last_Name?.[0] || ""}
+                              {student.student_First_Name?.[0]}
+                              {student.student_Last_Name?.[0]}
                             </span>
                           </div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {student.student_First_Name || "N/A"}{" "}
-                            {student.student_Last_Name || ""}
+                            {student.student_First_Name}
+                            {student.student_Last_Name}
                           </div>
                           <div className="text-sm text-gray-500">
-                            ID: {student.id ? student.id.slice(-8) : "N/A"}
+                            ID: {student.id && student.id.slice(-8)}
                           </div>
                         </div>
                       </div>
@@ -457,11 +450,11 @@ const StudentsTable = ({
                       <div className="space-y-1">
                         <div className="flex items-center text-sm text-gray-900">
                           <Phone size={14} className="mr-2 text-gray-400" />
-                          {student.student_phone || "N/A"}
+                          {student.student_phone}
                         </div>
                         <div className="flex items-center text-sm text-gray-500">
                           <Mail size={14} className="mr-2 text-gray-400" />
-                          {student.student_email || "N/A"}
+                          {student.student_email}
                         </div>
                       </div>
                     </td>
@@ -470,9 +463,9 @@ const StudentsTable = ({
                       <div className="flex items-center text-sm text-gray-900">
                         <MapPin size={14} className="mr-2 text-gray-400" />
                         <div>
-                          <div>{student.student_city || "N/A"}</div>
+                          <div>{student.student_city}</div>
                           <div className="text-gray-500">
-                            {student.student_state || "N/A"}
+                            {student.student_state}
                           </div>
                         </div>
                       </div>
@@ -499,12 +492,9 @@ const StudentsTable = ({
 
                     <td className="table-cell">
                       <select
-                        value={student.assignedUserId || ""}
+                        value={student.assignedUserId}
                         onChange={(e) =>
-                          handleAssignmentChange(
-                            student.id,
-                            e.target.value || null
-                          )
+                          handleAssignmentChange(student.id, e.target.value)
                         }
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                         onClick={(e) => e.stopPropagation()}
@@ -515,7 +505,7 @@ const StudentsTable = ({
                             key={user.id || user.uid}
                             value={user.id || user.uid}
                           >
-                            {user.displayName || user.email || "Unknown User"}
+                            {user.displayName || user.email}
                           </option>
                         ))}
                       </select>
@@ -523,13 +513,13 @@ const StudentsTable = ({
 
                     <td className="table-cell">
                       <div className="text-sm text-gray-900">
-                        {student.current_education || "N/A"}
+                        {student.current_education}
                       </div>
                     </td>
 
                     <td className="table-cell">
                       <select
-                        value={student.enquiry_status || ""}
+                        value={student.enquiry_status}
                         onChange={(e) =>
                           handleStatusChange(student.id, e.target.value)
                         }
@@ -551,7 +541,7 @@ const StudentsTable = ({
                       <div className="flex items-center justify-between">
                         <p
                           className="text-xs text-gray-600 truncate w-3/4"
-                          title={student.notes || "No note"}
+                          title={student.notes}
                         >
                           {student.notes ? (
                             student.notes.length > 30 ? (
@@ -580,7 +570,7 @@ const StudentsTable = ({
                       </div>
                       {editingNoteForStudentId === student.id && (
                         <InlineNoteEditor
-                          initialNote={student.notes || ""}
+                          initialNote={student.notes}
                           studentId={student.id}
                           onSaveNote={handleSaveNoteWithClose}
                           onCancel={() => setEditingNoteForStudentId(null)}

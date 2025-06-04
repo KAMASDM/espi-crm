@@ -1,7 +1,7 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Menu, Bell, Search, User, LogOut } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
 import { signOutUser } from "../../services/auth";
+import { useAuth } from "../../context/AuthContext";
 
 const Header = ({ setSidebarOpen }) => {
   const { user } = useAuth();
@@ -11,7 +11,7 @@ const Header = ({ setSidebarOpen }) => {
     try {
       await signOutUser();
     } catch (error) {
-      console.error("Sign out error:", error);
+      console.log("error", error);
     }
   };
 
@@ -64,7 +64,7 @@ const Header = ({ setSidebarOpen }) => {
                 </div>
               )}
               <span className="hidden md:block text-sm font-medium text-gray-700">
-                {user?.displayName || "User"}
+                {user?.displayName}
               </span>
             </button>
 
