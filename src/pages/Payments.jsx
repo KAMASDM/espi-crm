@@ -58,10 +58,6 @@ const Payments = () => {
     }
   };
 
-  const handleDownload = () => {
-    toast.info("Receipt download functionality will be implemented soon!");
-  };
-
   const handleFormSuccess = (action = "submitted") => {
     toast.success(`Payment ${action} successfully!`);
   };
@@ -194,7 +190,6 @@ const Payments = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
-          onDownload={handleDownload}
         />
       </div>
       <Modal

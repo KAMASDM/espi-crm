@@ -29,7 +29,6 @@ const PaymentsTable = ({
   onEdit,
   onDelete,
   onView,
-  onDownload,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -390,15 +389,6 @@ const PaymentsTable = ({
                         >
                           <Eye size={16} />
                         </button>
-                        {onDownload && payment.payment_document && (
-                          <button
-                            onClick={() => onDownload(payment)}
-                            className="text-green-600 hover:text-green-900"
-                            title="Download Receipt"
-                          >
-                            <Download size={16} />
-                          </button>
-                        )}
                         <button
                           onClick={() => onEdit(payment)}
                           className="text-yellow-600 hover:text-yellow-900"

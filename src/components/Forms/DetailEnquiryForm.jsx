@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useForm, useFieldArray } from "react-hook-form";
 import app from "../../services/firebase";
@@ -1042,11 +1042,11 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
         {Object.values(obj || {}).every(
           (val) => !val && val !== 0 && typeof val !== "boolean"
         ) && <p className="text-xs text-gray-400 italic">Not provided</p>}
-      </div>
     </div>
-  );
+  </div>
+);
 
-  const renderArrayOfObjects = (arr, title, icon) => (
+const renderArrayOfObjects = (arr, title, icon) => (
     <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex items-center mb-2">
         {icon && <span className="mr-2 text-gray-500">{icon}</span>}
@@ -1253,97 +1253,95 @@ const DetailEnquiryForm = ({
   const [filesToUpload, setFilesToUpload] = useState({});
   const [uploadedDocumentsDisplay, setUploadedDocumentsDisplay] = useState({});
 
-  const defaultValues = useMemo(() => {
-    return {
-      Current_Enquiry: selectedEnquiry?.id || "",
-      current_education_details: editData?.current_education_details || {
-        level: selectedEnquiry?.current_education || "",
-        stream: "",
-        percentage: "",
-        year: "",
-        institute: "",
-        medium: "",
-        board: "",
-      },
-      tenth_education_details: editData?.tenth_education_details || {
-        percentage: "",
-        year: "",
-        institute: "",
-        board: "",
-      },
-      twelveth_education_details: editData?.twelveth_education_details || {
-        stream: "",
-        percentage: "",
-        year: "",
-        institute: "",
-        board: "",
-      },
-      graduation_education_details: editData?.graduation_education_details || {
-        degree: "",
-        stream: "",
-        percentage: "",
-        year: "",
-        institute: "",
-        university: "",
-      },
-      workExperiences:
-        editData?.workExperiences && editData.workExperiences.length > 0
-          ? editData.workExperiences
-          : [{ companyName: "", designation: "", startDate: "", endDate: "" }],
-      toefl_exam: editData?.toefl_exam || {
-        listening: "",
-        reading: "",
-        writing: "",
-        speaking: "",
-        overall: "",
-      },
-      ielts_exam: editData?.ielts_exam || {
-        listening: "",
-        reading: "",
-        writing: "",
-        speaking: "",
-        overall: "",
-      },
-      pte_exam: editData?.pte_exam || {
-        listening: "",
-        reading: "",
-        writing: "",
-        speaking: "",
-        overall: "",
-      },
-      duolingo_exam: editData?.duolingo_exam || { overall: "" },
-      gre_exam: editData?.gre_exam || {
-        verbal: "",
-        quantitative: "",
-        analytical: "",
-      },
-      gmat_exam: editData?.gmat_exam || {
-        verbal: "",
-        quantitative: "",
-        overall: "",
-      },
-      father_Occupation: editData?.father_Occupation || "",
-      father_Annual_Income: editData?.father_Annual_Income || null,
-      refusal_details: editData?.refusal_details || {
-        country: "",
-        date: "",
-        visa_category: "",
-        reason: "",
-      },
-      ...DOCUMENT_FIELD_KEYS.reduce((acc, key) => {
-        acc[key] = editData?.[key] ? uploadedDocumentsDisplay[key] : "";
-        return acc;
-      }, {}),
-      confirmed_services:
-        editData?.confirmed_services ||
-        selectedEnquiry?.Interested_Services ||
-        [],
-      enquiry_status:
-        editData?.enquiry_status ||
-        selectedEnquiry?.enquiry_status ||
-        "Profile Under Review",
-    };
-  }, [editData, selectedEnquiry, uploadedDocumentsDisplay]);
+  const defaultValues = {
+    Current_Enquiry: selectedEnquiry?.id || "",
+    current_education_details: editData?.current_education_details || {
+      level: selectedEnquiry?.current_education || "",
+      stream: "",
+      percentage: "",
+      year: "",
+      institute: "",
+      medium: "",
+      board: "",
+    },
+    tenth_education_details: editData?.tenth_education_details || {
+      percentage: "",
+      year: "",
+      institute: "",
+      board: "",
+    },
+    twelveth_education_details: editData?.twelveth_education_details || {
+      stream: "",
+      percentage: "",
+      year: "",
+      institute: "",
+      board: "",
+    },
+    graduation_education_details: editData?.graduation_education_details || {
+      degree: "",
+      stream: "",
+      percentage: "",
+      year: "",
+      institute: "",
+      university: "",
+    },
+    workExperiences:
+      editData?.workExperiences && editData.workExperiences.length > 0
+        ? editData.workExperiences
+        : [{ companyName: "", designation: "", startDate: "", endDate: "" }],
+    toefl_exam: editData?.toefl_exam || {
+      listening: "",
+      reading: "",
+      writing: "",
+      speaking: "",
+      overall: "",
+    },
+    ielts_exam: editData?.ielts_exam || {
+      listening: "",
+      reading: "",
+      writing: "",
+      speaking: "",
+      overall: "",
+    },
+    pte_exam: editData?.pte_exam || {
+      listening: "",
+      reading: "",
+      writing: "",
+      speaking: "",
+      overall: "",
+    },
+    duolingo_exam: editData?.duolingo_exam || { overall: "" },
+    gre_exam: editData?.gre_exam || {
+      verbal: "",
+      quantitative: "",
+      analytical: "",
+    },
+    gmat_exam: editData?.gmat_exam || {
+      verbal: "",
+      quantitative: "",
+      overall: "",
+    },
+    father_Occupation: editData?.father_Occupation || "",
+    father_Annual_Income: editData?.father_Annual_Income || null,
+    refusal_details: editData?.refusal_details || {
+      country: "",
+      date: "",
+      visa_category: "",
+      reason: "",
+    },
+    ...DOCUMENT_FIELD_KEYS.reduce((acc, key) => {
+      acc[key] = editData?.[key] ? uploadedDocumentsDisplay[key] : "";
+      return acc;
+    }, {}),
+    confirmed_services:
+      editData?.confirmed_services ||
+      selectedEnquiry?.Interested_Services ||
+      [],
+    enquiry_status:
+      editData?.enquiry_status ||
+      selectedEnquiry?.enquiry_status ||
+      "Profile Under Review",
+  };
 
   const {
     register,
@@ -1440,7 +1438,7 @@ const DetailEnquiryForm = ({
         selectedEnquiry.enquiry_status || "Profile Under Review";
     }
     reset(initialFormValues);
-  }, [editData, selectedEnquiry, reset, defaultValues]);
+  }, [editData, selectedEnquiry, reset]);
 
   const nextStep = async () => {
     const stepFields = STEPS.find((s) => s.id === currentStep)?.fields || [];
@@ -1533,7 +1531,7 @@ const DetailEnquiryForm = ({
             new Promise((resolve, reject) => {
               uploadTask.on(
                 "state_changed",
-                () => {},
+                (snapshot) => {},
                 (error) => {
                   console.log("error", error);
                   console.log("error", {
@@ -1781,7 +1779,6 @@ const DetailEnquiryForm = ({
           className="btn-secondary"
           disabled={loading}
         >
-          <X size={18} className="inline mr-1" />
           Cancel
         </button>
         <div className="flex items-center space-x-3">
