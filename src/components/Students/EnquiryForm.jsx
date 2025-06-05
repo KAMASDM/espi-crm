@@ -155,64 +155,90 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
           Assignment Information
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Branch {userProfile?.role !== "Superadmin" ? "*" : ""}
-            </label>
-            <select
-              {...register("branchId", {
-                required:
-                  userProfile?.role !== "Superadmin"
-                    ? "Branch is required"
-                    : false,
-              })}
-              className="input-field"
-              disabled={userProfile?.role !== "Superadmin" || branchesLoading}
-            >
-              <option value="">
-                {userProfile?.role === "Superadmin"
-                  ? "Select Branch (Optional)"
-                  : "Loading..."}
-              </option>
-              {getAvailableBranches().map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.branchName ||
-                    branch.name ||
-                    `Branch ${branch.id.slice(0, 8)}`}
+          {userProfile?.role == "Superadmin" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Branch {userProfile?.role !== "Superadmin" ? "*" : ""}
+              </label>
+
+              <select
+                {...register("branchId", {
+                  required:
+                    userProfile?.role !== "Superadmin"
+                      ? "Branch is required"
+                      : false,
+                })}
+                className="input-field"
+                disabled={userProfile?.role !== "Superadmin" || branchesLoading}
+              >
+                <option value={userProfile?.branchId}>
+                  {userProfile?.role === "Superadmin"
+                    ? "Select Branch (Optional)"
+                    : "Loading..."}
                 </option>
-              ))}
-            </select>
-            {errors.branchId && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.branchId.message}
-              </p>
-            )}
-            {userProfile?.role !== "Superadmin" && (
-              <p className="text-xs text-gray-500 mt-1">
-                Enquiry will be assigned to your branch
-              </p>
-            )}
-          </div>
+                {getAvailableBranches().map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.branchName ||
+                      branch.name ||
+                      `Branch ${branch.id.slice(0, 8)}`}
+                  </option>
+                ))}
+              </select>
+
+              {errors.branchId && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.branchId.message}
+                </p>
+              )}
+              {userProfile?.role !== "Superadmin" && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Enquiry will be assigned to your branch
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Assign To *
             </label>
+
             <select
               {...register("assignedUserId", {
                 required: "Please assign this enquiry to someone",
               })}
               className="input-field"
-              disabled={usersLoading}
+              disabled={usersLoading || userProfile?.role !== "Superadmin"}
+              value={
+                userProfile?.role === "Superadmin"
+                  ? undefined
+                  : userProfile?.uid || ""
+              }
+              onChange={
+                userProfile?.role === "Superadmin" ? undefined : () => {}
+              }
             >
-              <option value="">Select User</option>
-              {getAvailableUsers().map((user) => (
-                <option key={user.id || user.uid} value={user.id || user.uid}>
-                  {user.displayName || user.email}
-                  {user.role && ` (${user.role})`}
+              {userProfile?.role === "Superadmin" ? (
+                <>
+                  <option value="">Select User</option>
+                  {getAvailableUsers().map((user) => (
+                    <option
+                      key={user.id || user.uid}
+                      value={user.id || user.uid}
+                    >
+                      {user.displayName || user.email}
+                      {user.role && ` (${user.role})`}
+                    </option>
+                  ))}
+                </>
+              ) : (
+                <option value={userProfile?.uid}>
+                  {userProfile?.displayName || userProfile?.email}
+                  {userProfile?.role && ` (${userProfile?.role})`}
                 </option>
-              ))}
+              )}
             </select>
+
             {errors.assignedUserId && (
               <p className="text-red-600 text-sm mt-1">
                 {errors.assignedUserId.message}

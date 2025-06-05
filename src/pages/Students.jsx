@@ -49,6 +49,13 @@ const Students = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
 
+  const filteredStudents =
+    userProfile.role === "Superadmin"
+      ? students
+      : userProfile.role === "Branch Admin"
+      ? students.filter((student) => student.branchId === userProfile.branchId)
+      : students.filter((student) => student.assignedUserId === userProfile.id);
+
   useEffect(() => {
     if (error) {
       console.error("Error fetching enquiries:", error);
@@ -412,20 +419,22 @@ const Students = () => {
         {[
           {
             title: "Total Students",
-            value: students?.length,
+            value: filteredStudents?.length,
             color: "blue",
             subtext: "All enquiries",
           },
           {
             title: "New Enquiries",
-            value: students?.filter((s) => s.enquiry_status === "New").length,
+            value: filteredStudents?.filter((s) => s.enquiry_status === "New")
+              .length,
             color: "green",
             subtext: "Require attention",
           },
           {
             title: "In Progress",
-            value: students?.filter((s) => s.enquiry_status === "In Progress")
-              .length,
+            value: filteredStudents?.filter(
+              (s) => s.enquiry_status === "In Progress"
+            ).length,
             color: "yellow",
             subtext: "Active cases",
           },
