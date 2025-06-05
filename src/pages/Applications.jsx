@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Download, Upload, AlertTriangle } from "lucide-react";
+import { Plus, Download, Upload, AlertTriangle, X } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import ApplicationForm from "../components/Application/ApplicationForm";
 import { useApplications, useAssessments } from "../hooks/useFirestore";
@@ -119,7 +119,7 @@ const Applications = () => {
             disabled={isLoading}
           >
             <Plus size={20} className="mr-2" />
-            New Application
+            Add Application
           </button>
         </div>
       </div>
@@ -193,7 +193,7 @@ const Applications = () => {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Create New Application"
+        title="Add New Application"
         size="large"
       >
         <ApplicationForm
@@ -222,19 +222,12 @@ const Applications = () => {
           }}
         />
       </Modal>
-      <Modal
+      <ApplicationDetail
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
-        title="Application Details"
-        size="large"
-      >
-        {selectedApplication && (
-          <ApplicationDetail
-            application={selectedApplication}
-            assessments={assessments}
-          />
-        )}
-      </Modal>
+        application={selectedApplication}
+        assessments={assessments}
+      />
       <Modal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -264,6 +257,7 @@ const Applications = () => {
               }}
               className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
+              <X size={16} className="inline mr-1" />
               Cancel
             </button>
             <button

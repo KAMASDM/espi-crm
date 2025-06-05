@@ -22,6 +22,7 @@ import {
   Upload,
   AlertTriangle,
   CheckCircle,
+  X,
 } from "lucide-react";
 
 const Courses = () => {
@@ -623,16 +624,12 @@ const Courses = () => {
           }}
         />
       </Modal>
-      <Modal
+      <CourseDetail
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
-        title="Course Details"
-        size="large"
-      >
-        {selectedCourse && (
-          <CourseDetail course={selectedCourse} universities={universities} />
-        )}
-      </Modal>
+        course={selectedCourse}
+        universities={universities}
+      />
       <Modal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -662,6 +659,7 @@ const Courses = () => {
               }}
               className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
+              <X size={16} className="inline mr-1" />
               Cancel
             </button>
             <button

@@ -6,13 +6,13 @@ import {
   Download,
   Calendar,
   Search,
-  Filter,
   CheckCircle,
   Clock,
   XCircle,
   CreditCard,
   User,
-  DollarSign,
+  IndianRupee,
+  Filter,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -20,6 +20,7 @@ import {
   PAYMENT_MODES,
   PAYMENT_TYPES,
 } from "../../utils/constants";
+import Loading from "../Common/Loading";
 
 const PaymentsTable = ({
   payments,
@@ -120,7 +121,7 @@ const PaymentsTable = ({
 
   const getModeIcon = (mode) => {
     const modeIcons = {
-      Cash: DollarSign,
+      Cash: IndianRupee,
       "Credit Card": CreditCard,
       "Debit Card": CreditCard,
       "Bank Transfer": CreditCard,
@@ -134,11 +135,7 @@ const PaymentsTable = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <Loading size="default" />;
   }
 
   return (
@@ -158,11 +155,15 @@ const PaymentsTable = ({
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="relative flex gap-2">
+          <Filter
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={16}
+          />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Status</option>
             {PAYMENT_STATUS.map((status) => (
@@ -172,31 +173,43 @@ const PaymentsTable = ({
             ))}
           </select>
 
-          <select
-            value={modeFilter}
-            onChange={(e) => setModeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">All Modes</option>
-            {PAYMENT_MODES.map((mode) => (
-              <option key={mode} value={mode}>
-                {mode}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={modeFilter}
+              onChange={(e) => setModeFilter(e.target.value)}
+              className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">All Modes</option>
+              {PAYMENT_MODES.map((mode) => (
+                <option key={mode} value={mode}>
+                  {mode}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">All Types</option>
-            {PAYMENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">All Types</option>
+              {PAYMENT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -389,14 +402,14 @@ const PaymentsTable = ({
                         <button
                           onClick={() => onEdit(payment)}
                           className="text-yellow-600 hover:text-yellow-900"
-                          title="Edit"
+                          title="Edit Payment"
                         >
                           <Edit size={16} />
                         </button>
                         <button
                           onClick={() => onDelete(payment.id)}
                           className="text-red-600 hover:text-red-900"
-                          title="Delete"
+                          title="Delete Payment"
                         >
                           <Trash2 size={16} />
                         </button>

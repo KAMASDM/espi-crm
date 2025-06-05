@@ -1,278 +1,372 @@
 import React from "react";
 import {
-  FileText,
+  FileText as FileTextIcon,
   ClipboardList,
   CheckCircle2,
   XCircle,
   Clock,
   AlertCircle,
   BookOpen,
-  Calendar,
+  Calendar as CalendarIcon,
   CircleDollarSign,
   FileCheck,
   FileX,
-  User,
   Info,
-  ChevronRight,
   Tag,
+  X,
+  FileArchive,
+  Link as LinkIcon,
+  Paperclip,
 } from "lucide-react";
+import Loading from "../Common/Loading";
 
-const documents = [
-  { key: "sop", label: "Statement of Purpose", icon: FileText },
+const documentsConfig = [
+  { key: "sop", label: "Statement of Purpose", icon: FileTextIcon },
   { key: "cv", label: "CV/Resume", icon: ClipboardList },
-  { key: "passport", label: "Passport", icon: FileText },
-  { key: "ielts", label: "IELTS Score", icon: FileText },
-  { key: "toefl", label: "TOEFL Score", icon: FileText },
-  { key: "gre", label: "GRE Score", icon: FileText },
-  { key: "gmat", label: "GMAT Score", icon: FileText },
-  { key: "pte", label: "PTE Score", icon: FileText },
-  { key: "work_experience", label: "Work Experience", icon: FileText },
-  { key: "diploma_marksheet", label: "Diploma Marksheet", icon: FileText },
-  { key: "bachelor_marksheet", label: "Bachelor's Marksheet", icon: FileText },
-  { key: "master_marksheet", label: "Master's Marksheet", icon: FileText },
-  { key: "other_documents", label: "Other Documents", icon: FileText },
+  { key: "passport", label: "Passport Copy", icon: FileTextIcon },
+  { key: "ielts", label: "IELTS Scorecard", icon: Paperclip },
+  { key: "toefl", label: "TOEFL Scorecard", icon: Paperclip },
+  { key: "gre", label: "GRE Scorecard", icon: Paperclip },
+  { key: "gmat", label: "GMAT Scorecard", icon: Paperclip },
+  { key: "pte", label: "PTE Scorecard", icon: Paperclip },
+  {
+    key: "work_experience",
+    label: "Work Experience Letter(s)",
+    icon: ClipboardList,
+  },
+  {
+    key: "diploma_marksheet",
+    label: "Diploma Marksheet(s)",
+    icon: FileTextIcon,
+  },
+  {
+    key: "bachelor_marksheet",
+    label: "Bachelor's Marksheet(s)",
+    icon: FileTextIcon,
+  },
+  {
+    key: "master_marksheet",
+    label: "Master's Marksheet(s)",
+    icon: FileTextIcon,
+  },
+  {
+    key: "other_documents",
+    label: "Other Supporting Documents",
+    icon: Paperclip,
+  },
 ];
 
-const ApplicationDetail = ({ application, assessments }) => {
+const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
   const getAssessment = (assessmentId) => {
-    return assessments.find((assessment) => assessment.id === assessmentId);
+    if (!assessmentId || !assessments) return null;
+    return assessments.find((ass) => ass.id === assessmentId);
   };
 
-  const assessment = getAssessment(application.application);
+  const assessment = React.useMemo(
+    () => (application ? getAssessment(application.application) : null),
+    [application, assessments]
+  );
 
-  const getStatusColor = (status) => {
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "Unknown";
+    try {
+      return new Date(timestamp.toDate()).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch (error) {
+      const date = new Date(timestamp);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      }
+      return "Invalid Date";
+    }
+  };
+
+  const getStatusClasses = (status) => {
     switch (status) {
       case "Accepted":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-700 border-green-300";
       case "Rejected":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-700 border-red-300";
       case "Under Review":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-700 border-yellow-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-100 text-slate-700 border-slate-300";
     }
   };
 
   const getStatusIcon = (status) => {
+    const iconProps = { className: "mr-1.5 h-4 w-4 flex-shrink-0" };
     switch (status) {
       case "Accepted":
-        return <CheckCircle2 className="w-4 h-4 mr-1" />;
+        return <CheckCircle2 {...iconProps} />;
       case "Rejected":
-        return <XCircle className="w-4 h-4 mr-1" />;
+        return <XCircle {...iconProps} />;
       case "Under Review":
-        return <Clock className="w-4 h-4 mr-1" />;
+        return <Clock {...iconProps} />;
       default:
-        return <Info className="w-4 h-4 mr-1" />;
+        return <Info {...iconProps} />;
     }
   };
 
+  const Card = ({ children, className = "" }) => (
+    <section
+      className={`rounded-xl bg-white p-5 shadow-lg sm:p-6 ${className}`}
+    >
+      {children}
+    </section>
+  );
+
+  const CardTitle = ({ icon: Icon, text, iconColor = "text-indigo-600" }) => (
+    <h2 className="mb-4 flex items-center text-lg font-semibold text-slate-800 sm:text-xl">
+      <Icon
+        className={`mr-3 h-5 w-5 sm:h-6 sm:w-6 ${iconColor} flex-shrink-0`}
+      />
+      {text}
+    </h2>
+  );
+
+  const InfoListItem = ({
+    icon: Icon,
+    label,
+    value,
+    valueClasses = "text-slate-800",
+  }) => (
+    <div className="py-2">
+      <div className="flex items-start">
+        <Icon className="mr-3 mt-1 h-5 w-5 flex-shrink-0 text-slate-500" />
+        <div className="flex-1">
+          <p className="text-xs font-medium text-slate-500 sm:text-sm">
+            {label}
+          </p>
+          <p
+            className={`mt-0.5 break-words text-sm sm:text-base ${valueClasses}`}
+          >
+            {value || "N/A"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!application) {
+    return isOpen && <Loading size="default" />;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg p-6 text-white shadow-lg">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">
-          Application Details
-        </h1>
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <span className="flex items-center">
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-white bg-opacity-20">
-              APP-{application.id.slice(-8).toUpperCase()}
-            </span>
-          </span>
-          <span className="flex items-center">
-            <User className="w-4 h-4 mr-1" />
-            {application.studentDisplayName}
-          </span>
-          <span className="flex items-center">
-            {getStatusIcon(application.application_status)}
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                application.application_status
-              )}`}
-            >
-              {application.application_status}
-            </span>
-          </span>
-          <span className="flex items-center">
-            <Calendar className="w-4 h-4 mr-1" />
-            Created:{" "}
-            {application.createdAt
-              ? new Date(application.createdAt.toDate()).toLocaleDateString()
-              : "Unknown"}
-          </span>
-        </div>
-      </div>
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <Info className="w-5 h-5 mr-2 text-blue-600" />
-          Basic Information
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 h-5 w-5 text-gray-500">
-              <ClipboardList className="h-5 w-5" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Assessment ID</p>
-              <p className="text-sm text-gray-900">
-                {assessment && `ASS-${assessment.id.slice(-8).toUpperCase()}`}
-              </p>
-            </div>
+    <div
+      className={`fixed inset-0 z-50 flex justify-end overflow-hidden transition-opacity duration-300 ease-in-out ${
+        isOpen
+          ? "pointer-events-auto opacity-100"
+          : "pointer-events-none opacity-0"
+      }`}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        className="fixed inset-0 bg-black/60"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className={`relative flex h-full w-full transform flex-col bg-slate-100 shadow-2xl transition-transform duration-300 ease-in-out sm:max-w-2xl md:max-w-3xl ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+          <div className="flex items-center">
+            <FileArchive className="mr-2 h-6 w-6 text-indigo-600" />
+            <h3 className="text-xl font-semibold text-slate-800">
+              Application Overview
+            </h3>
           </div>
-          <div className="flex items-start">
-            <div className="flex-shrink-0 h-5 w-5 text-gray-500">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Created Date</p>
-              <p className="text-sm text-gray-900">
-                {application.createdAt &&
-                  new Date(application.createdAt.toDate()).toLocaleDateString(
-                    "en-US",
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            aria-label="Close drawer"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto p-4 pt-5 sm:p-6 bg-slate-50">
+          <div className="space-y-6">
+            <section className="rounded-xl bg-gradient-to-br from-indigo-600 to-purple-700 p-6 text-white shadow-lg">
+              <div className="flex flex-col items-start gap-y-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="rounded-full bg-white/20 px-3 py-1 text-sm font-semibold tracking-wide">
+                  APP ID:{" "}
+                  {application.id
+                    ? application.id.slice(-8).toUpperCase()
+                    : "N/A"}
+                </span>
+                <span
+                  className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold shadow-sm sm:text-sm ${getStatusClasses(
+                    application.application_status
+                  )}`}
+                >
+                  {getStatusIcon(application.application_status)}
+                  {application.application_status || "N/A"}
+                </span>
+              </div>
+              <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
+                {application.studentDisplayName || "N/A"}
+              </h1>
+              <p className="mt-1 flex items-center text-sm text-indigo-200">
+                <CalendarIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                Application Date: {formatDate(application.createdAt)}
+              </p>
+            </section>
+            <Card>
+              <CardTitle
+                icon={Info}
+                text="Basic Application Info"
+                iconColor="text-sky-600"
+              />
+              <div className="grid grid-cols-1 gap-x-4 gap-y-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-y-0">
+                <InfoListItem
+                  icon={ClipboardList}
+                  label="Linked Assessment ID"
+                  value={
+                    assessment
+                      ? `ASS-${assessment.id.slice(-8).toUpperCase()}`
+                      : "Not Linked"
+                  }
+                />
+                <InfoListItem
+                  icon={CalendarIcon}
+                  label="Application Submission Date"
+                  value={formatDate(application.createdAt)}
+                />
+              </div>
+            </Card>
+            {assessment && (
+              <Card>
+                <CardTitle icon={BookOpen} text="Key Assessment Details" />
+                <div className="grid grid-cols-1 gap-x-4 gap-y-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-y-0">
+                  {[
                     {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }
-                  )}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      {assessment && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <BookOpen className="w-5 h-5 mr-2 text-indigo-600" />
-            Assessment Details
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 h-5 w-5 text-gray-500">
-                <Tag className="h-5 w-5" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">
-                  Specialization
-                </p>
-                <p className="text-sm text-gray-900">
-                  {assessment.specialisation}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <div className="flex-shrink-0 h-5 w-5 text-gray-500">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Duration</p>
-                <p className="text-sm text-gray-900">
-                  {assessment.duration && `${assessment.duration} years`}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <div className="flex-shrink-0 h-5 w-5 text-gray-500">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">
-                  Application Fee
-                </p>
-                <p className="text-sm text-gray-900">
-                  {assessment.application_fee &&
-                    `${assessment.fee_currency || ""} ${
-                      assessment.application_fee
-                    }`}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <div className="flex-shrink-0 h-5 w-5 text-gray-500">
-                <CircleDollarSign className="h-5 w-5" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Tuition Fee</p>
-                <p className="text-sm text-gray-900">
-                  {assessment.tution_fee &&
-                    `${assessment.fee_currency || ""} ${assessment.tution_fee}`}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <FileText className="w-5 h-5 mr-2 text-purple-600" />
-          Documents Status
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {documents.map((doc) => {
-            const Icon = doc.icon;
-            return (
-              <div
-                key={doc.key}
-                className={`p-4 rounded-lg border ${
-                  application[doc.key]
-                    ? "border-green-200 bg-green-50"
-                    : "border-red-200 bg-red-50"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Icon className="h-5 w-5 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700">
-                      {doc.label}
-                    </span>
-                  </div>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      application[doc.key]
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {application[doc.key] ? (
-                      <span className="flex items-center">
-                        <FileCheck className="w-3 h-3 mr-1" />
-                        Uploaded
-                      </span>
-                    ) : (
-                      <span className="flex items-center">
-                        <FileX className="w-3 h-3 mr-1" />
-                        Missing
-                      </span>
-                    )}
-                  </span>
+                      icon: Tag,
+                      label: "Specialization",
+                      value: assessment.specialisation,
+                    },
+                    {
+                      icon: Clock,
+                      label: "Duration",
+                      value: `${assessment.duration} ${
+                        assessment.duration_unit || "years"
+                      }`,
+                    },
+                    {
+                      icon: FileTextIcon,
+                      label: "Application Fee",
+                      value: `${assessment.fee_currency || ""} ${
+                        assessment.application_fee
+                      }`,
+                    },
+                    {
+                      icon: CircleDollarSign,
+                      label: "Tuition Fee (Est.)",
+                      value: `${assessment.fee_currency || ""} ${
+                        assessment.tution_fee
+                      }`,
+                    },
+                  ].map((item, index) => (
+                    <InfoListItem
+                      key={index}
+                      icon={item.icon}
+                      label={item.label}
+                      value={item.value}
+                    />
+                  ))}
                 </div>
-                {application[doc.key] && (
-                  <a
-                    href={application[doc.key]}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    View document <ChevronRight className="w-3 h-3 ml-1" />
-                  </a>
-                )}
+              </Card>
+            )}
+            <Card>
+              <CardTitle
+                icon={Paperclip}
+                text="Document Checklist"
+                iconColor="text-purple-600"
+              />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {documentsConfig.map((doc) => {
+                  const isUploaded = !!application[doc.key];
+                  const Icon = doc.icon;
+                  return (
+                    <div
+                      key={doc.key}
+                      className={`flex flex-col justify-between rounded-lg border p-4 shadow-sm transition-all ${
+                        isUploaded
+                          ? "border-green-300 bg-green-50 hover:shadow-md"
+                          : "border-red-300 bg-red-50 hover:shadow-md"
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Icon
+                              className={`mr-2 h-5 w-5 flex-shrink-0 ${
+                                isUploaded ? "text-green-600" : "text-red-600"
+                              }`}
+                            />
+                            <span className="text-sm font-medium text-slate-700">
+                              {doc.label}
+                            </span>
+                          </div>
+                          {isUploaded ? (
+                            <FileCheck className="h-5 w-5 text-green-600 flex-shrink-0" />
+                          ) : (
+                            <FileX className="h-5 w-5 text-red-600 flex-shrink-0" />
+                          )}
+                        </div>
+                        <p
+                          className={`mt-1 text-xs font-medium ${
+                            isUploaded ? "text-green-700" : "text-red-700"
+                          }`}
+                        >
+                          Status: {isUploaded ? "Uploaded" : "Missing"}
+                        </p>
+                      </div>
+                      {isUploaded && application[doc.key] && (
+                        <a
+                          href={application[doc.key]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center self-start rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-100"
+                        >
+                          View Document{" "}
+                          <LinkIcon className="ml-1.5 h-3.5 w-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      </div>
-      {application.notes && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <AlertCircle className="w-5 h-5 mr-2 text-yellow-600" />
-            Notes
-          </h2>
-          <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">
-              {application.notes}
-            </p>
+            </Card>
+            {application.notes && application.notes.trim() !== "" && (
+              <Card>
+                <CardTitle
+                  icon={AlertCircle}
+                  text="Application Notes"
+                  iconColor="text-amber-600"
+                />
+                <div className="rounded-lg bg-amber-50 p-4 ring-1 ring-amber-200">
+                  <div className="flex items-start">
+                    <Info className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+                    <p className="whitespace-pre-wrap text-sm text-amber-800">
+                      {application.notes}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

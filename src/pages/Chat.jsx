@@ -40,11 +40,7 @@ const Chat = () => {
   };
 
   if (chatsLoading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-120px)]">
-        <Loading />
-      </div>
-    );
+    return <Loading size="default" />;
   }
 
   if (chatsError) {

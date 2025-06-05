@@ -16,6 +16,7 @@ import {
 import Loading from "../Common/Loading";
 import { useAuth } from "../../context/AuthContext";
 import { assessmentService } from "../../services/firestore";
+import { Save, X } from "lucide-react";
 
 const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -374,9 +375,11 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
           className="btn-secondary"
           disabled={loading}
         >
+          <X size={16} className="inline mr-1" />
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
+          <Save size={16} className="inline mr-1" />
           {loading ? "Saving..." : editData ? "Update" : "Create"}
         </button>
       </div>

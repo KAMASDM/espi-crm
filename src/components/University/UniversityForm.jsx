@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useAuth } from "../../context/AuthContext";
 import { universityService } from "../../services/firestore";
 import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
+import { Save, X } from "lucide-react";
 
 const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -262,9 +263,11 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           className="btn-secondary"
           disabled={loading}
         >
+          <X size={16} className="inline mr-1" />
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
+          <Save size={16} className="inline mr-1" />
           {loading ? "Saving..." : editData ? "Update" : "Create"}
         </button>
       </div>

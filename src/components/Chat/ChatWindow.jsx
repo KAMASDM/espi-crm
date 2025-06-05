@@ -135,7 +135,7 @@ const ChatWindow = ({ selectedChat, onClose }) => {
         <div className="flex-1 flex flex-col">
           {messagesLoading && messages.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loading />
+              <Loading size="default" />
             </div>
           ) : (
             <MessageList messages={messages} currentUser={currentUser} />

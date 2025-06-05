@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Download, Upload, AlertTriangle } from "lucide-react";
+import { Plus, Download, Upload, AlertTriangle, X } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import PaymentForm from "../components/Payment/PaymentForm";
 import PaymentsTable from "../components/Payment/PaymentsTable";
-import { usePayments, useEnquiries } from "../hooks/useFirestore";
 import PaymentDetail from "../components/Payment/PaymentDetail";
+import { usePayments, useEnquiries } from "../hooks/useFirestore";
 
 const Payments = () => {
   const {
@@ -91,7 +91,7 @@ const Payments = () => {
   ).length;
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Payments</h1>
@@ -200,7 +200,7 @@ const Payments = () => {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Record New Payment"
+        title="Add New Payment"
         size="large"
       >
         <PaymentForm
@@ -229,16 +229,12 @@ const Payments = () => {
           }}
         />
       </Modal>
-      <Modal
+      <PaymentDetail
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
-        title="Payment Details"
-        size="large"
-      >
-        {selectedPayment && (
-          <PaymentDetail payment={selectedPayment} enquiries={enquiries} />
-        )}
-      </Modal>
+        payment={selectedPayment}
+        enquiries={enquiries}
+      />
       <Modal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -268,9 +264,11 @@ const Payments = () => {
               }}
               className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
+              <X size={16} className="inline mr-1" />
               Cancel
             </button>
             <button
+              disabled
               type="button"
               onClick={confirmDelete}
               className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { GraduationCap } from "lucide-react";
 import { signInWithGoogle } from "../services/auth";
 import toast from "react-hot-toast";

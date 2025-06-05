@@ -10,166 +10,275 @@ import {
   Calendar,
   CheckCircle,
   AlertTriangle,
+  X,
+  Building,
+  IndianRupee,
+  FileText,
+  Archive,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 
-const UniversityDetail = ({ university }) => {
+const UniversityDetail = ({ university, isOpen, onClose }) => {
   const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name;
+    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
+
+  const getDeadlineInfo = (deadline) => {
+    if (!deadline)
+      return {
+        formatted: "No deadline specified",
+        remainingDays: null,
+        isPast: false,
+      };
+
+    const deadlineDate = new Date(deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    const formatted = deadlineDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const remainingDays = Math.ceil(
+      (deadlineDate - today) / (1000 * 60 * 60 * 24)
+    );
+    return {
+      formatted,
+      remainingDays,
+      isPast: remainingDays < 0,
+    };
+  };
+
+  const deadlineInfo = university ? getDeadlineInfo(university.deadline) : null;
 
   return (
-    <div className="space-y-4">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg p-6 text-white shadow-lg">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">
-          {university.univ_name}
-        </h1>
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <span className="flex items-center">
-            <MapPin className="w-4 h-4 mr-1" />
-            {getCountryName(university.country)}
-          </span>
-          <span className="flex items-center">
-            <Phone className="w-4 h-4 mr-1" />
-            {university.univ_phone}
-          </span>
-          <span className="flex items-center">
-            <Mail className="w-4 h-4 mr-1" />
-            {university.univ_email}
-          </span>
-          {university.univ_website && (
-            <a
-              href={
-                university.univ_website.startsWith("http")
-                  ? university.univ_website
-                  : `https://${university.univ_website}`
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center hover:underline"
-            >
-              <Globe className="w-4 h-4 mr-1" />
-              Visit Website
-            </a>
+    <div
+      className={`fixed inset-0 z-50 flex justify-end overflow-hidden transition-opacity duration-300 ease-in-out ${
+        isOpen
+          ? "pointer-events-auto opacity-100"
+          : "pointer-events-none opacity-0"
+      }`}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        className="fixed inset-0 bg-black/60"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className={`relative flex h-full w-full transform flex-col bg-slate-50 shadow-2xl transition-transform duration-300 ease-in-out sm:max-w-2xl md:max-w-3xl ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+          <div className="flex items-center">
+            <Building className="mr-2 h-6 w-6 text-indigo-600" />
+            <h3 className="text-xl font-semibold text-slate-800">
+              University Details
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            aria-label="Close drawer"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto p-4 pt-6 sm:p-6 bg-slate-50">
+          {university ? (
+            <div className="space-y-6">
+              <section className="rounded-xl bg-gradient-to-br from-indigo-600 to-purple-700 p-6 text-white shadow-lg">
+                <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">
+                  {university.univ_name}
+                </h1>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2 md:text-base">
+                  <div className="flex items-center">
+                    <MapPin className="mr-2 h-5 w-5 flex-shrink-0" />
+                    <span>{getCountryName(university.country)}</span>
+                  </div>
+                  {university.univ_phone && (
+                    <div className="flex items-center">
+                      <Phone className="mr-2 h-5 w-5 flex-shrink-0" />
+                      <span>{university.univ_phone}</span>
+                    </div>
+                  )}
+                  {university.univ_email && (
+                    <div className="flex items-center">
+                      <Mail className="mr-2 h-5 w-5 flex-shrink-0" />
+                      <a
+                        href={`mailto:${university.univ_email}`}
+                        className="hover:underline break-all"
+                      >
+                        {university.univ_email}
+                      </a>
+                    </div>
+                  )}
+                  {university.univ_website && (
+                    <div className="flex items-center sm:col-span-2 md:col-span-1">
+                      <Globe className="mr-2 h-5 w-5 flex-shrink-0" />
+                      <a
+                        href={
+                          university.univ_website.startsWith("http")
+                            ? university.univ_website
+                            : `https://${university.univ_website}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline break-all"
+                      >
+                        Visit Website
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </section>
+              <section className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div
+                  className={`flex items-center justify-center rounded-lg p-3 text-sm font-medium shadow-sm ${
+                    university.Active
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {university.Active ? (
+                    <ThumbsUp className="mr-1.5 h-4 w-4" />
+                  ) : (
+                    <ThumbsDown className="mr-1.5 h-4 w-4" />
+                  )}
+                  {university.Active ? "Active" : "Inactive"}
+                </div>
+                <div
+                  className={`flex items-center justify-center rounded-lg p-3 text-sm font-medium shadow-sm ${
+                    university.moi_accepted
+                      ? "bg-sky-100 text-sky-700"
+                      : "bg-slate-100 text-slate-700"
+                  }`}
+                >
+                  <FileText className="mr-1.5 h-4 w-4" />
+                  MOI: {university.moi_accepted ? "Accepted" : "No"}
+                </div>
+                <div className="flex items-center justify-center rounded-lg bg-purple-100 p-3 text-sm font-medium text-purple-700 shadow-sm">
+                  <Archive className="mr-1.5 h-4 w-4" />
+                  Backlogs: {university.Backlogs_allowed || "N/A"}
+                </div>
+                <div className="flex items-center justify-center rounded-lg bg-amber-100 p-3 text-sm font-medium text-amber-700 shadow-sm">
+                  <IndianRupee className="mr-1.5 h-4 w-4" />
+                  Fee:{" "}
+                  {university.Application_fee
+                    ? `₹ ${university.Application_fee}`
+                    : "N/A"}
+                </div>
+              </section>
+              <section className="rounded-xl bg-white p-6 shadow-lg">
+                <h2 className="mb-4 flex items-center text-xl font-semibold text-slate-800">
+                  <Info className="mr-3 h-6 w-6 text-indigo-600" />
+                  About the University
+                </h2>
+                <p className="whitespace-pre-wrap text-slate-600 leading-relaxed">
+                  {university.univ_desc || "No description available."}
+                </p>
+              </section>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <section className="rounded-xl bg-white p-6 shadow-lg">
+                  <h2 className="mb-4 flex items-center text-xl font-semibold text-slate-800">
+                    <GraduationCap className="mr-3 h-6 w-6 text-indigo-600" />
+                    Course Levels Offered
+                  </h2>
+                  {Array.isArray(university.levels) &&
+                  university.levels.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {university.levels.map((level, index) => (
+                        <span
+                          key={index}
+                          className="rounded-full bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700"
+                        >
+                          {level}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-500">
+                      No course levels specified.
+                    </p>
+                  )}
+                </section>
+                <section className="rounded-xl bg-white p-6 shadow-lg">
+                  <h2 className="mb-4 flex items-center text-xl font-semibold text-slate-800">
+                    <Calendar className="mr-3 h-6 w-6 text-red-600" />
+                    Application Deadline
+                  </h2>
+                  {deadlineInfo && (
+                    <div className="flex flex-col space-y-2">
+                      <span
+                        className={`text-lg font-semibold ${
+                          deadlineInfo.isPast
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {deadlineInfo.formatted}
+                      </span>
+                      {deadlineInfo.formatted !== "No deadline specified" && (
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium self-start ${
+                            deadlineInfo.isPast
+                              ? "bg-red-100 text-red-700"
+                              : deadlineInfo.remainingDays < 30
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {deadlineInfo.isPast
+                            ? `Passed ${Math.abs(
+                                deadlineInfo.remainingDays
+                              )} days ago`
+                            : `${deadlineInfo.remainingDays} days remaining`}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </section>
+              </div>
+              <section className="rounded-xl bg-white p-6 shadow-lg">
+                <h2 className="mb-4 flex items-center text-xl font-semibold text-slate-800">
+                  <CheckCircle className="mr-3 h-6 w-6 text-green-600" />
+                  Admission Requirements
+                </h2>
+                <div className="prose prose-sm sm:prose-base max-w-none text-slate-600 whitespace-pre-wrap">
+                  {university.Admission_Requirements ||
+                    "No specific admission requirements provided."}
+                </div>
+              </section>
+              {university.Remark && (
+                <section className="rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-5 shadow-md">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <AlertTriangle className="h-6 w-6 text-yellow-600" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-base font-semibold text-yellow-800">
+                        Important Note
+                      </h3>
+                      <div className="mt-1 text-sm text-yellow-700 whitespace-pre-wrap">
+                        {university.Remark}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-slate-500">No university data available.</p>
+            </div>
           )}
         </div>
       </div>
-      <div className="flex flex-wrap gap-3">
-        <div
-          className={`px-4 py-2 rounded-full text-sm font-medium ${
-            university.Active
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {university.Active ? "Active" : "Inactive"}
-        </div>
-        <div
-          className={`px-4 py-2 rounded-full text-sm font-medium ${
-            university.moi_accepted
-              ? "bg-blue-100 text-blue-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          MOI Accepted: {university.moi_accepted ? "Yes" : "No"}
-        </div>
-        <div className="px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-          Backlogs Allowed: {university.Backlogs_allowed || "N/A"}
-        </div>
-        <div className="px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-          Application Fee:{" "}
-          {university.Application_fee
-            ? `$${university.Application_fee}`
-            : "N/A"}
-        </div>
-      </div>
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <Info className="w-5 h-5 mr-2 text-blue-600" />
-          About the University
-        </h2>
-        <p className="text-gray-700 whitespace-pre-wrap">
-          {university.univ_desc || "No description available."}
-        </p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <GraduationCap className="w-5 h-5 mr-2 text-indigo-600" />
-            Course Levels
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {Array.isArray(university.levels) &&
-            university.levels.length > 0 ? (
-              university.levels.map((level, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm"
-                >
-                  {level}
-                </span>
-              ))
-            ) : (
-              <span className="text-gray-500">No levels specified</span>
-            )}
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-red-600" />
-            Application Deadline
-          </h2>
-          <div className="flex items-center">
-            <span
-              className={`text-lg font-medium ${
-                new Date(university.deadline) < new Date()
-                  ? "text-red-600"
-                  : "text-green-600"
-              }`}
-            >
-              {university.deadline
-                ? new Date(university.deadline).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : "No deadline specified"}
-            </span>
-            {university.deadline && (
-              <span className="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                {Math.ceil(
-                  (new Date(university.deadline) - new Date()) /
-                    (1000 * 60 * 60 * 24)
-                )}{" "}
-                days remaining
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
-          Admission Requirements
-        </h2>
-        <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
-          {university.Admission_Requirements ||
-            "No specific admission requirements provided."}
-        </div>
-      </div>
-      {university.Remark && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-yellow-400" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">Note</h3>
-              <div className="mt-1 text-sm text-yellow-700">
-                {university.Remark}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

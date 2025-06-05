@@ -8,7 +8,7 @@ import {
   Filter,
   Calendar,
   Building2,
-  DollarSign,
+  IndianRupee,
   ExternalLink,
   ClipboardList,
 } from "lucide-react";
@@ -140,11 +140,15 @@ const AssessmentsTable = ({
             className="pl-10 input-field"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="relative flex gap-2">
+          <Filter
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={16}
+          />
           <select
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="pl-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Countries</option>
             {COUNTRIES.map((country) => (
@@ -161,7 +165,7 @@ const AssessmentsTable = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Status</option>
               {ASSESSMENT_STATUS.map((status) => (
@@ -324,7 +328,7 @@ const AssessmentsTable = ({
                     <div className="space-y-1">
                       {assessment.application_fee && (
                         <div className="flex items-center text-sm text-gray-900">
-                          <DollarSign
+                          <IndianRupee
                             size={14}
                             className="mr-1 text-gray-400"
                           />
@@ -368,14 +372,14 @@ const AssessmentsTable = ({
                       <button
                         onClick={() => onEdit(assessment)}
                         className="text-yellow-600 hover:text-yellow-900"
-                        title="Edit"
+                        title="Edit Assessment"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => onDelete(assessment.id)}
                         className="text-red-600 hover:text-red-900"
-                        title="Delete"
+                        title="Delete Assessment"
                       >
                         <Trash2 size={16} />
                       </button>

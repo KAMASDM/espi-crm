@@ -138,7 +138,7 @@ const UniversitiesTable = ({
             <select
               value={countryFilter}
               onChange={(e) => setCountryFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Countries</option>
               {COUNTRIES.map((country) => (
@@ -157,7 +157,7 @@ const UniversitiesTable = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
@@ -359,14 +359,14 @@ const UniversitiesTable = ({
                         <button
                           onClick={() => onEdit(university)}
                           className="text-yellow-600 hover:text-yellow-900"
-                          title="Edit"
+                          title="Edit University"
                         >
                           <Edit size={16} />
                         </button>
                         <button
                           onClick={() => onDelete(university.id)}
                           className="text-red-600 hover:text-red-900"
-                          title="Delete"
+                          title="Delete University"
                         >
                           <Trash2 size={16} />
                         </button>

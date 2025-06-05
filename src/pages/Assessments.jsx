@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Download, Upload, AlertTriangle } from "lucide-react";
+import { Plus, Download, Upload, AlertTriangle, X } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import AssessmentForm from "../components/Assessment/AssessmentForm";
 import AssessmentsTable from "../components/Assessment/AssessmentsTable";
@@ -123,7 +123,7 @@ const Assessments = () => {
             disabled={isLoading}
           >
             <Plus size={20} className="mr-2" />
-            New Assessment
+            Add Assessment
           </button>
         </div>
       </div>
@@ -198,7 +198,7 @@ const Assessments = () => {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Create New Assessment"
+        title="Add New Assessment"
         size="large"
       >
         <AssessmentForm
@@ -231,21 +231,14 @@ const Assessments = () => {
           }}
         />
       </Modal>
-      <Modal
+      <AssessmentDetail
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
-        title="Assessment Details"
-        size="large"
-      >
-        {selectedAssessment && (
-          <AssessmentDetail
-            assessment={selectedAssessment}
-            enquiries={enquiries}
-            universities={universities}
-            courses={courses}
-          />
-        )}
-      </Modal>
+        assessment={selectedAssessment}
+        enquiries={enquiries}
+        universities={universities}
+        courses={courses}
+      />
       <Modal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -275,6 +268,7 @@ const Assessments = () => {
               }}
               className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
+              <X size={16} className="inline mr-1" />
               Cancel
             </button>
             <button

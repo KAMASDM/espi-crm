@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { USER_ROLES } from "../../utils/constants";
 import { branchService, userService } from "../../services/firestore";
+import { Save, X } from "lucide-react";
 
 const BranchForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -212,9 +213,11 @@ const BranchForm = ({ onClose, onSuccess, editData = null }) => {
           className="btn-secondary"
           disabled={loading}
         >
+          <X size={16} className="inline mr-1" />
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
+          <Save size={16} className="inline mr-1" />
           {loading ? "Saving..." : editData ? "Update Branch" : "Create Branch"}
         </button>
       </div>

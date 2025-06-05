@@ -251,7 +251,7 @@ const StudentsTable = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Status</option>
               {ENQUIRY_STATUS.map((status) => (
@@ -270,7 +270,7 @@ const StudentsTable = ({
             <select
               value={branchFilter}
               onChange={(e) => setBranchFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Branches</option>
               {branches.map((branch) => (
@@ -289,7 +289,7 @@ const StudentsTable = ({
             <select
               value={assignmentFilter}
               onChange={(e) => setAssignmentFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Assignments</option>
               {getAvailableUsers().map((user) => (
@@ -536,7 +536,7 @@ const StudentsTable = ({
                         />
                       )}
                     </td>
-                    
+
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar size={14} className="mr-2 text-gray-400" />
@@ -556,14 +556,14 @@ const StudentsTable = ({
                         <button
                           onClick={() => onEdit(student)}
                           className="p-1 text-yellow-600 hover:text-yellow-900"
-                          title="Edit"
+                          title="Edit Student"
                         >
                           <Edit size={16} />
                         </button>
                         <button
                           onClick={() => onDelete(student.id)}
                           className="p-1 text-red-600 hover:text-red-900"
-                          title="Delete"
+                          title="Delete Student"
                         >
                           <Trash2 size={16} />
                         </button>

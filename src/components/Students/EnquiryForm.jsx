@@ -17,6 +17,7 @@ import {
 } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
 import { useUniversities } from "../../hooks/useFirestore";
+import { Save, X } from "lucide-react";
 
 const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -551,14 +552,12 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
           className="btn-secondary"
           disabled={loading}
         >
+          <X size={16} className="inline mr-1" />
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading
-            ? "Saving..."
-            : editData
-            ? "Update Enquiry"
-            : "Create Enquiry"}
+          <Save size={16} className="inline mr-1" />
+          {loading ? "Saving..." : editData ? "Update" : "Create"}
         </button>
       </div>
     </form>
