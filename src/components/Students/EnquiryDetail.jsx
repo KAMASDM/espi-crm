@@ -9,7 +9,7 @@ import {
   CheckCircle,
   Calendar,
   Download,
-  DollarSign,
+  IndianRupee,
   Info,
   ChevronDown,
   ChevronUp,
@@ -555,7 +555,7 @@ const EnquiryDetail = ({ detailEnquiry, onDownload }) => {
             <InfoCard
               label="Father's Annual Income"
               value={father_Annual_Income}
-              icon={DollarSign}
+              icon={IndianRupee}
               isCurrency={true}
               highlight
             />

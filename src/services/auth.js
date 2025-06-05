@@ -86,6 +86,7 @@ export const signOutUser = async () => {
     await signOut(auth);
     localStorage.removeItem("userProfile");
   } catch (error) {
+    console.log("error", error);
     throw error;
   }
 };
@@ -95,6 +96,7 @@ export const getCurrentUserProfile = () => {
     const profile = localStorage.getItem("userProfile");
     return profile ? JSON.parse(profile) : null;
   } catch (error) {
+    console.log("error", error);
     return null;
   }
 };

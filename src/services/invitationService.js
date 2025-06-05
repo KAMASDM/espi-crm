@@ -2,16 +2,10 @@ import { userService } from "./firestore";
 import toast from "react-hot-toast";
 
 export const invitationService = {
-  async sendInvitation(userEmail, userData, invitedBy) {
+  async sendInvitation(userEmail) {
     try {
       const invitationToken = generateInvitationToken();
       const invitationLink = `${window.location.origin}/accept-invitation?token=${invitationToken}`;
-
-      const emailContent = this.generateInvitationEmail(
-        userData,
-        invitationLink,
-        invitedBy
-      );
 
       toast.success(`Invitation email would be sent to ${userEmail}`);
       toast.info("Check console for email content (development mode)");

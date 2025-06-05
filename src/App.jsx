@@ -8,7 +8,6 @@ import { Toaster, toast } from "react-hot-toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Common/Layout";
 import Loading from "./components/Common/Loading";
-
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
@@ -20,7 +19,6 @@ import Applications from "./pages/Applications";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Chat from "./pages/Chat";
-
 import Users from "./pages/Users";
 import BranchManagement from "./pages/Branches";
 import { USER_ROLES } from "./utils/constants";
@@ -29,7 +27,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, userProfile, loading } = useAuth();
 
   if (loading) {
-    return <Loading />;
+    return <Loading size="default" />;
   }
 
   if (!user) {
@@ -48,7 +46,7 @@ const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
 
   if (loading && !user) {
-    return <Loading />;
+    return <Loading size="default" />;
   }
 
   if (!user) {
@@ -61,7 +59,7 @@ const AppRoutes = () => {
   }
 
   if (loading || (user && !userProfile)) {
-    return <Loading />;
+    return <Loading size="default" />;
   }
 
   return (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
-import { Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, X, Save } from "lucide-react";
 import Loading from "../Common/Loading";
 import app, { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
@@ -397,7 +397,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6 p-4 max-h-[calc(100vh-100px)] overflow-y-auto"
+      className="space-y-6 max-h-[calc(100vh-100px)] overflow-y-auto"
     >
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
@@ -557,9 +557,11 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           className="btn-secondary"
           disabled={loading}
         >
+          <X size={16} className="inline mr-1" />
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
+          <Save size={16} className="inline mr-1" />
           {loading ? "Saving..." : editData ? "Update " : "Create "}
         </button>
       </div>

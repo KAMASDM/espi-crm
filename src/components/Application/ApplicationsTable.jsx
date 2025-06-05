@@ -17,6 +17,7 @@ import {
 import { format } from "date-fns";
 import { APPLICATION_STATUS } from "../../utils/constants";
 import Loading from "../Common/Loading";
+
 const DOCUMENT_KEYS_FOR_COUNT = [
   "sop",
   "cv",
@@ -32,6 +33,7 @@ const DOCUMENT_KEYS_FOR_COUNT = [
   "master_marksheet",
   "other_documents",
 ];
+
 const ApplicationsTable = ({
   applications,
   assessments,
@@ -159,9 +161,9 @@ const ApplicationsTable = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none bg-white"
+            className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <option value="">All Statuses</option>
+            <option value="">All Status</option>
             {APPLICATION_STATUS.map((status) => (
               <option key={status} value={status}>
                 {status}

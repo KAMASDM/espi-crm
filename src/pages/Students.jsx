@@ -8,6 +8,7 @@ import {
   Upload,
   AlertTriangle,
   CheckCircle,
+  X,
 } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import { downloadAsCSV } from "../utils/helpers";
@@ -472,7 +473,7 @@ const Students = () => {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Add New Student Enquiry"
+        title="Add New Student"
         size="large"
       >
         <EnquiryForm
@@ -485,7 +486,7 @@ const Students = () => {
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Edit Student Enquiry"
+        title="Edit Student"
         size="large"
       >
         <EnquiryForm
@@ -510,10 +511,10 @@ const Students = () => {
           <div className="text-center">
             <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />{" "}
             <h3 className="mb-2 text-lg font-semibold text-gray-900">
-              Delete Student Enquiry?
+              Delete Student?
             </h3>
             <p className="text-sm text-gray-500 mb-8">
-              Are you sure you want to delete this student enquiry? This action
+              Are you sure you want to delete this student? This action
               cannot be undone.
             </p>
           </div>
@@ -526,6 +527,7 @@ const Students = () => {
               }}
               className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
+              <X size={16} className="inline mr-1" />
               Cancel
             </button>
             <button

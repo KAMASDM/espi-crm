@@ -8,13 +8,14 @@ import {
   XCircle,
   Calendar,
   BookOpen,
-  DollarSign,
+  IndianRupee,
   CheckCircle,
   ExternalLink,
   GraduationCap,
 } from "lucide-react";
 import { format } from "date-fns";
 import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
+import Loading from "../Common/Loading";
 
 const CoursesTable = ({
   courses,
@@ -115,11 +116,7 @@ const CoursesTable = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <Loading size="default" />;
   }
 
   return (
@@ -139,29 +136,20 @@ const CoursesTable = ({
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="relative flex gap-2">
+          <Filter
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={16}
+          />
           <select
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="pl-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Countries</option>
             {COUNTRIES.map((country) => (
               <option key={country.code} value={country.code}>
                 {country.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={levelFilter}
-            onChange={(e) => setLevelFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">All Levels</option>
-            {COURSE_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {level}
               </option>
             ))}
           </select>
@@ -172,9 +160,28 @@ const CoursesTable = ({
               size={16}
             />
             <select
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value)}
+              className="pl-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">All Levels</option>
+              {COURSE_LEVELS.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="relative">
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
@@ -287,7 +294,7 @@ const CoursesTable = ({
                     <div className="space-y-1">
                       {course.Application_fee && (
                         <div className="flex items-center text-sm text-gray-900">
-                          <DollarSign
+                          <IndianRupee
                             size={14}
                             className="mr-1 text-gray-400"
                           />
@@ -335,14 +342,14 @@ const CoursesTable = ({
                       <button
                         onClick={() => onEdit(course)}
                         className="text-yellow-600 hover:text-yellow-900"
-                        title="Edit"
+                        title="Edit Course"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => onDelete(course.id)}
                         className="text-red-600 hover:text-red-900"
-                        title="Delete"
+                        title="Delete Course"
                       >
                         <Trash2 size={16} />
                       </button>

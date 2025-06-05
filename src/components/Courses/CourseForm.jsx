@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { courseService } from "../../services/firestore";
 import { useUniversities } from "../../hooks/useFirestore";
+import { Save, X } from "lucide-react";
 
 const CourseForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -484,10 +485,12 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
           className="btn-secondary"
           disabled={loading}
         >
+          <X size={16} className="inline mr-1" />
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? "Saving..." : editData ? "Update Course" : "Create Course"}
+          <Save size={16} className="inline mr-1" />
+          {loading ? "Saving..." : editData ? "Update" : "Create"}
         </button>
       </div>
     </form>

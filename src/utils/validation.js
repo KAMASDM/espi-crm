@@ -254,7 +254,7 @@ export const validateEnquiryForm = (data) => {
   errors.country_interested = required(data.country_interested);
 
   return Object.fromEntries(
-    Object.entries(errors).filter(([_, value]) => value !== null)
+    Object.entries(errors).filter(([, value]) => value !== null)
   );
 };
 
@@ -272,7 +272,7 @@ export const validateUniversityForm = (data) => {
     errors.Backlogs_allowed = integer(data.Backlogs_allowed);
 
   return Object.fromEntries(
-    Object.entries(errors).filter(([_, value]) => value !== null)
+    Object.entries(errors).filter(([, value]) => value !== null)
   );
 };
 
@@ -293,7 +293,7 @@ export const validateCourseForm = (data) => {
     errors.Backlogs_allowed = integer(data.Backlogs_allowed);
 
   return Object.fromEntries(
-    Object.entries(errors).filter(([_, value]) => value !== null)
+    Object.entries(errors).filter(([, value]) => value !== null)
   );
 };
 
@@ -310,7 +310,7 @@ export const validateAssessmentForm = (data) => {
   if (data.tution_fee) errors.tution_fee = tuitionFee(data.tution_fee);
 
   return Object.fromEntries(
-    Object.entries(errors).filter(([_, value]) => value !== null)
+    Object.entries(errors).filter(([, value]) => value !== null)
   );
 };
 
@@ -320,7 +320,7 @@ export const validateApplicationForm = (data) => {
   errors.application = required(data.application);
 
   return Object.fromEntries(
-    Object.entries(errors).filter(([_, value]) => value !== null)
+    Object.entries(errors).filter(([, value]) => value !== null)
   );
 };
 
@@ -337,7 +337,7 @@ export const validatePaymentForm = (data) => {
   errors.Payment_For = required(data.Payment_For);
 
   return Object.fromEntries(
-    Object.entries(errors).filter(([_, value]) => value !== null)
+    Object.entries(errors).filter(([, value]) => value !== null)
   );
 };
 

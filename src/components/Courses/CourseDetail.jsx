@@ -5,30 +5,84 @@ import {
   School,
   Building2,
   MapPin,
-  Link,
+  Link as LinkIcon,
   Calendar,
-  FileText,
   Coins,
-  BadgeCheck,
   AlertCircle,
   Clock,
   ClipboardList,
   Award,
   Percent,
   Layers,
+  X,
+  Tag,
+  ListChecks,
+  FileBadge,
+  CalendarDays,
+  Sparkles,
+  MinusCircle,
 } from "lucide-react";
 
-const CourseDetail = ({ course, universities }) => {
+const CourseDetail = ({ course, universities, isOpen, onClose }) => {
   const getUniversityName = (universityId) =>
-    universities.find((uni) => uni.id === universityId)?.univ_name;
+    universities?.find((uni) => uni.id === universityId)?.univ_name || "N/A";
 
   const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name;
+    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
 
   const getCountryCodeForUniversity = (universityId) =>
-    universities.find((uni) => uni.id === universityId)?.country;
+    universities?.find((uni) => uni.id === universityId)?.country;
+
+  const getCourseDeadlineInfo = (deadline) => {
+    if (!deadline)
+      return {
+        formatted: "No deadline specified",
+        remainingDays: null,
+        isPast: false,
+        daysText: "",
+      };
+
+    const deadlineDate = new Date(deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    const formatted = deadlineDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const remainingDays = Math.ceil(
+      (deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    let daysText = "";
+    if (remainingDays > 0) {
+      daysText = `${remainingDays} day${
+        remainingDays > 1 ? "s" : ""
+      } remaining`;
+    } else if (remainingDays === 0) {
+      daysText = "Today is the deadline";
+    } else {
+      daysText = `Passed ${Math.abs(remainingDays)} day${
+        Math.abs(remainingDays) > 1 ? "s" : ""
+      } ago`;
+    }
+
+    return {
+      formatted,
+      remainingDays,
+      isPast: remainingDays < 0,
+      daysText,
+    };
+  };
+
+  const deadlineInfo = course
+    ? getCourseDeadlineInfo(course.Application_deadline)
+    : null;
 
   const renderExamRequirements = () => {
+    if (!course) return <p className="text-sm text-slate-500">N/A</p>;
     const exams = [
       { name: "IELTS", value: course.ielts_Exam },
       { name: "TOEFL", value: course.Toefl_Exam },
@@ -37,17 +91,28 @@ const CourseDetail = ({ course, universities }) => {
       { name: "GRE", value: course.Gre_Exam },
       { name: "GMAT", value: course.Gmat_Exam },
       { name: "Other", value: course.other_exam },
-    ].filter((exam) => exam.value);
+    ].filter(
+      (exam) =>
+        exam.value &&
+        exam.value.toString().trim() !== "" &&
+        exam.value.toString().toLowerCase() !== "n/a"
+    );
 
-    if (exams.length === 0) return "N/A";
+    if (exams.length === 0)
+      return (
+        <p className="text-sm text-slate-500">
+          No specific exam scores required or mentioned.
+        </p>
+      );
 
     return (
       <div className="flex flex-wrap gap-2">
         {exams.map((exam, index) => (
           <span
             key={index}
-            className="px-3 py-1 bg-blue-50 text-blue-800 rounded-full text-xs flex items-center"
+            className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1.5 text-xs font-medium text-sky-700"
           >
+            <ListChecks className="mr-1.5 h-3.5 w-3.5" />
             {exam.name}: {exam.value}
           </span>
         ))}
@@ -55,259 +120,364 @@ const CourseDetail = ({ course, universities }) => {
     );
   };
 
+  const Card = ({ children, className = "" }) => (
+    <section
+      className={`rounded-xl bg-white p-5 shadow-lg sm:p-6 ${className}`}
+    >
+      {children}
+    </section>
+  );
+
+  const CardTitle = ({ icon: Icon, text, iconColor = "text-indigo-600" }) => (
+    <h2 className="mb-4 flex items-center text-lg font-semibold text-slate-800 sm:text-xl">
+      <Icon className={`mr-3 h-5 w-5 sm:h-6 sm:w-6 ${iconColor}`} />
+      {text}
+    </h2>
+  );
+
+  const InfoItem = ({
+    icon: Icon,
+    label,
+    value,
+    unit = "",
+    condition = true,
+  }) => {
+    if (!condition || !value) return null;
+    return (
+      <div className="flex items-center text-sm text-slate-600">
+        <Icon className="mr-2 h-4 w-4 text-slate-500 flex-shrink-0" />
+        <span>
+          {label}: {value}
+          {unit}
+        </span>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg p-6 text-white shadow-lg">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center">
-          <BookOpen className="w-6 h-6 mr-2" />
-          {course.course_name}
-        </h1>
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <span className="flex items-center">
-            <School className="w-4 h-4 mr-1" />
-            {course.course_levels}
-          </span>
-          <span className="flex items-center">
-            <Building2 className="w-4 h-4 mr-1" />
-            {getUniversityName(course.university)}
-          </span>
-          <span className="flex items-center">
-            <MapPin className="w-4 h-4 mr-1" />
-            {getCountryName(
-              getCountryCodeForUniversity(course.university) || course.country
-            )}
-          </span>
-          {course.website_url && (
-            <a
-              href={course.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center hover:underline"
-            >
-              <Link className="w-4 h-4 mr-1" />
-              Course Website
-            </a>
+    <div
+      className={`fixed inset-0 z-50 flex justify-end overflow-hidden transition-opacity duration-300 ease-in-out ${
+        isOpen
+          ? "pointer-events-auto opacity-100"
+          : "pointer-events-none opacity-0"
+      }`}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        className="fixed inset-0 bg-black/60"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className={`relative flex h-full w-full transform flex-col bg-slate-100 shadow-2xl transition-transform duration-300 ease-in-out sm:max-w-2xl md:max-w-3xl ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+          <div className="flex items-center">
+            <BookOpen className="mr-2 h-6 w-6 text-indigo-600" />
+            <h3 className="text-xl font-semibold text-slate-800">
+              Course Details
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            aria-label="Close drawer"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto p-4 pt-5 sm:p-6 bg-slate-50">
+          {course ? (
+            <div className="space-y-6">
+              <section className="rounded-xl bg-gradient-to-br from-indigo-600 to-purple-700 p-6 text-white shadow-lg">
+                <h1 className="mb-1 text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+                  {course.course_name}
+                </h1>
+                <p className="mb-3 text-indigo-200 text-sm sm:text-base flex items-center">
+                  <School className="mr-1.5 h-4 w-4 flex-shrink-0" />{" "}
+                  {course.course_levels || "N/A"}
+                </p>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2 md:text-base">
+                  <div className="flex items-center">
+                    <Building2 className="mr-2 h-5 w-5 flex-shrink-0" />
+                    <span>{getUniversityName(course.university)}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPin className="mr-2 h-5 w-5 flex-shrink-0" />
+                    <span>
+                      {getCountryName(
+                        getCountryCodeForUniversity(course.university) ||
+                          course.country
+                      )}
+                    </span>
+                  </div>
+                  {course.website_url && (
+                    <div className="flex items-center sm:col-span-2">
+                      <LinkIcon className="mr-2 h-5 w-5 flex-shrink-0" />
+                      <a
+                        href={
+                          course.website_url.startsWith("http")
+                            ? course.website_url
+                            : `https://${course.website_url}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline break-all"
+                      >
+                        View Course Website
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </section>
+              <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div
+                  className={`flex items-center justify-center rounded-lg p-3 text-sm font-semibold shadow-sm ${
+                    course.Active
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {course.Active ? (
+                    <Sparkles className="mr-1.5 h-4 w-4" />
+                  ) : (
+                    <MinusCircle className="mr-1.5 h-4 w-4" />
+                  )}
+                  Status: {course.Active ? "Active" : "Inactive"}
+                </div>
+                <div className="flex items-center justify-center rounded-lg bg-purple-100 p-3 text-sm font-semibold text-purple-700 shadow-sm">
+                  <Layers className="mr-1.5 h-4 w-4" />
+                  Backlogs: {course.Backlogs_allowed || "N/A"}
+                </div>
+              </section>
+              <Card>
+                <CardTitle icon={ClipboardList} text="Admission Requirements" />
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="mb-2 text-base font-semibold text-slate-700">
+                      Exam Scores
+                    </h3>
+                    {renderExamRequirements()}
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-base font-semibold text-slate-700">
+                      Academic Requirements
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {[
+                        {
+                          icon: Percent,
+                          label: "10th",
+                          value: course.tenth_std_percentage_requirement,
+                          unit: "%",
+                        },
+                        {
+                          icon: Percent,
+                          label: "12th",
+                          value: course.twelfth_std_percentage_requirement,
+                          unit: "%",
+                        },
+                        {
+                          icon: Award,
+                          label: "Bachelor GPA",
+                          value: course.bachelor_requirement,
+                          unit: "/10",
+                          condition: !!course.bachelor_requirement,
+                        },
+                        {
+                          icon: Award,
+                          label: "Master GPA",
+                          value: course.masters_requirement,
+                          unit: "/10",
+                          condition: !!course.masters_requirement,
+                        },
+                      ].map((item, index) => (
+                        <InfoItem
+                          key={index}
+                          icon={item.icon}
+                          label={item.label}
+                          value={item.value}
+                          unit={item.unit}
+                          condition={item.condition}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-base font-semibold text-slate-700">
+                      Documents Required
+                    </h3>
+                    {Array.isArray(course.documents_required) &&
+                    course.documents_required.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {course.documents_required.map((doc, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700"
+                          >
+                            <FileBadge className="mr-1.5 h-3.5 w-3.5" />
+                            {doc}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        No specific documents listed.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+              <Card>
+                <CardTitle
+                  icon={Calendar}
+                  text="Intake & Deadline"
+                  iconColor="text-rose-600"
+                />
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="mb-2 text-base font-semibold text-slate-700">
+                      Available Intakes
+                    </h3>
+                    {Array.isArray(course.intake) &&
+                    course.intake.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {course.intake.map((intake, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700"
+                          >
+                            <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+                            {intake}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        No intakes specified.
+                      </p>
+                    )}
+                  </div>
+                  {deadlineInfo && (
+                    <div>
+                      <h3 className="mb-1 text-base font-semibold text-slate-700">
+                        Application Deadline
+                      </h3>
+                      <div className="flex flex-col items-start gap-y-1 sm:flex-row sm:items-center sm:gap-x-3">
+                        <span
+                          className={`text-base font-semibold ${
+                            deadlineInfo.isPast
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {deadlineInfo.formatted}
+                        </span>
+                        {deadlineInfo.formatted !== "No deadline specified" && (
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+                              deadlineInfo.isPast
+                                ? "bg-red-100 text-red-700"
+                                : deadlineInfo.remainingDays === 0
+                                ? "bg-yellow-100 text-yellow-700"
+                                : deadlineInfo.remainingDays < 30
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
+                          >
+                            <Clock className="mr-1 h-3.5 w-3.5" />
+                            {deadlineInfo.daysText}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+              <Card>
+                <CardTitle
+                  icon={Coins}
+                  text="Financial Information"
+                  iconColor="text-amber-600"
+                />
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div>
+                    <h3 className="mb-1 text-sm font-medium text-slate-500">
+                      Application Fee
+                    </h3>
+                    <p className="text-lg font-semibold text-slate-700">
+                      {course.Application_fee
+                        ? `${course.Application_fee_currency || "USD"} ${
+                            course.Application_fee
+                          }`
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="mb-1 text-sm font-medium text-slate-500">
+                      Est. Yearly Tuition Fee
+                    </h3>
+                    <p className="text-lg font-semibold text-slate-700">
+                      {course.Yearly_Tuition_fee
+                        ? `${course.Application_fee_currency || "USD"} ${
+                            course.Yearly_Tuition_fee
+                          }`
+                        : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+              {course.specialisation_tag &&
+                course.specialisation_tag.trim() !== "" && (
+                  <Card>
+                    <CardTitle
+                      icon={Tag}
+                      text="Specializations"
+                      iconColor="text-purple-600"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {course.specialisation_tag.split(",").map(
+                        (tag, index) =>
+                          tag.trim() && (
+                            <span
+                              key={index}
+                              className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1.5 text-xs font-medium text-purple-700"
+                            >
+                              {tag.trim()}
+                            </span>
+                          )
+                      )}
+                    </div>
+                  </Card>
+                )}
+              {course.Remark && course.Remark.trim() !== "" && (
+                <section className="rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-5 shadow-md">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <AlertCircle className="h-6 w-6 text-yellow-600" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-base font-semibold text-yellow-800">
+                        Additional Notes
+                      </h3>
+                      <div className="mt-1 text-sm text-yellow-700 whitespace-pre-wrap">
+                        {course.Remark}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-slate-500">No course data available.</p>
+            </div>
           )}
         </div>
       </div>
-      <div className="flex flex-wrap gap-3">
-        <div
-          className={`px-4 py-2 rounded-full text-sm font-medium flex items-center ${
-            course.Active
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          <BadgeCheck className="w-4 h-4 mr-1" />
-          {course.Active ? "Active" : "Inactive"}
-        </div>
-        <div className="px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 flex items-center">
-          <Layers className="w-4 h-4 mr-1" />
-          Backlogs Allowed: {course.Backlogs_allowed || "N/A"}
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <ClipboardList className="w-5 h-5 mr-2 text-blue-600" />
-            Admission Requirements
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-1">
-                Exam Scores
-              </h3>
-              {renderExamRequirements()}
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-1">
-                Academic Requirements
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center">
-                  <Percent className="w-4 h-4 mr-1 text-gray-500" />
-                  <span className="text-sm">
-                    10th: {course.tenth_std_percentage_requirement || "N/A"}%
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <Percent className="w-4 h-4 mr-1 text-gray-500" />
-                  <span className="text-sm">
-                    12th: {course.twelfth_std_percentage_requirement || "N/A"}%
-                  </span>
-                </div>
-                {course.bachelor_requirement && (
-                  <div className="flex items-center">
-                    <Award className="w-4 h-4 mr-1 text-gray-500" />
-                    <span className="text-sm">
-                      Bachelor GPA: {course.bachelor_requirement}/10
-                    </span>
-                  </div>
-                )}
-                {course.masters_requirement && (
-                  <div className="flex items-center">
-                    <Award className="w-4 h-4 mr-1 text-gray-500" />
-                    <span className="text-sm">
-                      Master GPA: {course.masters_requirement}/10
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-1">
-                Documents Required
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {Array.isArray(course.documents_required) &&
-                course.documents_required.length > 0 ? (
-                  course.documents_required.map((doc, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs"
-                    >
-                      {doc}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-gray-500 text-sm">
-                    No documents specified
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
-            Intake & Deadline
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-1">
-                Available Intakes
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {Array.isArray(course.intake) && course.intake.length > 0 ? (
-                  course.intake.map((intake, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-green-50 text-green-800 rounded-full text-xs"
-                    >
-                      {intake}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-gray-500 text-sm">
-                    No intakes specified
-                  </span>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-1">
-                Application Deadline
-              </h3>
-              <div className="flex items-center">
-                <span
-                  className={`text-sm font-medium ${
-                    new Date(course.Application_deadline) < new Date()
-                      ? "text-red-600"
-                      : "text-green-600"
-                  }`}
-                >
-                  {course.Application_deadline
-                    ? new Date(course.Application_deadline).toLocaleDateString(
-                        "en-US",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        }
-                      )
-                    : "No deadline specified"}
-                </span>
-                {course.Application_deadline && (
-                  <span className="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 flex items-center">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {Math.ceil(
-                      (new Date(course.Application_deadline) - new Date()) /
-                        (1000 * 60 * 60 * 24)
-                    )}{" "}
-                    days remaining
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <Coins className="w-5 h-5 mr-2 text-yellow-600" />
-          Financial Information
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-1">
-              Application Fee
-            </h3>
-            <p className="text-lg font-medium">
-              {course.Application_fee
-                ? `${course.Application_fee_currency || "CAD"} ${
-                    course.Application_fee
-                  }`
-                : "N/A"}
-            </p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-1">
-              Yearly Tuition Fee
-            </h3>
-            <p className="text-lg font-medium">
-              {course.Yearly_Tuition_fee
-                ? `${course.Application_fee_currency || "CAD"} ${
-                    course.Yearly_Tuition_fee
-                  }`
-                : "N/A"}
-            </p>
-          </div>
-        </div>
-      </div>
-      {course.specialisation_tag && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <FileText className="w-5 h-5 mr-2 text-purple-600" />
-            Specialization
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {course.specialisation_tag.split(",").map((tag, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-purple-50 text-purple-800 rounded-full text-sm"
-              >
-                {tag.trim()}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-      {course.Remark && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-yellow-400" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">Note</h3>
-              <div className="mt-1 text-sm text-yellow-700 whitespace-pre-wrap">
-                {course.Remark}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

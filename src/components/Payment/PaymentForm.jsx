@@ -9,7 +9,7 @@ import {
 import { useEnquiries } from "../../hooks/useFirestore";
 import { paymentService } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
-import { Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, X, Save } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   getStorage,
@@ -19,6 +19,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import app from "../../services/firebase";
+import Loading from "../Common/Loading";
 
 const storage = getStorage(app);
 
@@ -266,7 +267,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
   };
 
   if (enquiriesLoading && !editData) {
-    return <div className="p-6 text-center">Loading student data...</div>;
+    return <Loading size="default" />;
   }
   if (!user) {
     return (
@@ -279,7 +280,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6 p-4 max-h-[calc(100vh-100px)] overflow-y-auto"
+      className="space-y-6 max-h-[calc(100vh-100px)] overflow-y-auto"
     >
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
@@ -644,9 +645,11 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
           className="btn-secondary"
           disabled={loading}
         >
+          <X size={16} className="inline mr-1" />
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
+          <Save size={16} className="inline mr-1" />
           {loading ? "Saving..." : editData ? "Update " : "Create "}
         </button>
       </div>

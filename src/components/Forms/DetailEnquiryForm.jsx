@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useForm, useFieldArray } from "react-hook-form";
 import app from "../../services/firebase";
@@ -19,6 +19,15 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle,
+  AlertTriangle,
+  Briefcase,
+  GraduationCap,
+  BookOpen,
+  Clock,
+  Award,
+  User,
+  DollarSign,
+  Flag,
 } from "lucide-react";
 import {
   getStorage,
@@ -1002,175 +1011,232 @@ const Step6ServicesAndStatus = ({ register }) => (
 const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
   const formData = getValues();
 
-  const renderObject = (obj, title) => (
-    <div className="mb-2">
-      <h6 className="text-sm font-semibold text-gray-600">{title}</h6>
-      {Object.entries(obj || {}).map(
-        ([key, value]) =>
-          (value || value === 0 || typeof value === "boolean") && (
-            <p key={key} className="text-xs text-gray-700 ml-2">
-              <span className="capitalize font-medium">
-                {key
-                  .replace(/_/g, " ")
-                  .replace(/([A-Z])/g, " $1")
-                  .trim()}
-                :
-              </span>{" "}
-              {typeof value === "object" &&
-              value !== null &&
-              !Array.isArray(value)
-                ? JSON.stringify(value)
-                : String(value)}
-            </p>
-          )
-      )}
-      {Object.values(obj || {}).every(
-        (val) => !val && val !== 0 && typeof val !== "boolean"
-      ) && <p className="text-xs text-gray-500 ml-2 italic">Not provided</p>}
+  const renderObject = (obj, title, icon) => (
+    <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="flex items-center mb-2">
+        {icon && <span className="mr-2 text-gray-500">{icon}</span>}
+        <h6 className="text-sm font-semibold text-gray-700">{title}</h6>
+      </div>
+      <div className="space-y-1">
+        {Object.entries(obj || {}).map(
+          ([key, value]) =>
+            (value || value === 0 || typeof value === "boolean") && (
+              <div key={key} className="flex text-xs">
+                <span className="capitalize font-medium text-gray-600 min-w-[120px]">
+                  {key
+                    .replace(/_/g, " ")
+                    .replace(/([A-Z])/g, " $1")
+                    .trim()}
+                  :
+                </span>
+                <span className="text-gray-800 ml-2 break-words">
+                  {typeof value === "object" &&
+                  value !== null &&
+                  !Array.isArray(value)
+                    ? JSON.stringify(value)
+                    : String(value)}
+                </span>
+              </div>
+            )
+        )}
+        {Object.values(obj || {}).every(
+          (val) => !val && val !== 0 && typeof val !== "boolean"
+        ) && <p className="text-xs text-gray-400 italic">Not provided</p>}
+      </div>
     </div>
   );
-  const renderArrayOfObjects = (arr, title) => (
-    <div className="mb-2">
-      <h6 className="text-sm font-semibold text-gray-600">{title}</h6>
-      {(arr || []).map((item, index) => (
-        <div
-          key={index}
-          className="ml-2 mb-1 p-1 border-b border-gray-200 text-xs"
-        >
-          {Object.entries(item).map(
-            ([key, value]) =>
-              (value || value === 0) && (
-                <p key={key}>
-                  <span className="capitalize font-medium">
-                    {key
-                      .replace(/([A-Z])/g, " $1")
-                      .replace(/_/g, " ")
-                      .trim()}
-                    :
-                  </span>{" "}
-                  {String(value)}
-                </p>
-              )
-          )}
-        </div>
-      ))}
-      {(!arr ||
-        arr.length === 0 ||
-        (arr.length === 1 &&
-          !Object.values(arr[0]).some((v) => v || v === 0))) && (
-        <p className="text-xs text-gray-500 ml-2 italic">Not provided</p>
-      )}
+
+  const renderArrayOfObjects = (arr, title, icon) => (
+    <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="flex items-center mb-2">
+        {icon && <span className="mr-2 text-gray-500">{icon}</span>}
+        <h6 className="text-sm font-semibold text-gray-700">{title}</h6>
+      </div>
+      <div className="space-y-2">
+        {(arr || []).map((item, index) => (
+          <div
+            key={index}
+            className="ml-2 p-2 border border-gray-100 rounded bg-gray-50 text-xs"
+          >
+            {Object.entries(item).map(
+              ([key, value]) =>
+                (value || value === 0) && (
+                  <div key={key} className="flex mb-1 last:mb-0">
+                    <span className="capitalize font-medium text-gray-600 min-w-[100px]">
+                      {key
+                        .replace(/([A-Z])/g, " $1")
+                        .replace(/_/g, " ")
+                        .trim()}
+                      :
+                    </span>
+                    <span className="text-gray-800 ml-2 break-words">
+                      {String(value)}
+                    </span>
+                  </div>
+                )
+            )}
+          </div>
+        ))}
+        {(!arr ||
+          arr.length === 0 ||
+          (arr.length === 1 &&
+            !Object.values(arr[0]).some((v) => v || v === 0))) && (
+          <p className="text-xs text-gray-400 italic">Not provided</p>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderSimpleField = (value, title, icon, isCurrency = false) => (
+    <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="flex items-center mb-1">
+        {icon && <span className="mr-2 text-gray-500">{icon}</span>}
+        <h6 className="text-sm font-semibold text-gray-700">{title}</h6>
+      </div>
+      <p className="text-xs text-gray-800 ml-6">
+        {isCurrency && value ? `₹${value.toLocaleString()}` : value || "N/A"}
+      </p>
     </div>
   );
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-yellow-700 bg-yellow-50 p-3 rounded-md">
-        Please review all the information carefully before submitting. Documents
-        will be uploaded upon submission.
-      </p>
+    <div className="space-y-6">
+      <div className="flex items-start p-3 bg-yellow-50 rounded-md border border-yellow-100">
+        <AlertTriangle
+          className="flex-shrink-0 text-yellow-600 mt-0.5 mr-2"
+          size={16}
+        />
+        <p className="text-sm text-yellow-700">
+          Please review all the information carefully before submitting.
+          Documents will be uploaded upon submission.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-4">
           {renderObject(
             formData.current_education_details,
-            "Current Education"
+            "Current Education",
+            <BookOpen size={16} />
           )}
-          {renderObject(formData.tenth_education_details, "10th Grade")}
-          {renderObject(formData.twelveth_education_details, "12th Grade")}
-          {renderObject(formData.graduation_education_details, "Graduation")}
-          {renderArrayOfObjects(formData.workExperiences, "Work Experience")}
+          {renderObject(
+            formData.tenth_education_details,
+            "10th Grade",
+            <GraduationCap size={16} />
+          )}
+          {renderObject(
+            formData.twelveth_education_details,
+            "12th Grade",
+            <GraduationCap size={16} />
+          )}
+          {renderObject(
+            formData.graduation_education_details,
+            "Graduation",
+            <GraduationCap size={16} />
+          )}
+          {renderArrayOfObjects(
+            formData.workExperiences,
+            "Work Experience",
+            <Briefcase size={16} />
+          )}
         </div>
-        <div>
-          {renderObject(formData.ielts_exam, "IELTS")}
-          {renderObject(formData.toefl_exam, "TOEFL")}
-          {renderObject(formData.pte_exam, "PTE")}
-          {renderObject(formData.duolingo_exam, "Duolingo")}
-          {renderObject(formData.gre_exam, "GRE")}
-          {renderObject(formData.gmat_exam, "GMAT")}
-          {renderObject(formData.refusal_details, "Refusal History")}
-          <div>
-            <h6 className="text-sm font-semibold text-gray-600">
-              Father's Occupation:
-            </h6>
-            <p className="text-xs text-gray-700 ml-2">
-              {formData.father_Occupation}
-            </p>
-          </div>
-          <div>
-            <h6 className="text-sm font-semibold text-gray-600">
-              Father's Income:
-            </h6>
-            <p className="text-xs text-gray-700 ml-2">
-              {formData.father_Annual_Income
-                ? `₹${formData.father_Annual_Income.toLocaleString()}`
-                : "N/A"}
-            </p>
-          </div>
-          <div>
-            <h6 className="text-sm font-semibold text-gray-600">
-              Confirmed Services:
-            </h6>
-            <p className="text-xs text-gray-700 ml-2">
-              {formData.confirmed_services.join(", ")}
-            </p>
-          </div>
-          <div>
-            <h6 className="text-sm font-semibold text-gray-600">
-              Profile Status:
-            </h6>
-            <p className="text-xs text-gray-700 ml-2">
-              {formData.enquiry_status}
-            </p>
-          </div>
+
+        {/* Right Column */}
+        <div className="space-y-4">
+          {renderObject(formData.ielts_exam, "IELTS", <Award size={16} />)}
+          {renderObject(formData.toefl_exam, "TOEFL", <Award size={16} />)}
+          {renderObject(formData.pte_exam, "PTE", <Award size={16} />)}
+          {renderObject(
+            formData.duolingo_exam,
+            "Duolingo",
+            <Award size={16} />
+          )}
+          {renderObject(formData.gre_exam, "GRE", <Award size={16} />)}
+          {renderObject(formData.gmat_exam, "GMAT", <Award size={16} />)}
+          {renderObject(
+            formData.refusal_details,
+            "Refusal History",
+            <Flag size={16} />
+          )}
+
+          {renderSimpleField(
+            formData.father_Occupation,
+            "Father's Occupation",
+            <User size={16} />
+          )}
+          {renderSimpleField(
+            formData.father_Annual_Income,
+            "Father's Income",
+            <DollarSign size={16} />,
+            true
+          )}
+          {renderSimpleField(
+            formData.confirmed_services?.join(", "),
+            "Confirmed Services",
+            <CheckCircle size={16} />
+          )}
+          {renderSimpleField(
+            formData.enquiry_status,
+            "Profile Status",
+            <Clock size={16} />
+          )}
         </div>
       </div>
-      <div>
-        <h5 className="text-md font-semibold text-gray-700 mb-2">
-          Selected Documents
-        </h5>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-          {DOCUMENT_FIELD_KEYS.map((key) => {
-            const documentName = uploadedDocumentsDisplay[key] || formData[key];
-            if (documentName) {
-              return (
-                <div
-                  key={key}
-                  className="p-2 bg-gray-100 rounded truncate flex items-center space-x-2"
-                  title={
-                    typeof documentName === "string"
-                      ? documentName
-                      : "File selected"
-                  }
-                >
-                  <FileText size={14} className="text-gray-600 flex-shrink-0" />
-                  <span className="font-medium overflow-hidden whitespace-nowrap text-ellipsis">
-                    {key
-                      .replace(/([A-Z])/g, " $1")
-                      .replace(/_/g, " ")
-                      .replace(" Document", "")
-                      .replace(" Result", "")
-                      .replace(" Certificate", "")
-                      .replace(" Marksheet", "")
-                      .replace(" Letter", "")
-                      .trim()}
-                    :
-                  </span>
-                  <span className="text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
-                    {uploadedDocumentsDisplay[key]}
-                  </span>
-                </div>
-              );
-            }
-            return null;
-          })}
-          {Object.keys(uploadedDocumentsDisplay).length === 0 &&
-            !DOCUMENT_FIELD_KEYS.some((key) => getValues(key)) && (
-              <p className="text-xs text-gray-500 italic col-span-full">
-                No documents selected for upload.
-              </p>
-            )}
+
+      {/* Documents Section */}
+      <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="flex items-center mb-3">
+          <FileText size={18} className="text-gray-600 mr-2" />
+          <h5 className="text-md font-semibold text-gray-700">
+            Selected Documents
+          </h5>
         </div>
+
+        {Object.keys(uploadedDocumentsDisplay).length > 0 ||
+        DOCUMENT_FIELD_KEYS.some((key) => getValues(key)) ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {DOCUMENT_FIELD_KEYS.map((key) => {
+              const documentName =
+                uploadedDocumentsDisplay[key] || formData[key];
+              if (documentName) {
+                return (
+                  <div
+                    key={key}
+                    className="p-3 bg-gray-50 rounded border border-gray-200 flex items-start space-x-2 hover:bg-gray-100 transition-colors"
+                  >
+                    <FileText
+                      size={14}
+                      className="text-gray-600 flex-shrink-0 mt-0.5"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-700 text-xs truncate">
+                        {key
+                          .replace(/([A-Z])/g, " $1")
+                          .replace(/_/g, " ")
+                          .replace(
+                            / (Document|Result|Certificate|Marksheet|Letter)/g,
+                            ""
+                          )
+                          .trim()}
+                      </p>
+                      <p className="text-gray-500 text-xs truncate">
+                        {typeof documentName === "string"
+                          ? documentName
+                          : "File selected"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 italic">
+            No documents selected for upload.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -1187,95 +1253,97 @@ const DetailEnquiryForm = ({
   const [filesToUpload, setFilesToUpload] = useState({});
   const [uploadedDocumentsDisplay, setUploadedDocumentsDisplay] = useState({});
 
-  const defaultValues = {
-    Current_Enquiry: selectedEnquiry?.id || "",
-    current_education_details: editData?.current_education_details || {
-      level: selectedEnquiry?.current_education || "",
-      stream: "",
-      percentage: "",
-      year: "",
-      institute: "",
-      medium: "",
-      board: "",
-    },
-    tenth_education_details: editData?.tenth_education_details || {
-      percentage: "",
-      year: "",
-      institute: "",
-      board: "",
-    },
-    twelveth_education_details: editData?.twelveth_education_details || {
-      stream: "",
-      percentage: "",
-      year: "",
-      institute: "",
-      board: "",
-    },
-    graduation_education_details: editData?.graduation_education_details || {
-      degree: "",
-      stream: "",
-      percentage: "",
-      year: "",
-      institute: "",
-      university: "",
-    },
-    workExperiences:
-      editData?.workExperiences && editData.workExperiences.length > 0
-        ? editData.workExperiences
-        : [{ companyName: "", designation: "", startDate: "", endDate: "" }],
-    toefl_exam: editData?.toefl_exam || {
-      listening: "",
-      reading: "",
-      writing: "",
-      speaking: "",
-      overall: "",
-    },
-    ielts_exam: editData?.ielts_exam || {
-      listening: "",
-      reading: "",
-      writing: "",
-      speaking: "",
-      overall: "",
-    },
-    pte_exam: editData?.pte_exam || {
-      listening: "",
-      reading: "",
-      writing: "",
-      speaking: "",
-      overall: "",
-    },
-    duolingo_exam: editData?.duolingo_exam || { overall: "" },
-    gre_exam: editData?.gre_exam || {
-      verbal: "",
-      quantitative: "",
-      analytical: "",
-    },
-    gmat_exam: editData?.gmat_exam || {
-      verbal: "",
-      quantitative: "",
-      overall: "",
-    },
-    father_Occupation: editData?.father_Occupation || "",
-    father_Annual_Income: editData?.father_Annual_Income || null,
-    refusal_details: editData?.refusal_details || {
-      country: "",
-      date: "",
-      visa_category: "",
-      reason: "",
-    },
-    ...DOCUMENT_FIELD_KEYS.reduce((acc, key) => {
-      acc[key] = editData?.[key] ? uploadedDocumentsDisplay[key] : "";
-      return acc;
-    }, {}),
-    confirmed_services:
-      editData?.confirmed_services ||
-      selectedEnquiry?.Interested_Services ||
-      [],
-    enquiry_status:
-      editData?.enquiry_status ||
-      selectedEnquiry?.enquiry_status ||
-      "Profile Under Review",
-  };
+  const defaultValues = useMemo(() => {
+    return {
+      Current_Enquiry: selectedEnquiry?.id || "",
+      current_education_details: editData?.current_education_details || {
+        level: selectedEnquiry?.current_education || "",
+        stream: "",
+        percentage: "",
+        year: "",
+        institute: "",
+        medium: "",
+        board: "",
+      },
+      tenth_education_details: editData?.tenth_education_details || {
+        percentage: "",
+        year: "",
+        institute: "",
+        board: "",
+      },
+      twelveth_education_details: editData?.twelveth_education_details || {
+        stream: "",
+        percentage: "",
+        year: "",
+        institute: "",
+        board: "",
+      },
+      graduation_education_details: editData?.graduation_education_details || {
+        degree: "",
+        stream: "",
+        percentage: "",
+        year: "",
+        institute: "",
+        university: "",
+      },
+      workExperiences:
+        editData?.workExperiences && editData.workExperiences.length > 0
+          ? editData.workExperiences
+          : [{ companyName: "", designation: "", startDate: "", endDate: "" }],
+      toefl_exam: editData?.toefl_exam || {
+        listening: "",
+        reading: "",
+        writing: "",
+        speaking: "",
+        overall: "",
+      },
+      ielts_exam: editData?.ielts_exam || {
+        listening: "",
+        reading: "",
+        writing: "",
+        speaking: "",
+        overall: "",
+      },
+      pte_exam: editData?.pte_exam || {
+        listening: "",
+        reading: "",
+        writing: "",
+        speaking: "",
+        overall: "",
+      },
+      duolingo_exam: editData?.duolingo_exam || { overall: "" },
+      gre_exam: editData?.gre_exam || {
+        verbal: "",
+        quantitative: "",
+        analytical: "",
+      },
+      gmat_exam: editData?.gmat_exam || {
+        verbal: "",
+        quantitative: "",
+        overall: "",
+      },
+      father_Occupation: editData?.father_Occupation || "",
+      father_Annual_Income: editData?.father_Annual_Income || null,
+      refusal_details: editData?.refusal_details || {
+        country: "",
+        date: "",
+        visa_category: "",
+        reason: "",
+      },
+      ...DOCUMENT_FIELD_KEYS.reduce((acc, key) => {
+        acc[key] = editData?.[key] ? uploadedDocumentsDisplay[key] : "";
+        return acc;
+      }, {}),
+      confirmed_services:
+        editData?.confirmed_services ||
+        selectedEnquiry?.Interested_Services ||
+        [],
+      enquiry_status:
+        editData?.enquiry_status ||
+        selectedEnquiry?.enquiry_status ||
+        "Profile Under Review",
+    };
+  }, [editData, selectedEnquiry, uploadedDocumentsDisplay]);
 
   const {
     register,
@@ -1372,7 +1440,7 @@ const DetailEnquiryForm = ({
         selectedEnquiry.enquiry_status || "Profile Under Review";
     }
     reset(initialFormValues);
-  }, [editData, selectedEnquiry, reset]);
+  }, [editData, selectedEnquiry, reset, defaultValues]);
 
   const nextStep = async () => {
     const stepFields = STEPS.find((s) => s.id === currentStep)?.fields || [];
@@ -1465,7 +1533,7 @@ const DetailEnquiryForm = ({
             new Promise((resolve, reject) => {
               uploadTask.on(
                 "state_changed",
-                (snapshot) => {},
+                () => {},
                 (error) => {
                   console.log("error", error);
                   console.log("error", {
@@ -1654,7 +1722,7 @@ const DetailEnquiryForm = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmitHandler)}
-      className="space-y-6 p-1 sm:p-4 max-h-[calc(100vh-150px)] overflow-y-auto"
+      className="space-y-6 max-h-[calc(100vh-150px)] overflow-y-auto"
       noValidate
     >
       <div className="sticky top-0 bg-white py-3 px-1 sm:px-0 z-10 border-b mb-6">
@@ -1713,6 +1781,7 @@ const DetailEnquiryForm = ({
           className="btn-secondary"
           disabled={loading}
         >
+          <X size={18} className="inline mr-1" />
           Cancel
         </button>
         <div className="flex items-center space-x-3">

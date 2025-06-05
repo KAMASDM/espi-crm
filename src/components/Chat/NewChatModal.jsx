@@ -5,11 +5,13 @@ import {
   Search,
   Users as GroupIcon,
   User as DirectIcon,
+  Save,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useChatUsers } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { chatService } from "../../services/firestore";
+import Loading from "../Common/Loading";
 
 const NewChatModal = ({ onClose, onChatCreated }) => {
   const { user: currentUser } = useAuth();
@@ -208,9 +210,7 @@ const NewChatModal = ({ onClose, onChatCreated }) => {
               </div>
               <div className="border rounded-lg max-h-48 overflow-y-auto divide-y">
                 {usersLoading ? (
-                  <p className="p-4 text-sm text-gray-500 text-center">
-                    Loading users...
-                  </p>
+                  <Loading size="default" />
                 ) : filteredUsers.length === 0 ? (
                   <p className="p-4 text-sm text-gray-500 text-center">
                     No users found.
@@ -253,6 +253,7 @@ const NewChatModal = ({ onClose, onChatCreated }) => {
               className="btn-secondary"
               disabled={isCreating}
             >
+              <X size={16} className="inline mr-1" />
               Cancel
             </button>
             <button
@@ -264,6 +265,7 @@ const NewChatModal = ({ onClose, onChatCreated }) => {
                 (chatType === "group" && !groupName.trim())
               }
             >
+              <Save size={16} className="inline mr-1" />
               {isCreating ? "Creating..." : "Create Chat"}
             </button>
           </div>

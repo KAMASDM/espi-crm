@@ -7,6 +7,7 @@ import {
   Upload,
   AlertTriangle,
   CheckCircle,
+  X,
 } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import { useAuth } from "../context/AuthContext";
@@ -284,7 +285,7 @@ const Universities = () => {
     }
     setIsImporting(false);
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -431,7 +432,7 @@ const Universities = () => {
                 : 0,
             color: "yellow",
             subtext: "Average per uni",
-            prefix: "$",
+            prefix: "₹",
           },
         ].map((card) => (
           <div
@@ -499,16 +500,11 @@ const Universities = () => {
           }}
         />
       </Modal>
-      <Modal
+      <UniversityDetail
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
-        title="University Details"
-        size="large"
-      >
-        {selectedUniversity && (
-          <UniversityDetail university={selectedUniversity} />
-        )}
-      </Modal>
+        university={selectedUniversity}
+      />
       <Modal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -538,11 +534,12 @@ const Universities = () => {
               }}
               className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
+              <X size={16} className="inline mr-1" />
               Cancel
             </button>
             <button
-              type="button"
               disabled
+              type="button"
               onClick={confirmDelete}
               className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
             >

@@ -16,22 +16,17 @@ import {
 } from "recharts";
 import {
   Download,
-  Filter,
-  Calendar,
   TrendingUp,
   Users,
   Building2,
-  DollarSign,
+  IndianRupee,
   FileText,
   Eye,
 } from "lucide-react";
 import {
   useEnquiries,
   useUniversities,
-  useCourses,
-  useAssessments,
   useApplications,
-  usePayments,
 } from "../hooks/useFirestore";
 
 const Reports = () => {
@@ -40,10 +35,7 @@ const Reports = () => {
 
   const { data: enquiries } = useEnquiries();
   const { data: universities } = useUniversities();
-  const { data: courses } = useCourses();
-  const { data: assessments } = useAssessments();
   const { data: applications } = useApplications();
-  const { data: payments } = usePayments();
 
   const enrollmentData = [
     { month: "Jan", students: 45, applications: 52 },
@@ -181,7 +173,7 @@ const Reports = () => {
               <p className="text-sm text-green-600">+15% from target</p>
             </div>
             <div className="p-3 bg-yellow-100 rounded-full">
-              <DollarSign className="text-yellow-600" size={24} />
+              <IndianRupee className="text-yellow-600" size={24} />
             </div>
           </div>
         </div>
@@ -192,7 +184,7 @@ const Reports = () => {
           {[
             { id: "overview", name: "Overview", icon: TrendingUp },
             { id: "enrollment", name: "Enrollment", icon: Users },
-            { id: "revenue", name: "Revenue", icon: DollarSign },
+            { id: "revenue", name: "Revenue", icon: IndianRupee },
             { id: "performance", name: "Performance", icon: BarChart },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -281,7 +273,7 @@ const Reports = () => {
                 </h3>
                 <div className="space-y-3">
                   {conversionData.map((stage, index) => (
-                    <div key={stage.stage} className="flex items-center">
+                    <div key={index} className="flex items-center">
                       <div className="w-20 text-sm font-medium text-gray-700">
                         {stage.stage}
                       </div>
