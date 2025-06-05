@@ -94,6 +94,17 @@ const StudentsTable = ({
   const [branches, setBranches] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
 
+  const filteredStudentss =
+    currentUserProfile.role === "Superadmin"
+      ? students
+      : currentUserProfile.role === "Branch Admin"
+      ? students.filter(
+          (student) => student.branchId === currentUserProfile.branchId
+        )
+      : students.filter(
+          (student) => student.assignedUserId === currentUserProfile.id
+        );
+
   useEffect(() => {
     const fetchReferenceData = async () => {
       try {
@@ -126,17 +137,22 @@ const StudentsTable = ({
   const getAvailableUsers = () => {
     if (currentUserProfile?.role === "Superadmin") {
       return users;
-    } else if (currentUserProfile?.branchId) {
+    } else if (currentUserProfile?.role === "Counsellor") {
+      return [];
+    } else if (
+      currentUserProfile?.role === "Branch Admin" &&
+      currentUserProfile?.branchId
+    ) {
       return users.filter(
         (user) =>
-          user.branchId === currentUserProfile.branchId ||
-          user.role === "Superadmin"
+          user.branchId === currentUserProfile.branchId &&
+          user.role === "Counsellor"
       );
     }
-    return users;
+    return [];
   };
 
-  const filteredStudents = students
+  const filteredStudents = filteredStudentss
     .filter((student) => {
       const searchTermLower = searchTerm.toLowerCase();
       const matchesSearch =

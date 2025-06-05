@@ -100,7 +100,8 @@ export const useEnquiries = () => {
       (userProfile.role === USER_ROLES.BRANCH_ADMIN ||
         userProfile.role === USER_ROLES.BRANCH_MANAGER ||
         userProfile.role === USER_ROLES.RECEPTION ||
-        userProfile.role === USER_ROLES.AGENT)
+        userProfile.role === USER_ROLES.AGENT ||
+        userProfile.role === USER_ROLES.COUNSELLOR)
     ) {
       constraints.push(where("branchId", "==", userProfile.branchId));
     } else if (userProfile.role === USER_ROLES.COUNSELLOR) {

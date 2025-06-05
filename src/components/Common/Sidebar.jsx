@@ -47,10 +47,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       icon: Building2,
       roles: [
         USER_ROLES.SUPERADMIN,
-        USER_ROLES.BRANCH_ADMIN,
-        USER_ROLES.BRANCH_MANAGER,
-        USER_ROLES.COUNSELLOR,
-        USER_ROLES.PROCESSOR,
+        // USER_ROLES.BRANCH_ADMIN,
+        // USER_ROLES.BRANCH_MANAGER,
+        // USER_ROLES.COUNSELLOR,
+        // USER_ROLES.PROCESSOR,
       ],
     },
     {
@@ -59,10 +59,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       icon: BookOpen,
       roles: [
         USER_ROLES.SUPERADMIN,
-        USER_ROLES.BRANCH_ADMIN,
-        USER_ROLES.BRANCH_MANAGER,
-        USER_ROLES.COUNSELLOR,
-        USER_ROLES.PROCESSOR,
+        // USER_ROLES.BRANCH_ADMIN,
+        // USER_ROLES.BRANCH_MANAGER,
+        // USER_ROLES.COUNSELLOR,
+        // USER_ROLES.PROCESSOR,
       ],
     },
     {
@@ -72,9 +72,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       roles: [
         USER_ROLES.SUPERADMIN,
         USER_ROLES.BRANCH_ADMIN,
-        USER_ROLES.BRANCH_MANAGER,
+        // USER_ROLES.BRANCH_MANAGER,
         USER_ROLES.PROCESSOR,
-        USER_ROLES.COUNSELLOR,
+        // USER_ROLES.COUNSELLOR,
       ],
     },
     {
@@ -84,9 +84,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       roles: [
         USER_ROLES.SUPERADMIN,
         USER_ROLES.BRANCH_ADMIN,
-        USER_ROLES.BRANCH_MANAGER,
+        // USER_ROLES.BRANCH_MANAGER,
         USER_ROLES.PROCESSOR,
-        USER_ROLES.COUNSELLOR,
+        // USER_ROLES.COUNSELLOR,
       ],
     },
     {
@@ -124,7 +124,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       name: "Users",
       href: "/users",
       icon: UsersIcon,
-      roles: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
+      roles: [
+        USER_ROLES.SUPERADMIN,
+        //  USER_ROLES.BRANCH_ADMIN
+      ],
     },
     {
       name: "Branches",
