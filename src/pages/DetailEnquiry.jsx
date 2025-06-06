@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import toast from "react-hot-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, Plus, FileText } from "lucide-react";
 import { where } from "firebase/firestore";
@@ -61,18 +60,6 @@ const DetailedEnquiry = () => {
   const handleEditSuccess = () => {
     setShowEditModal(false);
     loadDetailEnquiry();
-  };
-
-  const handleDownload = (documentField, documentUrl) => {
-    if (
-      documentUrl &&
-      typeof documentUrl === "string" &&
-      documentUrl.startsWith("http")
-    ) {
-      window.open(documentUrl, "_blank");
-    } else {
-      toast.info(`Download for ${documentField} - URL missing or invalid.`);
-    }
   };
 
   if (enquiryLoading || loadingDetail) {
@@ -211,10 +198,7 @@ const DetailedEnquiry = () => {
         </div>
       </div>
       {detailEnquiry ? (
-        <EnquiryDetail
-          detailEnquiry={detailEnquiry}
-          onDownload={handleDownload}
-        />
+        <EnquiryDetail detailEnquiry={detailEnquiry} />
       ) : (
         !loadingDetail && (
           <div className="card">

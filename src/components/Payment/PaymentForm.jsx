@@ -304,10 +304,9 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
               }`}
             >
               <option value="">Select Student</option>
-              {(enquiries || []).map((enquiry) => (
+              {(enquiries).map((enquiry) => (
                 <option key={enquiry.id} value={enquiry.id}>
-                  {enquiry.student_First_Name} {enquiry.student_Last_Name} -{" "}
-                  {enquiry.student_email}
+                  {enquiry.student_First_Name} {enquiry.student_Last_Name}
                 </option>
               ))}
             </select>

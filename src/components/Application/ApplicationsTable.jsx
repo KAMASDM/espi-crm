@@ -13,10 +13,13 @@ import {
   XCircle,
   Download,
   User,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { APPLICATION_STATUS } from "../../utils/constants";
 import Loading from "../Common/Loading";
+import { PDFDocument } from "pdf-lib";
+import { saveAs } from "file-saver";
 
 const DOCUMENT_KEYS_FOR_COUNT = [
   "sop",
@@ -41,16 +44,18 @@ const ApplicationsTable = ({
   onEdit,
   onDelete,
   onView,
-  onDownload,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [downloadingAppId, setDownloadingAppId] = useState(null);
+
   const getAssessment = (assessmentId) => {
     if (!assessments || !assessmentId) return null;
     return assessments.find((assessment) => assessment.id === assessmentId);
   };
+
   const filteredApplications = applications
     .filter((application) => {
       const assessment = getAssessment(application.application);
@@ -79,6 +84,7 @@ const ApplicationsTable = ({
         return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
       }
     });
+
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -87,6 +93,7 @@ const ApplicationsTable = ({
       setSortDirection("asc");
     }
   };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       Draft: { color: "bg-gray-100 text-gray-800", icon: FileText },
@@ -120,17 +127,93 @@ const ApplicationsTable = ({
       </span>
     );
   };
+
   const getDocumentCount = (application) => {
     if (!application) return 0;
     return DOCUMENT_KEYS_FOR_COUNT.filter((docKey) => application[docKey])
       .length;
   };
+
   const getCompletionPercentage = (application) => {
     if (!application) return 0;
     const totalFields = DOCUMENT_KEYS_FOR_COUNT.length;
     if (totalFields === 0) return 0;
     const completedFields = getDocumentCount(application);
     return Math.round((completedFields / totalFields) * 100);
+  };
+
+  const handleDownloadAllDocuments = async (application) => {
+    setDownloadingAppId(application.id);
+    try {
+      const pdfDoc = await PDFDocument.create();
+
+      const documentFields = [
+        "passport",
+        "diploma_marksheet",
+        "bachelor_marksheet",
+        "master_marksheet",
+        "ielts",
+        "toefl",
+        "gre",
+        "gmat",
+        "pte",
+        "sop",
+        "cv",
+        "work_experience",
+        "other_documents",
+      ];
+
+      let mergedAny = false;
+
+      for (const key of documentFields) {
+        const fileUrl = application[key];
+        if (fileUrl && typeof fileUrl === "string") {
+          try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+
+            const response = await fetch(fileUrl, {
+              signal: controller.signal,
+            });
+            clearTimeout(timeout);
+
+            if (!response.ok) throw new Error("Failed to fetch");
+
+            const fileBytes = await response.arrayBuffer();
+
+            try {
+              const externalPdfDoc = await PDFDocument.load(fileBytes);
+              const pages = await pdfDoc.copyPages(
+                externalPdfDoc,
+                externalPdfDoc.getPageIndices()
+              );
+              pages.forEach((page) => pdfDoc.addPage(page));
+              mergedAny = true;
+            } catch (e) {
+              console.error(`Error merging ${key}:`, e);
+              console.warn(`File ${key} is not a valid PDF`);
+            }
+          } catch (error) {
+            console.error(`Error processing ${key}:`, error);
+          }
+        }
+      }
+
+      if (!mergedAny) {
+        throw new Error("No valid PDFs found to merge");
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      saveAs(
+        new Blob([pdfBytes], { type: "application/pdf" }),
+        `Application_${application.id.slice(-8)}.pdf`
+      );
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      alert("Could not merge PDFs. Please check if documents are valid PDFs.");
+    } finally {
+      setDownloadingAppId(null);
+    }
   };
 
   if (loading) {
@@ -229,7 +312,7 @@ const ApplicationsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                   <FileText className="mx-auto mb-2 text-gray-300" size={48} />
                   <p className="font-semibold">No applications found</p>
                   {searchTerm || statusFilter ? (
@@ -293,13 +376,20 @@ const ApplicationsTable = ({
                           {getDocumentCount(application)}/
                           {DOCUMENT_KEYS_FOR_COUNT.length}
                         </span>
-                        {onDownload && getDocumentCount(application) > 0 && (
+                        {getDocumentCount(application) > 0 && (
                           <button
-                            onClick={() => onDownload(application)}
+                            onClick={() =>
+                              handleDownloadAllDocuments(application)
+                            }
                             className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition-colors"
-                            title="Download All Documents (ZIP)"
+                            title="Download All Documents (PDF)"
+                            disabled={downloadingAppId === application.id}
                           >
-                            <Download size={14} />
+                            {downloadingAppId === application.id ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                              <Download size={14} />
+                            )}
                           </button>
                         )}
                       </div>
@@ -378,4 +468,5 @@ const ApplicationsTable = ({
     </div>
   );
 };
+
 export default ApplicationsTable;

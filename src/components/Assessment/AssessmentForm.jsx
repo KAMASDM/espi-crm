@@ -67,32 +67,29 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
 
   useEffect(() => {
     if (universitiesLoading) return;
+
     if (selectedCountry) {
       const filtered = universities.filter(
-        (uni) => uni.country === selectedCountry
+        (uni) => uni.country === selectedCountry && uni.Active
       );
       setFilteredUniversities(filtered);
     } else {
-      setFilteredUniversities(universities || []);
+      const activeUniversities = universities.filter((uni) => uni.Active);
+      setFilteredUniversities(activeUniversities || []);
     }
   }, [selectedCountry, universities, universitiesLoading]);
 
   useEffect(() => {
     if (coursesLoading) return;
-    let localFilteredCourses = courses || [];
 
-    if (selectedUniversity) {
-      localFilteredCourses = localFilteredCourses.filter(
-        (course) => course.university === selectedUniversity
-      );
-    }
+    const filtered = (courses || []).filter(
+      (course) =>
+        course.Active &&
+        (!selectedUniversity || course.university === selectedUniversity) &&
+        (!selectedLevel || course.course_levels === selectedLevel)
+    );
 
-    if (selectedLevel) {
-      localFilteredCourses = localFilteredCourses.filter(
-        (course) => course.course_levels === selectedLevel
-      );
-    }
-    setFilteredCourses(localFilteredCourses);
+    setFilteredCourses(filtered);
   }, [selectedUniversity, selectedLevel, courses, coursesLoading]);
 
   const onSubmit = async (dataFromForm) => {
@@ -127,7 +124,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
 
   function getEnquiriesWithDetailEnquiry(enquiries, detailEnquiries) {
     const detailEnquiryIds = new Set();
-    console.log("detailEnquiryIds", detailEnquiryIds);
 
     if (detailEnquiries) {
       detailEnquiries.forEach((detail) => {
@@ -391,7 +387,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Assessment Status
+              Status
             </label>
             <select {...register("ass_status")} className="input-field">
               <option value="">Select Status</option>
@@ -404,7 +400,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Assessment Notes
+              Notes
             </label>
             <textarea
               {...register("notes")}

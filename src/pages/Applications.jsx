@@ -57,10 +57,6 @@ const Applications = () => {
     }
   };
 
-  const handleDownload = () => {
-    toast.info("Document download functionality will be implemented soon!");
-  };
-
   const handleFormSuccess = (action = "submitted") => {
     toast.success(`Application ${action} successfully!`);
   };
@@ -187,7 +183,6 @@ const Applications = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
-          onDownload={handleDownload}
         />
       </div>
       <Modal
