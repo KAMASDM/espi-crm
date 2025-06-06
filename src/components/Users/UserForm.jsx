@@ -229,15 +229,16 @@ const UserForm = ({
                   : "Select Branch"}
               </option>
               {isSuperAdmin
-                ? branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.branchName}
-                    </option>
-                  ))
+                ? branches
+                    .filter((branch) => branch.isActive)
+                    .map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.branchName}
+                      </option>
+                    ))
                 : currentUserProfile?.branchId && (
                     <option value={currentUserProfile.branchId}>
-                      Your Branch ({currentUserProfile.branchId.slice(0, 8)}
-                      ...)
+                      Your Branch ({currentUserProfile.branchId.slice(0, 8)}...)
                     </option>
                   )}
             </select>

@@ -128,28 +128,10 @@ const BranchForm = ({ onClose, onSuccess, editData = null }) => {
               <option value="">Select Branch Admin</option>
               {availableAdmins.map((admin) => (
                 <option key={admin.id} value={admin.id}>
-                  {admin.displayName} ({admin.email})
+                  {admin.displayName}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Assigning an admin will update their role to 'Branch Admin'.
-            </p>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address *
-            </label>
-            <textarea
-              {...register("address", { required: "Address is required" })}
-              rows={3}
-              className="input-field"
-            />
-            {errors.address && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.address.message}
-              </p>
-            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -190,6 +172,21 @@ const BranchForm = ({ onClose, onSuccess, editData = null }) => {
               {...register("contactPhone")}
               className="input-field"
             />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Address *
+            </label>
+            <textarea
+              {...register("address", { required: "Address is required" })}
+              rows={3}
+              className="input-field"
+            />
+            {errors.address && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.address.message}
+              </p>
+            )}
           </div>
           <div className="md:col-span-2">
             <label className="flex items-center">

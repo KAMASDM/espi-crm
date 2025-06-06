@@ -91,25 +91,31 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
       if (selectedBranchId) {
         return users.filter(
           (user) =>
-            user.branchId === selectedBranchId || user.role === "Superadmin"
+            user.isActive &&
+            (user.branchId === selectedBranchId || user.role === "Superadmin")
         );
       }
-      return users;
+      return users.filter((user) => user.isActive);
     } else if (userProfile?.branchId) {
       return users.filter(
         (user) =>
-          user.branchId === userProfile.branchId || user.role === "Superadmin"
+          user.isActive &&
+          (user.branchId === userProfile.branchId || user.role === "Superadmin")
       );
     }
-    return users;
+
+    return users.filter((user) => user.isActive);
   };
 
   const getAvailableBranches = () => {
     if (userProfile?.role === "Superadmin") {
-      return branches;
+      return branches.filter((branch) => branch.isActive);
     } else if (userProfile?.branchId) {
-      return branches.filter((branch) => branch.id === userProfile.branchId);
+      return branches.filter(
+        (branch) => branch.isActive && branch.id === userProfile.branchId
+      );
     }
+
     return [];
   };
 
@@ -221,11 +227,8 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               {userProfile?.role === "Superadmin" ? (
                 <>
                   <option value="">Select User</option>
-                  {getAvailableUsers().map((user) => (
-                    <option
-                      key={user.id || user.uid}
-                      value={user.id || user.uid}
-                    >
+                  {getAvailableUsers().map((user, index) => (
+                    <option key={index} value={user.id || user.uid}>
                       {user.displayName || user.email}
                       {user.role && ` (${user.role})`}
                     </option>
@@ -244,9 +247,6 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
                 {errors.assignedUserId.message}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1">
-              Only assigned user and admins can view this enquiry
-            </p>
           </div>
         </div>
       </div>
@@ -546,7 +546,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Enquiry Status
+              Status
             </label>
             <select {...register("enquiry_status")} className="input-field">
               {ENQUIRY_STATUS.map((status) => (

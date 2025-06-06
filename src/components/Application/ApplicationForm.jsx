@@ -404,9 +404,9 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           Basic Information
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Assessment <span className="text-red-500">*</span>
+              Assessment
             </label>
             <select
               {...register("assessmentId", {
@@ -417,25 +417,28 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
               }`}
             >
               <option value="">Select Assessment</option>
-              {assessments.map((assessment, index) => {
-                const studentEnquiry = enquiriesData.find(
-                  (enq) => enq.id === assessment.enquiry
-                );
+              {assessments
+                .filter((assessment) => assessment.ass_status === "Completed")
+                .map((assessment, index) => {
+                  const studentEnquiry = enquiriesData.find(
+                    (enq) => enq.id === assessment.enquiry
+                  );
 
-                let studentNameToDisplay = "";
-                if (studentEnquiry) {
-                  const firstName = studentEnquiry.student_First_Name;
-                  const lastName = studentEnquiry.student_Last_Name;
-                  const fullName = `${firstName} ${lastName}`.trim();
-                  studentNameToDisplay = fullName;
-                }
-                return (
-                  <option key={index} value={assessment.id}>
-                    {`${index + 1}. ${studentNameToDisplay}`}
-                  </option>
-                );
-              })}
+                  let studentNameToDisplay = "";
+                  if (studentEnquiry) {
+                    const firstName = studentEnquiry.student_First_Name || "";
+                    const lastName = studentEnquiry.student_Last_Name || "";
+                    studentNameToDisplay = `${firstName} ${lastName}`.trim();
+                  }
+
+                  return (
+                    <option key={assessment.id} value={assessment.id}>
+                      {`${index + 1}. ${studentNameToDisplay || "N/A"}`}
+                    </option>
+                  );
+                })}
             </select>
+
             {errors.assessmentId && (
               <p className="text-red-600 text-sm mt-1">
                 {errors.assessmentId.message}
@@ -538,7 +541,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Application Notes
+              Notes
             </label>
             <textarea
               {...register("notes")}

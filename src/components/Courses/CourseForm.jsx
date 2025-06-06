@@ -33,11 +33,12 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
   useEffect(() => {
     if (selectedCountry) {
       const filtered = universities.filter(
-        (uni) => uni.country === selectedCountry
+        (uni) => uni.country === selectedCountry && uni.Active
       );
       setFilteredUniversities(filtered);
     } else {
-      setFilteredUniversities(universities);
+      const activeUniversities = universities.filter((uni) => uni.Active);
+      setFilteredUniversities(activeUniversities);
     }
   }, [selectedCountry, universities]);
 
@@ -176,7 +177,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Specialization Tags
+              Specialization
             </label>
             <input
               type="text"
@@ -216,7 +217,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Documents Required
             </label>
-            <div className="max-h-32 overflow-y-auto p-3 border border-gray-300 rounded-lg">
+            <div className="grid grid-cols-2 gap-2 p-3 border border-gray-300 rounded-lg">
               {DOCUMENTS_REQUIRED.map((doc) => (
                 <label key={doc} className="flex items-center mb-1">
                   <input
@@ -313,7 +314,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              10th Standard Requirement
+              10th Standard
             </label>
             <input
               type="text"
@@ -325,7 +326,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              12th Standard Requirement
+              12th Standard
             </label>
             <input
               type="text"
@@ -337,7 +338,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bachelor's Requirement
+              Bachelor's
             </label>
             <input
               type="text"
@@ -349,7 +350,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Master's Requirement
+              Master's
             </label>
             <input
               type="text"
@@ -368,7 +369,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              IELTS Requirement
+              IELTS
             </label>
             <input
               type="text"
@@ -380,7 +381,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              TOEFL Requirement
+              TOEFL
             </label>
             <input
               type="text"
@@ -392,7 +393,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              PTE Requirement
+              PTE
             </label>
             <input
               type="text"
@@ -404,7 +405,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Duolingo Requirement
+              Duolingo
             </label>
             <input
               type="text"
@@ -416,7 +417,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              GRE Requirement
+              GRE
             </label>
             <input
               type="text"
@@ -428,7 +429,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              GMAT Requirement
+              GMAT
             </label>
             <input
               type="text"
@@ -440,7 +441,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Other Exam Requirements
+              Other Exam
             </label>
             <input
               type="text"
@@ -459,7 +460,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Course Notes
+              Notes
             </label>
             <textarea
               {...register("Remark")}
@@ -472,7 +473,7 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
           <div className="flex items-center">
             <input type="checkbox" {...register("Active")} className="mr-3" />
             <label className="text-sm font-medium text-gray-700">
-              Active Course (Available for applications)
+              Active Course
             </label>
           </div>
         </div>
