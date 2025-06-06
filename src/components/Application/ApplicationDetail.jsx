@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
+import { saveAs } from "file-saver";
+import { PDFDocument } from "pdf-lib";
 import {
   FileText as FileTextIcon,
   ClipboardList,
@@ -17,6 +19,9 @@ import {
   FileArchive,
   Link as LinkIcon,
   Paperclip,
+  Download,
+  Eye,
+  Loader2,
 } from "lucide-react";
 import Loading from "../Common/Loading";
 
@@ -57,6 +62,10 @@ const documentsConfig = [
 ];
 
 const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
+  const [downloadingDoc, setDownloadingDoc] = useState(null);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [isMergingPdf, setIsMergingPdf] = useState(false);
+
   const getAssessment = (assessmentId) => {
     if (!assessmentId || !assessments) return null;
     return assessments.find((ass) => ass.id === assessmentId);
@@ -154,6 +163,91 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
       </div>
     </div>
   );
+
+  const handleDownloadDocument = async (docKey, docName) => {
+    if (!application[docKey]) return;
+
+    setDownloadingDoc(docKey);
+    try {
+      const response = await fetch(application[docKey]);
+      const blob = await response.blob();
+      saveAs(blob, `${docName}.pdf`);
+    } catch (error) {
+      console.error(`Error downloading ${docKey}:`, error);
+      alert(`Failed to download ${docName}. Please try again.`);
+    } finally {
+      setDownloadingDoc(null);
+    }
+  };
+
+  const handleDownloadAllDocuments = async () => {
+    setIsDownloadingAll(true);
+    try {
+      for (const doc of documentsConfig) {
+        if (application[doc.key]) {
+          try {
+            const response = await fetch(application[doc.key]);
+            const blob = await response.blob();
+            saveAs(blob, `${doc.label}.pdf`);
+            await new Promise((resolve) => setTimeout(resolve, 500)); // Small delay between downloads
+          } catch (error) {
+            console.error(`Failed to download ${doc.label}`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error initiating downloads:", error);
+    } finally {
+      setIsDownloadingAll(false);
+    }
+  };
+
+  const handleMergeToPdf = async () => {
+    setIsMergingPdf(true);
+    try {
+      const pdfDoc = await PDFDocument.create();
+      let mergedAny = false;
+
+      for (const doc of documentsConfig) {
+        const fileUrl = application[doc.key];
+        if (fileUrl) {
+          try {
+            const response = await fetch(fileUrl);
+            const fileBytes = await response.arrayBuffer();
+
+            try {
+              const externalPdfDoc = await PDFDocument.load(fileBytes);
+              const pages = await pdfDoc.copyPages(
+                externalPdfDoc,
+                externalPdfDoc.getPageIndices()
+              );
+              pages.forEach((page) => pdfDoc.addPage(page));
+              mergedAny = true;
+            } catch (e) {
+              console.warn(`Skipping non-PDF document: ${doc.label}`);
+            }
+          } catch (error) {
+            console.error(`Error processing ${doc.label}:`, error);
+          }
+        }
+      }
+
+      if (!mergedAny) {
+        throw new Error("No valid PDF documents found to merge");
+      }
+
+      const mergedPdfBytes = await pdfDoc.save();
+      saveAs(
+        new Blob([mergedPdfBytes], { type: "application/pdf" }),
+        `Application_${application.id.slice(-8)}_Documents.pdf`
+      );
+    } catch (error) {
+      console.error("Error merging PDFs:", error);
+      alert("Failed to merge PDFs. Please check if documents are valid PDFs.");
+    } finally {
+      setIsMergingPdf(false);
+    }
+  };
 
   if (!application) {
     return isOpen && <Loading size="default" />;
@@ -332,19 +426,71 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
                         </p>
                       </div>
                       {isUploaded && application[doc.key] && (
-                        <a
-                          href={application[doc.key]}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-3 inline-flex items-center self-start rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-100"
-                        >
-                          View Document{" "}
-                          <LinkIcon className="ml-1.5 h-3.5 w-3.5" />
-                        </a>
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={() =>
+                              window.open(application[doc.key], "_blank")
+                            }
+                            className="inline-flex items-center rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-100"
+                          >
+                            <Eye className="mr-1.5 h-3.5 w-3.5" />
+                            View
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDownloadDocument(doc.key, doc.label)
+                            }
+                            disabled={downloadingDoc === doc.key}
+                            className="inline-flex items-center rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-100"
+                          >
+                            {downloadingDoc === doc.key ? (
+                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Download className="mr-1.5 h-3.5 w-3.5" />
+                            )}
+                            Download
+                          </button>
+                        </div>
                       )}
                     </div>
                   );
                 })}
+              </div>
+              <div className="mt-6 flex justify-end gap-4">
+                <button
+                  onClick={handleDownloadAllDocuments}
+                  disabled={isDownloadingAll}
+                  className="flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  {isDownloadingAll ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Preparing...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download All Individually
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleMergeToPdf}
+                  disabled={isMergingPdf}
+                  className="flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  {isMergingPdf ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Merging...
+                    </>
+                  ) : (
+                    <>
+                      <FileArchive className="mr-2 h-4 w-4" />
+                      Merge to Single PDF
+                    </>
+                  )}
+                </button>
               </div>
             </Card>
             {application.notes && application.notes.trim() !== "" && (
