@@ -169,6 +169,34 @@ export const enquiryService = {
     firestoreService.subscribe("enquiries", callback, constraints, onError),
 };
 
+export const detailEnquiryService = {
+  create: async (data) => {
+    const currentUser = auth.currentUser;
+
+    return firestoreService.create("detailEnquiries", {
+      ...data,
+      createdBy: currentUser?.uid,
+    });
+  },
+
+  update: (id, data) => firestoreService.update("detailEnquiries", id, data),
+
+  delete: (id) => firestoreService.delete("detailEnquiries", id),
+
+  getAll: (constraints = []) =>
+    firestoreService.getAll("detailEnquiries", constraints),
+
+  getById: (id) => firestoreService.getById("detailEnquiries", id),
+
+  subscribe: (callback, constraints = [], onError) =>
+    firestoreService.subscribe(
+      "detailEnquiries",
+      callback,
+      constraints,
+      onError
+    ),
+};
+
 export const universityService = {
   create: (data) => {
     const currentUser = auth.currentUser;

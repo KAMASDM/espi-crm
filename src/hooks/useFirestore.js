@@ -9,6 +9,7 @@ import {
   paymentService,
   userService,
   branchService,
+  detailEnquiryService,
 } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
@@ -123,6 +124,42 @@ export const useEnquiries = () => {
     buildConstraints
   );
   return { data, loading, error, ...enquiryService };
+};
+
+export const useDetailEnquiries = () => {
+  const buildConstraints = useCallback((userProfile) => {
+    if (!userProfile) return null;
+
+    const constraints = [];
+
+    if (userProfile.role === USER_ROLES.SUPERADMIN) {
+      return constraints;
+    }
+
+    if (
+      userProfile.role === USER_ROLES.BRANCH_ADMIN ||
+      userProfile.role === USER_ROLES.BRANCH_MANAGER ||
+      userProfile.role === USER_ROLES.COUNSELLOR
+    ) {
+      if (userProfile.branchId) {
+        constraints.push(where("branchId", "==", userProfile.branchId));
+      }
+    }
+
+    if (userProfile.role === USER_ROLES.COUNSELLOR) {
+      constraints.push(where("createdBy", "==", userProfile.uid));
+    }
+
+    return constraints.length ? constraints : null;
+  }, []);
+
+  const { data, loading, error } = useSubscription(
+    "detailEnquiries",
+    ["createdAt", "desc"],
+    buildConstraints
+  );
+
+  return { data, loading, error, ...detailEnquiryService };
 };
 
 export const useUniversities = () => {
