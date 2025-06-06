@@ -102,7 +102,8 @@ export const useEnquiries = () => {
         userProfile.role === USER_ROLES.BRANCH_MANAGER ||
         userProfile.role === USER_ROLES.RECEPTION ||
         userProfile.role === USER_ROLES.AGENT ||
-        userProfile.role === USER_ROLES.COUNSELLOR)
+        userProfile.role === USER_ROLES.COUNSELLOR ||
+        userProfile.role === USER_ROLES.PROCESSOR)
     ) {
       constraints.push(where("branchId", "==", userProfile.branchId));
     } else if (userProfile.role === USER_ROLES.COUNSELLOR) {
@@ -132,14 +133,19 @@ export const useDetailEnquiries = () => {
 
     const constraints = [];
 
-    if (userProfile.role === USER_ROLES.SUPERADMIN) {
+    if (
+      userProfile.role === USER_ROLES.SUPERADMIN ||
+      userProfile.role === USER_ROLES.PROCESSOR ||
+      userProfile.role === USER_ROLES.BRANCH_ADMIN
+    ) {
       return constraints;
     }
 
     if (
       userProfile.role === USER_ROLES.BRANCH_ADMIN ||
       userProfile.role === USER_ROLES.BRANCH_MANAGER ||
-      userProfile.role === USER_ROLES.COUNSELLOR
+      userProfile.role === USER_ROLES.COUNSELLOR ||
+      userProfile.role === USER_ROLES.PROCESSOR
     ) {
       if (userProfile.branchId) {
         constraints.push(where("branchId", "==", userProfile.branchId));
@@ -183,7 +189,10 @@ export const useAssessments = () => {
     if (!userProfile) return null;
 
     const constraints = [];
-    if (userProfile.role === USER_ROLES.SUPERADMIN) {
+    if (
+      userProfile.role === USER_ROLES.SUPERADMIN ||
+      userProfile.role === USER_ROLES.PROCESSOR
+    ) {
       // Sees all
     } else if (
       userProfile.branchId &&
@@ -222,7 +231,10 @@ export const useApplications = () => {
     if (!userProfile) return null;
 
     const constraints = [];
-    if (userProfile.role === USER_ROLES.SUPERADMIN) {
+    if (
+      userProfile.role === USER_ROLES.SUPERADMIN ||
+      userProfile.role === USER_ROLES.PROCESSOR
+    ) {
       // Sees all
     } else if (
       userProfile.branchId &&

@@ -96,9 +96,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       roles: [
         USER_ROLES.SUPERADMIN,
         USER_ROLES.BRANCH_ADMIN,
-        USER_ROLES.BRANCH_MANAGER,
+        // USER_ROLES.BRANCH_MANAGER,
         USER_ROLES.ACCOUNTANT,
-        USER_ROLES.RECEPTION,
+        // USER_ROLES.RECEPTION,
       ],
     },
     {

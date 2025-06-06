@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { Menu, Search, User, LogOut } from "lucide-react";
+import { Menu, Search, User, LogOut, Shield } from "lucide-react";
 import { signOutUser } from "../../services/auth";
 import { useAuth } from "../../context/AuthContext";
 
 const Header = ({ setSidebarOpen }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleSignOut = async () => {
@@ -13,6 +13,36 @@ const Header = ({ setSidebarOpen }) => {
     } catch (error) {
       console.log("error", error);
     }
+  };
+
+  const getRoleBadge = (role) => {
+    let bgColor = "bg-gray-100";
+    let textColor = "text-gray-800";
+
+    if (role === "Superadmin") {
+      bgColor = "bg-red-100";
+      textColor = "text-red-800";
+    } else if (role === "Branch Admin" || role === "Branch Manager") {
+      bgColor = "bg-purple-100";
+      textColor = "text-purple-800";
+    } else if (role === "Counsellor" || role === "Processor") {
+      bgColor = "bg-blue-100";
+      textColor = "text-blue-800";
+    } else if (role === "Reception" || role === "Accountant") {
+      bgColor = "bg-yellow-100";
+      textColor = "text-yellow-800";
+    } else if (role === "Agent") {
+      bgColor = "bg-green-100";
+      textColor = "text-green-800";
+    }
+
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
+      >
+        <Shield size={12} className="mr-1" /> {role || "Unknown"}
+      </span>
+    );
   };
 
   return (
@@ -38,6 +68,9 @@ const Header = ({ setSidebarOpen }) => {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-80"
               />
             </div>
+            {userProfile?.role && (
+              <div className="ml-3">{getRoleBadge(userProfile.role)}</div>
+            )}
           </div>
         </div>
 
