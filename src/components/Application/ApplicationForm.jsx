@@ -278,6 +278,50 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
 
       await Promise.all(uploadPromises);
 
+      const updatedFilesToUpload = {};
+      const updatedFileDisplayNames = {};
+      const updatedOriginalFileUrls = {};
+
+      for (const fieldName of FILE_FIELD_NAMES) {
+        if (finalApplicationData[fieldName]) {
+          const fileUrl = finalApplicationData[fieldName];
+          updatedFilesToUpload[fieldName] = fileUrl;
+          updatedOriginalFileUrls[fieldName] = fileUrl;
+
+          if (
+            fileDisplayNames[fieldName] &&
+            !fileUrl.includes("firebasestorage.googleapis.com")
+          ) {
+            updatedFileDisplayNames[fieldName] = fileDisplayNames[fieldName];
+          } else {
+            try {
+              const url = new URL(fileUrl);
+              const pathParts = url.pathname.split("/");
+              let displayName = decodeURIComponent(
+                pathParts[pathParts.length - 1].split("?")[0]
+              );
+              const underscoreIndex = displayName.indexOf("_");
+              if (
+                displayName.substring(0, underscoreIndex).match(/^\d+$/) &&
+                underscoreIndex > -1 &&
+                underscoreIndex < 20
+              ) {
+                displayName = displayName.substring(underscoreIndex + 1);
+              }
+              updatedFileDisplayNames[fieldName] =
+                displayName || "Attached Document";
+            } catch (e) {
+              console.log("Error parsing filename from URL:", fileUrl, e);
+              updatedFileDisplayNames[fieldName] = "Attached Document";
+            }
+          }
+        }
+      }
+
+      setFilesToUpload(updatedFilesToUpload);
+      setFileDisplayNames(updatedFileDisplayNames);
+      setOriginalFileUrls(updatedOriginalFileUrls);
+
       if (editData) {
         finalApplicationData.updatedBy = user.uid;
         if (editData.createdBy) {
@@ -293,8 +337,23 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           !editData.studentDisplayName &&
           !dataFromForm.assessmentId &&
           editData.application
-        )
-          await applicationService.update(editData.id, finalApplicationData);
+        ) {
+          const selectedAssessment = (assessments || []).find(
+            (ass) => ass.id === editData.application
+          );
+          if (selectedAssessment && selectedAssessment.enquiry) {
+            const studentEnquiry = (enquiriesData || []).find(
+              (enq) => enq.id === selectedAssessment.enquiry
+            );
+            if (studentEnquiry) {
+              const firstName = studentEnquiry.student_First_Name || "";
+              const lastName = studentEnquiry.student_Last_Name || "";
+              const fullName = `${firstName} ${lastName}`.trim();
+              finalApplicationData.studentDisplayName = fullName || "N/A";
+            }
+          }
+        }
+        await applicationService.update(editData.id, finalApplicationData);
         toast.success("Application updated successfully!", { id: toastId });
       } else {
         finalApplicationData.createdBy = user.uid;
