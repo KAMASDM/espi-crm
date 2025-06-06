@@ -10,6 +10,7 @@ import {
 } from "../../utils/constants";
 import {
   useCourses,
+  useDetailEnquiries,
   useEnquiries,
   useUniversities,
 } from "../../hooks/useFirestore";
@@ -28,6 +29,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
   } = useForm({});
   const { user } = useAuth();
   const { data: enquiries, loading: enquiriesLoading } = useEnquiries();
+  const { data: detailEnquiries } = useDetailEnquiries();
   const { data: courses, loading: coursesLoading } = useCourses();
   const { data: universities, loading: universitiesLoading } =
     useUniversities();
@@ -123,6 +125,52 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
     }
   };
 
+  function getEnquiriesWithDetailEnquiry(enquiries, detailEnquiries) {
+    const detailEnquiryIds = new Set();
+    console.log("detailEnquiryIds", detailEnquiryIds);
+
+    if (detailEnquiries) {
+      detailEnquiries.forEach((detail) => {
+        if (detail.Current_Enquiry) {
+          detailEnquiryIds.add(detail.Current_Enquiry);
+        }
+      });
+    }
+
+    const filteredEnquiryOptions = [];
+
+    if (enquiries) {
+      enquiries.forEach((enquiry) => {
+        if (detailEnquiryIds.has(enquiry.id)) {
+          let fullName = "";
+          if (enquiry.student_First_Name && enquiry.student_Last_Name) {
+            fullName = `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`;
+          } else if (enquiry.student_First_Name) {
+            fullName = enquiry.student_First_Name;
+          } else if (enquiry.student_Last_Name) {
+            fullName = enquiry.student_Last_Name;
+          }
+
+          if (enquiry.student_email) {
+            fullName += ` - ${enquiry.student_email}`;
+          }
+
+          filteredEnquiryOptions.push({
+            id: enquiry.id,
+            fullName: fullName,
+          });
+        }
+      });
+    }
+
+    return filteredEnquiryOptions;
+  }
+
+  const enquiriesForDropdown = getEnquiriesWithDetailEnquiry(
+    enquiries,
+    detailEnquiries
+  );
+
   if (enquiriesLoading || universitiesLoading || coursesLoading) {
     return <Loading size="default" />;
   }
@@ -145,10 +193,9 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               className="input-field"
             >
               <option value="">Select Student</option>
-              {enquiries.map((enquiry) => (
-                <option key={enquiry.id} value={enquiry.id}>
-                  {enquiry.student_First_Name} {enquiry.student_Last_Name} -{" "}
-                  {enquiry.student_email}
+              {enquiriesForDropdown.map((enquiryOption) => (
+                <option key={enquiryOption.id} value={enquiryOption.id}>
+                  {enquiryOption.fullName}
                 </option>
               ))}
             </select>
