@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Edit,
@@ -11,20 +11,22 @@ import {
   ArrowUpNarrowWide,
   ArrowDownWideNarrow,
   ArrowUpDown,
-  Loader2,
-  Building,
+  Loader2, 
+  PlusCircle, 
 } from "lucide-react";
 
-const BranchesTable = ({
-  branches,
+const ServicesTable = ({
+  services,
   onEdit,
   onDelete,
+  handleVisibility,
   loading,
-  totalBranchesCount,
+  totalServicesCount,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+  const [priceFilter, setPriceFilter] = useState("all");
 
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -33,46 +35,62 @@ const BranchesTable = ({
 
   const allDates = useMemo(() => {
     const datesSet = new Set();
-    branches.forEach((b) => {
-      const date = b.createdAt?.toDate?.();
+    services.forEach((s) => {
+      const date = s.createdAt?.toDate?.();
       if (date) {
         datesSet.add(format(date, "yyyy-MM"));
       }
     });
     return Array.from(datesSet).sort().reverse();
-  }, [branches]);
+  }, [services]);
 
-  const filteredAndSortedBranches = useMemo(() => {
-    let currentBranches = branches.filter((branch) => {
-      const matchesSearch =
-        branch.branchName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        branch.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        branch.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredAndSortedServices = useMemo(() => {
+    let currentServices = services.filter((service) => {
+      const matchesSearch = service.serviceName
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
       const matchesStatus =
         statusFilter === "all"
           ? true
           : statusFilter === "active"
-          ? branch.isActive
-          : !branch.isActive;
+          ? service.isActive
+          : !service.isActive;
 
       const matchesDate =
         dateFilter === "all"
           ? true
-          : branch.createdAt?.toDate?.() &&
-            format(branch.createdAt.toDate(), "yyyy-MM") === dateFilter;
+          : service.createdAt?.toDate?.() &&
+            format(service.createdAt.toDate(), "yyyy-MM") === dateFilter;
 
-      return matchesSearch && matchesStatus && matchesDate;
+      const servicePrice = parseFloat(service.servicePrice);
+      let matchesPrice = true;
+      if (priceFilter !== "all" && !isNaN(servicePrice)) {
+        if (priceFilter === "0-100")
+          matchesPrice = servicePrice >= 0 && servicePrice <= 100;
+        else if (priceFilter === "101-500")
+          matchesPrice = servicePrice > 100 && servicePrice <= 500;
+        else if (priceFilter === "501-1000")
+          matchesPrice = servicePrice > 500 && servicePrice <= 1000;
+        else if (priceFilter === "1001-5000")
+          matchesPrice = servicePrice > 1000 && servicePrice <= 5000;
+        else if (priceFilter === "5000+") matchesPrice = servicePrice > 5000;
+      }
+
+      return matchesSearch && matchesStatus && matchesDate && matchesPrice;
     });
 
     if (sortConfig.key) {
-      currentBranches.sort((a, b) => {
+      currentServices.sort((a, b) => {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
 
         if (sortConfig.key === "createdAt") {
           aValue = a.createdAt?.toDate?.()?.getTime() || 0;
           bValue = b.createdAt?.toDate?.()?.getTime() || 0;
+        } else if (sortConfig.key === "servicePrice") {
+          aValue = parseFloat(a.servicePrice) || 0;
+          bValue = parseFloat(b.servicePrice) || 0;
         } else if (sortConfig.key === "isActive") {
           aValue = a.isActive ? 1 : 0;
           bValue = b.isActive ? 1 : 0;
@@ -91,8 +109,8 @@ const BranchesTable = ({
       });
     }
 
-    return currentBranches;
-  }, [branches, searchTerm, statusFilter, dateFilter, sortConfig]);
+    return currentServices;
+  }, [services, searchTerm, statusFilter, dateFilter, priceFilter, sortConfig]);
 
   const requestSort = (key) => {
     let direction = "ascending";
@@ -130,7 +148,7 @@ const BranchesTable = ({
     );
   };
 
-  const colSpan = 7;
+  const colSpan = handleVisibility ? 5 : 4;
 
   return (
     <div className="space-y-4">
@@ -142,26 +160,29 @@ const BranchesTable = ({
           />
           <input
             type="text"
-            placeholder="Search branches by name, address, contact..."
+            placeholder="Search services by name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 input-field "
+            className="pl-10 input-field"
           />
         </div>
         <div className="relative flex gap-2">
-          <Filter
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={16}
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+          <div className="relative">
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
           <div className="relative">
             <Filter
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -175,15 +196,34 @@ const BranchesTable = ({
               <option value="all">All Dates</option>
               {allDates.map((dateStr) => (
                 <option key={dateStr} value={dateStr}>
-                  {format(new Date(dateStr + "-01"), "MMMM yyyy")}{" "}
+                  {format(new Date(dateStr + "-01"), "MMMM yyyy")}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div className="relative">
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={priceFilter}
+              onChange={(e) => setPriceFilter(e.target.value)}
+              className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="all">All Prices</option>
+              <option value="0-100">₹0 - ₹100</option>
+              <option value="101-500">₹101 - ₹500</option>
+              <option value="501-1000">₹501 - ₹1000</option>
+              <option value="1001-5000">₹1001 - ₹5000</option>
+              <option value="5000+">₹5000+</option>
             </select>
           </div>
         </div>
       </div>
       <div className="text-sm text-gray-500">
-        Showing {filteredAndSortedBranches.length} of {branches.length} branches
+        Showing {filteredAndSortedServices.length} of {services.length} services
       </div>
       <div className="table-container">
         <table className="min-w-full divide-y divide-gray-200">
@@ -191,34 +231,18 @@ const BranchesTable = ({
             <tr>
               <th
                 className="table-header cursor-pointer hover:bg-gray-100"
-                onClick={() => requestSort("branchName")}
+                onClick={() => requestSort("serviceName")}
               >
                 <div className="flex items-center">
-                  Branch Name {getSortIcon("branchName")}
+                  Service Name {getSortIcon("serviceName")}
                 </div>
               </th>
               <th
                 className="table-header cursor-pointer hover:bg-gray-100"
-                onClick={() => requestSort("address")}
+                onClick={() => requestSort("servicePrice")}
               >
                 <div className="flex items-center">
-                  Address {getSortIcon("address")}
-                </div>
-              </th>
-              <th
-                className="table-header cursor-pointer hover:bg-gray-100"
-                onClick={() => requestSort("contactPerson")}
-              >
-                <div className="flex items-center">
-                  Contact Person {getSortIcon("contactPerson")}
-                </div>
-              </th>
-              <th
-                className="table-header cursor-pointer hover:bg-gray-100"
-                onClick={() => requestSort("contactEmail")}
-              >
-                <div className="flex items-center">
-                  Contact Email {getSortIcon("contactEmail")}
+                  Price {getSortIcon("servicePrice")}
                 </div>
               </th>
               <th
@@ -237,7 +261,7 @@ const BranchesTable = ({
                   Created At {getSortIcon("createdAt")}
                 </div>
               </th>
-              <th className="table-header">Actions</th>
+              {handleVisibility && <th className="table-header">Actions</th>}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -245,68 +269,73 @@ const BranchesTable = ({
               <tr>
                 <td colSpan={colSpan} className="table-cell text-center py-8">
                   <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
-                  <p className="text-gray-500">Loading branches...</p>
+                  <p className="text-gray-500">Loading services...</p>
                 </td>
               </tr>
-            ) : totalBranchesCount === 0 ? (
+            ) : totalServicesCount === 0 ? (
               <tr>
                 <td colSpan={colSpan} className="table-cell text-center py-8">
-                  <Building className="mx-auto mb-2 text-gray-300" size={40} />{" "}
-                  <p className="text-gray-500">No branches added yet.</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Click "Add Branch" above to get started.
-                  </p>
+                  <PlusCircle
+                    className="mx-auto mb-2 text-gray-300"
+                    size={40}
+                  />
+                  <p className="text-gray-500">No services added yet.</p>
+                  {handleVisibility && (
+                    <p className="text-sm text-gray-400 mt-2">
+                      Click "Add Service" above to get started.
+                    </p>
+                  )}
                 </td>
               </tr>
-            ) : filteredAndSortedBranches.length === 0 ? (
+            ) : filteredAndSortedServices.length === 0 ? (
               <tr>
                 <td colSpan={colSpan} className="table-cell text-center py-8">
                   <Home className="mx-auto mb-2 text-gray-300" />
                   <p className="text-gray-500">
-                    No branches found matching your criteria.
+                    No services found matching your criteria.
                   </p>
                 </td>
               </tr>
             ) : (
-              filteredAndSortedBranches.map((branch) => (
-                <tr key={branch.id} className="hover:bg-gray-50">
+              filteredAndSortedServices.map((service) => (
+                <tr key={service.id} className="hover:bg-gray-50">
                   <td className="table-cell">
                     <div className="text-sm font-medium text-gray-900">
-                      {branch.branchName}
+                      {service.serviceName}
                     </div>
                   </td>
-                  <td className="table-cell text-sm font-medium">
-                    {branch.address}
-                  </td>
-                  <td className="table-cell">{branch.contactPerson}</td>
-                  <td className="table-cell text-sm font-medium">
-                    {branch.contactEmail}
+                  <td className="table-cell">
+                    <div className="text-sm font-medium text-gray-900">
+                      ₹{service.servicePrice}
+                    </div>
                   </td>
                   <td className="table-cell">
-                    {getStatusBadge(branch.isActive)}
+                    {getStatusBadge(service.isActive)}
                   </td>
                   <td className="table-cell text-sm font-medium text-gray-500">
-                    {branch.createdAt?.toDate &&
-                      format(branch.createdAt.toDate(), "PP")}
+                    {service.createdAt?.toDate &&
+                      format(service.createdAt.toDate(), "PP")}
                   </td>
-                  <td className="table-cell">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => onEdit(branch)}
-                        className="text-yellow-600 hover:text-yellow-900 p-1"
-                        title="Edit Branch"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => onDelete(branch.id)}
-                        className="text-red-600 hover:text-red-900 p-1"
-                        title="Delete Branch"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+                  {handleVisibility && (
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => onEdit(service)}
+                          className="text-yellow-600 hover:text-yellow-900 p-1"
+                          title="Edit Service"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => onDelete(service.id)}
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Delete Service"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
@@ -317,4 +346,4 @@ const BranchesTable = ({
   );
 };
 
-export default BranchesTable;
+export default ServicesTable;

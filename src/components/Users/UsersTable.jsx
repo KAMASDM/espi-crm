@@ -6,11 +6,20 @@ import {
   CheckCircle,
   XCircle,
   Shield,
+  Loader2,
+  Users as UsersIcon,
 } from "lucide-react";
 import { branchService } from "../../services/firestore";
 import { USER_ROLE_LIST, USER_ROLES } from "../../utils/constants";
 
-const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
+const UsersTable = ({
+  users = [],
+  onEdit,
+  onDelete,
+  currentUserProfile,
+  loading,
+  totalUsersCount,
+}) => {
   const [branches, setBranches] = useState([]);
   const [roleFilter, setRoleFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,7 +33,7 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
         const fetchedBranches = await branchService.getAll();
         setBranches(fetchedBranches || []);
       } catch (error) {
-        console.log("error", error);
+        console.error("Error fetching branches for users table:", error);
         setBranches([]);
       } finally {
         setBranchesLoading(false);
@@ -42,7 +51,7 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
   const getBranchName = (branchId) => {
     if (!branchId) return "No Branch";
     if (branchesLoading) return "Loading...";
-    return branchMap[branchId];
+    return branchMap[branchId] || "Unknown Branch";
   };
 
   const safeUsers = Array.isArray(users) ? users : [];
@@ -58,12 +67,16 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
       (statusFilter === "active" && user.isActive !== false) ||
       (statusFilter === "inactive" && user.isActive === false);
 
-    if (
-      currentUserProfile?.role === "Branch Admin" &&
-      user.branchId !== currentUserProfile.branchId &&
-      user.role !== "Superadmin"
-    ) {
-      return false;
+    if (currentUserProfile?.role === USER_ROLES.BRANCH_ADMIN) {
+      if (user.role === USER_ROLES.SUPERADMIN) {
+        return matchesSearch && matchesRole && matchesStatus;
+      }
+      return (
+        user.branchId === currentUserProfile.branchId &&
+        matchesSearch &&
+        matchesRole &&
+        matchesStatus
+      );
     }
 
     return matchesSearch && matchesRole && matchesStatus;
@@ -85,19 +98,25 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
     let bgColor = "bg-gray-100";
     let textColor = "text-gray-800";
 
-    if (role === "Superadmin") {
+    if (role === USER_ROLES.SUPERADMIN) {
       bgColor = "bg-red-100";
       textColor = "text-red-800";
-    } else if (role === "Branch Admin" || role === "Branch Manager") {
+    } else if (role === USER_ROLES.BRANCH_ADMIN) {
       bgColor = "bg-purple-100";
       textColor = "text-purple-800";
-    } else if (role === "Counsellor" || role === "Processor") {
+    } else if (
+      role === USER_ROLES.COUNSELLOR ||
+      role === USER_ROLES.PROCESSOR
+    ) {
       bgColor = "bg-blue-100";
       textColor = "text-blue-800";
-    } else if (role === "Reception" || role === "Accountant") {
+    } else if (
+      role === USER_ROLES.RECEPTION ||
+      role === USER_ROLES.ACCOUNTANT
+    ) {
       bgColor = "bg-yellow-100";
       textColor = "text-yellow-800";
-    } else if (role === "Agent") {
+    } else if (role === USER_ROLES.AGENT) {
       bgColor = "bg-green-100";
       textColor = "text-green-800";
     }
@@ -124,12 +143,15 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
       }
 
       if (typeof timestamp === "string") {
-        return new Date(timestamp).toLocaleDateString();
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime())) return "N/A";
+        return date.toLocaleDateString();
       }
 
       return "N/A";
     } catch (error) {
       console.error("Error formatting date:", error);
+      return "N/A";
     }
   };
 
@@ -137,6 +159,8 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
     const name = displayName?.replace(/\s/g, "+");
     return `https://ui-avatars.com/api/?name=${name}&background=random&color=fff`;
   };
+
+  const colSpan = onEdit || onDelete ? 7 : 6;
 
   return (
     <div className="space-y-4">
@@ -213,21 +237,41 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredUsers.length === 0 ? (
+            {loading ? (
               <tr>
-                <td
-                  colSpan={onEdit || onDelete ? 7 : 6}
-                  className="px-6 py-12 text-center text-gray-500"
-                >
-                  <div className="flex flex-col items-center">
-                    <Shield className="mb-2 text-gray-300" size={48} />
-                    <p>No users found</p>
-                  </div>
+                <td colSpan={colSpan} className="px-6 py-12 text-center">
+                  <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
+                  <p className="text-gray-500">Loading users...</p>
+                </td>
+              </tr>
+            ) : totalUsersCount === 0 ? (
+              <tr>
+                <td colSpan={colSpan} className="px-6 py-12 text-center">
+                  <UsersIcon className="mx-auto mb-2 text-gray-300" size={40} />
+                  <p className="text-gray-500">No users added yet.</p>
+                  {(currentUserProfile?.role === USER_ROLES.SUPERADMIN ||
+                    currentUserProfile?.role === USER_ROLES.BRANCH_ADMIN) && (
+                    <p className="text-sm text-gray-400 mt-2">
+                      Click "Add User" above to get started.
+                    </p>
+                  )}
+                </td>
+              </tr>
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={colSpan} className="px-6 py-12 text-center">
+                  <Shield className="mx-auto mb-2 text-gray-300" size={40} />
+                  <p className="text-gray-500">
+                    No users found matching your criteria.
+                  </p>
                 </td>
               </tr>
             ) : (
               filteredUsers.map((user, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr
+                  key={user.id || user.uid || index}
+                  className="hover:bg-gray-50"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
@@ -255,13 +299,7 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex flex-col">
-                      {branchesLoading ? (
-                        <span className="text-gray-400">Loading...</span>
-                      ) : (
-                        <span className="font-medium text-gray-900">
-                          {getBranchName(user.branchId)}
-                        </span>
-                      )}
+                      {getBranchName(user.branchId)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -273,24 +311,36 @@ const UsersTable = ({ users = [], onEdit, onDelete, currentUserProfile }) => {
                   {(onEdit || onDelete) && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        {onEdit && (
-                          <button
-                            onClick={() => onEdit(user)}
-                            className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
-                            title="Edit User"
-                          >
-                            <Edit size={16} />
-                          </button>
-                        )}
-                        {onDelete && user.role !== USER_ROLES.SUPERADMIN && (
-                          <button
-                            onClick={() => onDelete(user.id || user.uid)}
-                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                            title="Deactivate User"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
+                        {onEdit &&
+                          (currentUserProfile?.role === USER_ROLES.SUPERADMIN ||
+                            (currentUserProfile?.role ===
+                              USER_ROLES.BRANCH_ADMIN &&
+                              user.role !== USER_ROLES.SUPERADMIN &&
+                              user.branchId ===
+                                currentUserProfile.branchId)) && (
+                            <button
+                              onClick={() => onEdit(user)}
+                              className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
+                              title="Edit User"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          )}
+                        {onDelete &&
+                          user.role !== USER_ROLES.SUPERADMIN &&
+                          (currentUserProfile?.role === USER_ROLES.SUPERADMIN ||
+                            (currentUserProfile?.role ===
+                              USER_ROLES.BRANCH_ADMIN &&
+                              user.branchId === currentUserProfile.branchId &&
+                              user.role !== USER_ROLES.BRANCH_ADMIN)) && (
+                            <button
+                              onClick={() => onDelete(user.id || user.uid)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                              title="Deactivate User"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                       </div>
                     </td>
                   )}

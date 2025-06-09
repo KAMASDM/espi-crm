@@ -8,7 +8,6 @@ import {
   ENQUIRY_STATUS,
   ENQUIRY_SOURCES,
   EDUCATION_LEVELS,
-  AVAILABLE_SERVICES,
 } from "../../utils/constants";
 import {
   userService,
@@ -16,7 +15,7 @@ import {
   enquiryService,
 } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
-import { useUniversities } from "../../hooks/useFirestore";
+import { useServices, useUniversities } from "../../hooks/useFirestore";
 import { Save, X } from "lucide-react";
 
 const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
@@ -31,6 +30,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
   });
   const { user, userProfile } = useAuth();
   const { data: universities } = useUniversities();
+  const { data: services } = useServices();
   const [users, setUsers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -523,17 +523,29 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
               Services Interested
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border border-gray-300 rounded-lg">
-              {AVAILABLE_SERVICES.map((service) => (
-                <label key={service.name} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value={service.name}
-                    {...register("Interested_Services")}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">{service.name}</span>
-                </label>
-              ))}
+              {services
+                .filter((service) => service.isActive)
+                .map(({ serviceName, servicePrice }, index) => (
+                  <label
+                    key={index}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        value={serviceName}
+                        {...register("Interested_Services", {
+                          required: "Please select at least one service",
+                        })}
+                        className="form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 mr-2"
+                      />
+                      <span className="text-sm">{serviceName}</span>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      (₹{servicePrice.toLocaleString()})
+                    </span>
+                  </label>
+                ))}
             </div>
           </div>
         </div>

@@ -26,7 +26,6 @@ const BranchForm = ({ onClose, onSuccess, editData = null }) => {
             (u) =>
               u.isActive &&
               (u.role === USER_ROLES.ADMIN ||
-                u.role === USER_ROLES.BRANCH_MANAGER ||
                 u.role === USER_ROLES.COUNSELLOR ||
                 !u.role)
           )

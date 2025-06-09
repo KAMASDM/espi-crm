@@ -303,6 +303,12 @@ const Students = () => {
     setIsImporting(false);
   };
 
+  const handleVisibility =
+    userProfile.role === "Superadmin" ||
+    userProfile.role === "Branch Admin" ||
+    userProfile.role === "Counsellor" ||
+    userProfile.role === "Reception";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -313,40 +319,44 @@ const Students = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileImport}
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            id="csvFileInput"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="btn-secondary flex items-center"
-            title="Import Students from CSV"
-            disabled={isImporting}
-          >
-            <Upload size={20} className="mr-2" />
-            {isImporting ? "Importing..." : "Import"}
-          </button>
-          <button
-            onClick={handleExport}
-            className="btn-secondary flex items-center"
-            title="Export Students to CSV"
-            disabled={
-              isImporting || loading || !students || students.length === 0
-            }
-          >
-            <Download size={20} className="mr-2" /> Export
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center"
-            disabled={isImporting}
-          >
-            <Plus size={20} className="mr-2" /> Add Student
-          </button>
+          {handleVisibility && (
+            <>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileImport}
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                id="csvFileInput"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="btn-secondary flex items-center"
+                title="Import Students from CSV"
+                disabled={isImporting}
+              >
+                <Upload size={20} className="mr-2" />
+                {isImporting ? "Importing..." : "Import"}
+              </button>
+              <button
+                onClick={handleExport}
+                className="btn-secondary flex items-center"
+                title="Export Students to CSV"
+                disabled={
+                  isImporting || loading || !students || students.length === 0
+                }
+              >
+                <Download size={20} className="mr-2" /> Export
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="btn-primary flex items-center"
+                disabled={isImporting}
+              >
+                <Plus size={20} className="mr-2" /> Add Student
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -477,6 +487,7 @@ const Students = () => {
           onUpdateNote={handleUpdateStudentNote}
           onUpdateAssignment={handleUpdateStudentAssignment}
           currentUserProfile={userProfile}
+          handleVisibility={handleVisibility}
         />
       </div>
       <Modal
@@ -523,8 +534,8 @@ const Students = () => {
               Delete Student?
             </h3>
             <p className="text-sm text-gray-500 mb-8">
-              Are you sure you want to delete this student? This action
-              cannot be undone.
+              Are you sure you want to delete this student? This action cannot
+              be undone.
             </p>
           </div>
           <div className="flex justify-center gap-x-4">

@@ -116,18 +116,6 @@ export const PAYMENT_MODES = [
   "Other",
 ];
 
-// Available Services
-export const AVAILABLE_SERVICES = [
-  { name: "Counselling", price: 5000 },
-  { name: "University Application", price: 10000 },
-  { name: "Visa Assistance", price: 15000 },
-  { name: "Document Preparation", price: 3000 },
-  { name: "SOP Writing", price: 5000 },
-  { name: "Interview Preparation", price: 2000 },
-  { name: "Scholarship Guidance", price: 3000 },
-  { name: "Accommodation Assistance", price: 2000 },
-];
-
 // Intakes
 export const INTAKES = [
   { name: "Fall 2024", month: "September", year: "2024" },
@@ -211,9 +199,8 @@ export const VISA_STATUS = [
 // User Roles
 export const USER_ROLES = {
   SUPERADMIN: "Superadmin",
-  ADMIN: "Admin", // General Admin - might be deprecated by Branch Admin
+  ADMIN: "Admin",
   BRANCH_ADMIN: "Branch Admin",
-  BRANCH_MANAGER: "Branch Manager",
   AGENT: "Agent",
   ACCOUNTANT: "Accountant",
   RECEPTION: "Reception",
@@ -313,35 +300,6 @@ export const ROLE_PERMISSIONS = {
   [USER_ROLES.BRANCH_ADMIN]: {
     canViewAllBranches: false,
     canManageUsers: true, // Within their branch
-    canManageBranches: false,
-    canViewEnquiries: true,
-    canCreateEnquiries: true,
-    canUpdateEnquiries: true,
-    canDeleteEnquiries: true,
-    canViewAssessments: true,
-    canCreateAssessments: true,
-    canUpdateAssessments: true,
-    canDeleteAssessments: true,
-    canViewApplications: true,
-    canCreateApplications: true,
-    canUpdateApplications: true,
-    canDeleteApplications: true,
-    canViewPayments: true,
-    canCreatePayments: true,
-    canUpdatePayments: true,
-    canDeletePayments: true,
-    canViewUniversities: true,
-    canManageUniversities: false,
-    canViewCourses: true,
-    canManageCourses: false,
-    canViewReports: true,
-    canManageSettings: false,
-    canViewChats: true,
-    canManageChats: false,
-  },
-  [USER_ROLES.BRANCH_MANAGER]: {
-    canViewAllBranches: false,
-    canManageUsers: false,
     canManageBranches: false,
     canViewEnquiries: true,
     canCreateEnquiries: true,
@@ -532,7 +490,6 @@ export const MENU_ITEMS = [
     roles: [
       USER_ROLES.SUPERADMIN,
       USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.BRANCH_MANAGER,
       USER_ROLES.AGENT,
       USER_ROLES.COUNSELLOR,
       USER_ROLES.RECEPTION,
@@ -546,7 +503,6 @@ export const MENU_ITEMS = [
     roles: [
       USER_ROLES.SUPERADMIN,
       USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.BRANCH_MANAGER,
       USER_ROLES.PROCESSOR,
       USER_ROLES.COUNSELLOR,
     ],
@@ -559,7 +515,6 @@ export const MENU_ITEMS = [
     roles: [
       USER_ROLES.SUPERADMIN,
       USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.BRANCH_MANAGER,
       USER_ROLES.PROCESSOR,
       USER_ROLES.COUNSELLOR,
     ],
@@ -572,7 +527,6 @@ export const MENU_ITEMS = [
     roles: [
       USER_ROLES.SUPERADMIN,
       USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.BRANCH_MANAGER,
       USER_ROLES.ACCOUNTANT,
       USER_ROLES.RECEPTION,
     ],
@@ -585,7 +539,6 @@ export const MENU_ITEMS = [
     roles: [
       USER_ROLES.SUPERADMIN,
       USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.BRANCH_MANAGER,
       USER_ROLES.COUNSELLOR,
       USER_ROLES.PROCESSOR,
       USER_ROLES.AGENT,
@@ -599,7 +552,6 @@ export const MENU_ITEMS = [
     roles: [
       USER_ROLES.SUPERADMIN,
       USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.BRANCH_MANAGER,
       USER_ROLES.COUNSELLOR,
       USER_ROLES.PROCESSOR,
       USER_ROLES.AGENT,
@@ -624,11 +576,7 @@ export const MENU_ITEMS = [
     name: "Reports",
     path: "/reports",
     icon: "report",
-    roles: [
-      USER_ROLES.SUPERADMIN,
-      USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.BRANCH_MANAGER,
-    ],
+    roles: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
   },
   {
     id: "chat",
@@ -682,7 +630,6 @@ export default {
   PAYMENT_TYPES,
   PAYMENT_STATUS,
   PAYMENT_MODES,
-  AVAILABLE_SERVICES,
   INTAKES,
   DOCUMENTS_REQUIRED,
   ADMISSION_STATUS,

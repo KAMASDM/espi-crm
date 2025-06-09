@@ -4,43 +4,26 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
+import { USER_ROLES } from "./utils/constants";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import Chat from "./pages/Chat";
+import Login from "./pages/Login";
+import Users from "./pages/Users";
+import Courses from "./pages/Courses";
+import Reports from "./pages/Reports";
+import Services from "./pages/Services";
+import Branches from "./pages/Branches";
+import Students from "./pages/Students";
+import Payments from "./pages/Payments";
+import Dashboard from "./pages/Dashboard";
+import Assessments from "./pages/Assessments";
+import Universities from "./pages/Universities";
+import Applications from "./pages/Applications";
 import Layout from "./components/Common/Layout";
 import Loading from "./components/Common/Loading";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Students from "./pages/Students";
 import DetailedEnquiry from "./pages/DetailEnquiry";
-import Universities from "./pages/Universities";
-import Courses from "./pages/Courses";
-import Assessments from "./pages/Assessments";
-import Applications from "./pages/Applications";
-import Payments from "./pages/Payments";
-import Reports from "./pages/Reports";
-import Chat from "./pages/Chat";
-import Users from "./pages/Users";
-import BranchManagement from "./pages/Branches";
-import { USER_ROLES } from "./utils/constants";
-
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user, userProfile, loading } = useAuth();
-
-  if (loading) {
-    return <Loading size="default" />;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  if (allowedRoles && userProfile && !allowedRoles.includes(userProfile.role)) {
-    toast.error("You are not authorized to view this page.");
-    return <Navigate to="/" />;
-  }
-
-  return children;
-};
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 
 const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
@@ -80,7 +63,6 @@ const AppRoutes = () => {
               allowedRoles={[
                 USER_ROLES.SUPERADMIN,
                 USER_ROLES.BRANCH_ADMIN,
-                USER_ROLES.BRANCH_MANAGER,
                 USER_ROLES.COUNSELLOR,
                 USER_ROLES.RECEPTION,
               ]}
@@ -96,8 +78,8 @@ const AppRoutes = () => {
               allowedRoles={[
                 USER_ROLES.SUPERADMIN,
                 USER_ROLES.BRANCH_ADMIN,
-                USER_ROLES.BRANCH_MANAGER,
                 USER_ROLES.COUNSELLOR,
+                USER_ROLES.RECEPTION,
               ]}
             >
               <DetailedEnquiry />
@@ -111,7 +93,6 @@ const AppRoutes = () => {
               allowedRoles={[
                 USER_ROLES.SUPERADMIN,
                 USER_ROLES.BRANCH_ADMIN,
-                USER_ROLES.BRANCH_MANAGER,
                 USER_ROLES.COUNSELLOR,
                 USER_ROLES.PROCESSOR,
               ]}
@@ -127,7 +108,6 @@ const AppRoutes = () => {
               allowedRoles={[
                 USER_ROLES.SUPERADMIN,
                 USER_ROLES.BRANCH_ADMIN,
-                USER_ROLES.BRANCH_MANAGER,
                 USER_ROLES.COUNSELLOR,
                 USER_ROLES.PROCESSOR,
               ]}
@@ -143,9 +123,7 @@ const AppRoutes = () => {
               allowedRoles={[
                 USER_ROLES.SUPERADMIN,
                 USER_ROLES.BRANCH_ADMIN,
-                USER_ROLES.BRANCH_MANAGER,
                 USER_ROLES.PROCESSOR,
-                USER_ROLES.COUNSELLOR,
               ]}
             >
               <Assessments />
@@ -159,9 +137,7 @@ const AppRoutes = () => {
               allowedRoles={[
                 USER_ROLES.SUPERADMIN,
                 USER_ROLES.BRANCH_ADMIN,
-                USER_ROLES.BRANCH_MANAGER,
                 USER_ROLES.PROCESSOR,
-                USER_ROLES.COUNSELLOR,
               ]}
             >
               <Applications />
@@ -175,9 +151,7 @@ const AppRoutes = () => {
               allowedRoles={[
                 USER_ROLES.SUPERADMIN,
                 USER_ROLES.BRANCH_ADMIN,
-                USER_ROLES.BRANCH_MANAGER,
                 USER_ROLES.ACCOUNTANT,
-                USER_ROLES.RECEPTION,
               ]}
             >
               <Payments />
@@ -188,11 +162,7 @@ const AppRoutes = () => {
           path="/reports"
           element={
             <ProtectedRoute
-              allowedRoles={[
-                USER_ROLES.SUPERADMIN,
-                USER_ROLES.BRANCH_ADMIN,
-                USER_ROLES.BRANCH_MANAGER,
-              ]}
+              allowedRoles={[USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN]}
             >
               <Reports />
             </ProtectedRoute>
@@ -206,14 +176,26 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/users"
           element={
-            <ProtectedRoute
-              allowedRoles={[USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN]}
-            >
+            <ProtectedRoute allowedRoles={[USER_ROLES.SUPERADMIN]}>
               <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/services"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                USER_ROLES.SUPERADMIN,
+                USER_ROLES.BRANCH_ADMIN,
+                USER_ROLES.COUNSELLOR,
+                USER_ROLES.PROCESSOR,
+              ]}
+            >
+              <Services />
             </ProtectedRoute>
           }
         />
@@ -221,11 +203,10 @@ const AppRoutes = () => {
           path="/branches"
           element={
             <ProtectedRoute allowedRoles={[USER_ROLES.SUPERADMIN]}>
-              <BranchManagement />
+              <Branches />
             </ProtectedRoute>
           }
         />
-
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Layout>

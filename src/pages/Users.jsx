@@ -14,7 +14,6 @@ import { useAuth } from "../context/AuthContext";
 import { userService } from "../services/firestore";
 import UserForm from "../components/Users/UserForm";
 import UsersTable from "../components/Users/UsersTable";
-import Loading from "../components/Common/Loading";
 
 const Users = () => {
   const { userProfile } = useAuth();
@@ -36,7 +35,7 @@ const Users = () => {
       setUsers(fetchedUsers);
       setError(null);
     } catch (error) {
-      console.log("error fetching users:", error);
+      console.error("Error fetching users:", error);
       setError(error);
       toast.error("Failed to fetch users.");
     } finally {
@@ -54,14 +53,16 @@ const Users = () => {
   };
 
   const handleDelete = (userId) => {
-    const userToDelete = users.find((user) => (user.id || user.uid) === userId);
+    const userToDelete = users.find(
+      (user) => (user.id || user.uid) === userId
+    );
     if (userToDelete) {
       setUserToDeactivateId(userId);
-      setUserToDeactivateName(userToDelete.fullName || userToDelete.email);
+      setUserToDeactivateName(userToDelete.displayName || userToDelete.email);
       setShowDeactivateModal(true);
     } else {
       toast.error("User not found.");
-      console.log("User not found for deactivation:", userId);
+      console.error("User not found for deactivation:", userId);
     }
   };
 
@@ -77,7 +78,7 @@ const Users = () => {
       toast.success(`User ${userToDeactivateName} deactivated successfully!`);
       fetchUsers();
     } catch (error) {
-      console.log("error deactivating user:", error);
+      console.error("Error deactivating user:", error);
       toast.error(
         `Failed to deactivate user ${userToDeactivateName}. Please try again.`
       );
@@ -88,22 +89,19 @@ const Users = () => {
     }
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (message = "User operation successful!") => {
     setShowAddModal(false);
     setShowEditModal(false);
     setSelectedUser(null);
     fetchUsers();
+    toast.success(message);
   };
 
   const allUsers = users || [];
   const activeUsers = allUsers.filter((u) => u.isActive !== false);
   const inactiveUsers = allUsers.filter((u) => u.isActive === false);
 
-  if (loading) {
-    return <Loading size="default" />;
-  }
-
-  if (error && !users.length) {
+  if (error && !allUsers.length) {
     return (
       <div className="text-center py-12">
         <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
@@ -151,11 +149,13 @@ const Users = () => {
         <button
           onClick={() => setShowAddModal(true)}
           className="btn-primary flex items-center"
+          disabled={loading} 
         >
           <Plus size={20} className="mr-2" />
           Add User
         </button>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
@@ -165,7 +165,7 @@ const Users = () => {
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-700">Total Users</p>
               <p className="text-2xl font-bold text-gray-900">
-                {allUsers.length}
+                {loading ? "..." : allUsers.length}
               </p>
             </div>
           </div>
@@ -178,7 +178,7 @@ const Users = () => {
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-700">Active Users</p>
               <p className="text-2xl font-bold text-gray-900">
-                {activeUsers.length}
+                {loading ? "..." : activeUsers.length}
               </p>
             </div>
           </div>
@@ -193,40 +193,27 @@ const Users = () => {
                 Inactive Users
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {inactiveUsers.length}
+                {loading ? "..." : inactiveUsers.length}
               </p>
             </div>
           </div>
         </div>
       </div>
+
       <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
         <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
           All Users
         </h3>
-        {allUsers.length === 0 && !loading ? (
-          <div className="text-center py-12">
-            <UsersIcon className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-500">No users found.</p>
-            {error && (
-              <p className="text-red-500 mt-2">Error: {error.message}</p>
-            )}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="mt-4 btn-primary flex items-center mx-auto"
-            >
-              <Plus size={18} className="mr-1.5" />
-              Add First User
-            </button>
-          </div>
-        ) : (
-          <UsersTable
-            users={allUsers}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            currentUserProfile={userProfile}
-          />
-        )}
+        <UsersTable
+          users={allUsers}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          currentUserProfile={userProfile}
+          loading={loading}
+          totalUsersCount={allUsers.length}
+        />
       </div>
+
       {showAddModal && (
         <Modal
           isOpen={showAddModal}
@@ -236,14 +223,12 @@ const Users = () => {
         >
           <UserForm
             onClose={() => setShowAddModal(false)}
-            onSuccess={() => {
-              handleFormSuccess();
-              toast.success("User added successfully!");
-            }}
+            onSuccess={() => handleFormSuccess("User added successfully!")}
             currentUserProfile={userProfile}
           />
         </Modal>
       )}
+
       {showEditModal && selectedUser && (
         <Modal
           isOpen={showEditModal}
@@ -260,14 +245,12 @@ const Users = () => {
               setShowEditModal(false);
               setSelectedUser(null);
             }}
-            onSuccess={() => {
-              handleFormSuccess();
-              toast.success("User updated successfully!");
-            }}
+            onSuccess={() => handleFormSuccess("User updated successfully!")}
             currentUserProfile={userProfile}
           />
         </Modal>
       )}
+
       <Modal
         isOpen={showDeactivateModal}
         onClose={() => {
