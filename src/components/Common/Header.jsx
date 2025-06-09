@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Menu, Search, User, LogOut, Shield } from "lucide-react";
+import { Menu, User, LogOut, Shield } from "lucide-react";
 import { signOutUser } from "../../services/auth";
 import { useAuth } from "../../context/AuthContext";
 
@@ -18,29 +18,35 @@ const Header = ({ setSidebarOpen }) => {
   const getRoleBadge = (role) => {
     let bgColor = "bg-gray-100";
     let textColor = "text-gray-800";
+    let roleName = "";
 
     if (role === "Superadmin") {
       bgColor = "bg-red-100";
       textColor = "text-red-800";
+      roleName = "Super Admin";
     } else if (role === "Branch Admin" || role === "Branch Manager") {
       bgColor = "bg-purple-100";
       textColor = "text-purple-800";
+      roleName = "Branch Admin";
     } else if (role === "Counsellor" || role === "Processor") {
       bgColor = "bg-blue-100";
       textColor = "text-blue-800";
+      roleName = role === "Counsellor" ? "Counsellor" : "Processor";
     } else if (role === "Reception" || role === "Accountant") {
       bgColor = "bg-yellow-100";
       textColor = "text-yellow-800";
+      roleName = role === "Reception" ? "Receptionist" : "Accountant";
     } else if (role === "Agent") {
       bgColor = "bg-green-100";
       textColor = "text-green-800";
+      roleName = "Agent";
     }
 
     return (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
       >
-        <Shield size={12} className="mr-1" /> {role || "Unknown"}
+        <Shield size={12} className="mr-1" /> {roleName || "Unknown"}
       </span>
     );
   };
@@ -57,17 +63,6 @@ const Header = ({ setSidebarOpen }) => {
           </button>
 
           <div className="hidden md:flex items-center ml-4">
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={20}
-              />
-              <input
-                type="text"
-                placeholder="Search students, universities..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-80"
-              />
-            </div>
             {userProfile?.role && (
               <div className="ml-3">{getRoleBadge(userProfile.role)}</div>
             )}

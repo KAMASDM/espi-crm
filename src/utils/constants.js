@@ -9,6 +9,7 @@ export const COUNTRIES = [
   { code: "NL", name: "Netherlands" },
   { code: "SG", name: "Singapore" },
   { code: "IN", name: "India" },
+  { code: "other", name: "Other" },
 ];
 
 // Education Levels

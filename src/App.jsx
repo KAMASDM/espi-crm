@@ -24,6 +24,7 @@ import Layout from "./components/Common/Layout";
 import Loading from "./components/Common/Loading";
 import DetailedEnquiry from "./pages/DetailEnquiry";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import StudentDetails from "./components/Students/StudentDetails";
 
 const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
@@ -41,7 +42,7 @@ const AppRoutes = () => {
     );
   }
 
-  if (loading || (user && !userProfile)) {
+  if (loading || (!user && !userProfile)) {
     return <Loading size="default" />;
   }
 
@@ -83,6 +84,20 @@ const AppRoutes = () => {
               ]}
             >
               <DetailedEnquiry />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/students/:id"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                USER_ROLES.SUPERADMIN,
+                USER_ROLES.BRANCH_ADMIN,
+                USER_ROLES.COUNSELLOR,
+              ]}
+            >
+              <StudentDetails />
             </ProtectedRoute>
           }
         />

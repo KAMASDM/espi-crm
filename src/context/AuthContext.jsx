@@ -52,9 +52,7 @@ export const AuthProvider = ({ children }) => {
               profile = null;
             }
           }
-
           setUserProfile(profile);
-          console.log("User profile loaded:", profile);
         } else {
           setUser(null);
           setUserProfile(null);

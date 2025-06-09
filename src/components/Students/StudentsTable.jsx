@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom"; // Import Link
 import {
   Eye,
   Edit,
@@ -347,7 +348,10 @@ const StudentsTable = ({
               <th className="table-header">Contact</th>
               <th className="table-header">Location</th>
               <th className="table-header">Branch</th>
-              <th className="table-header">Assigned To</th>
+              {(currentUserProfile.role === "Superadmin" ||
+                currentUserProfile.role === "Branch Admin") && (
+                <th className="table-header">Assigned To</th>
+              )}
               <th className="table-header">Education</th>
               <th
                 onClick={() => handleSort("enquiry_status")}
@@ -414,7 +418,7 @@ const StudentsTable = ({
                       formattedDate = "Invalid Date";
                     }
                   } catch (error) {
-                    console.log("error", error);
+                    console.error("Error formatting date (other type):", error);
                   }
                 }
 
@@ -431,10 +435,13 @@ const StudentsTable = ({
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <Link
+                            to={`/students/${student.id}`}
+                            className="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline"
+                          >
                             {student.student_First_Name}{" "}
                             {student.student_Last_Name}
-                          </div>
+                          </Link>
                         </div>
                       </div>
                     </td>
@@ -473,23 +480,26 @@ const StudentsTable = ({
                       </div>
                     </td>
 
-                    <td className="table-cell">
-                      <select
-                        value={student.assignedUserId}
-                        onChange={(e) =>
-                          handleAssignmentChange(student.id, e.target.value)
-                        }
-                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <option value="">Unassigned</option>
-                        {getAvailableUsers().map((user, index) => (
-                          <option key={index} value={user.id}>
-                            {user.displayName}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
+                    {(currentUserProfile.role === "Superadmin" ||
+                      currentUserProfile.role === "Branch Admin") && (
+                      <td className="table-cell">
+                        <select
+                          value={student.assignedUserId || ""}
+                          onChange={(e) =>
+                            handleAssignmentChange(student.id, e.target.value)
+                          }
+                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <option value="">Unassigned</option>
+                          {getAvailableUsers().map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.displayName}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    )}
 
                     <td className="table-cell">
                       <div className="text-sm text-gray-900">

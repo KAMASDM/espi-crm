@@ -15,6 +15,7 @@ import {
 import { format } from "date-fns";
 import { COUNTRIES, ASSESSMENT_STATUS } from "../../utils/constants";
 import Loading from "../Common/Loading";
+import { Link } from "react-router-dom";
 
 const AssessmentsTable = ({
   assessments,
@@ -270,7 +271,12 @@ const AssessmentsTable = ({
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {getStudentName(assessment.enquiry)}
+                          <Link
+                            to={`/students/${assessment.enquiry}`}
+                            className="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline"
+                          >
+                            {getStudentName(assessment.enquiry)}
+                          </Link>
                         </div>
                         <div className="text-sm text-gray-500">
                           {getCountryName(assessment.student_country)}
