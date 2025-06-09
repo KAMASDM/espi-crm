@@ -355,6 +355,28 @@ export const branchService = {
     firestoreService.subscribe("branches", callback, constraints, onError),
 };
 
+export const serviceService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    return firestoreService.create("services", {
+      ...data,
+      createdBy: currentUser?.uid,
+    });
+  },
+
+  update: (id, data) => firestoreService.update("services", id, data),
+
+  delete: (id) => firestoreService.delete("services", id),
+
+  getAll: (constraints = []) =>
+    firestoreService.getAll("services", constraints),
+
+  getById: (id) => firestoreService.getById("services", id),
+
+  subscribe: (callback, constraints = [], onError) =>
+    firestoreService.subscribe("services", callback, constraints, onError),
+};
+
 export const chatService = {
   async sendMessage(chatId, messageText) {
     const currentUser = auth.currentUser;

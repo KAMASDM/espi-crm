@@ -26,7 +26,7 @@ const Universities = () => {
     create,
     delete: deleteUniversity,
   } = useUniversities();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -286,6 +286,8 @@ const Universities = () => {
     setIsImporting(false);
   };
 
+  const handleVisibility = userProfile.role === "Superadmin";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -296,43 +298,47 @@ const Universities = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileImportChange}
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            id="csvUniversityInput"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="btn-secondary flex items-center"
-            title="Import Universities from CSV"
-            disabled={isImporting}
-          >
-            <Upload size={20} className="mr-2" />{" "}
-            {isImporting ? "Importing..." : "Import"}
-          </button>
-          <button
-            onClick={handleExport}
-            className="btn-secondary flex items-center"
-            title="Export Universities to CSV"
-            disabled={
-              isImporting ||
-              loading ||
-              !universities ||
-              universities.length === 0
-            }
-          >
-            <Download size={20} className="mr-2" /> Export
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center"
-            disabled={isImporting}
-          >
-            <Plus size={20} className="mr-2" /> Add University
-          </button>
+          {handleVisibility && (
+            <>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileImportChange}
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                id="csvUniversityInput"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="btn-secondary flex items-center"
+                title="Import Universities from CSV"
+                disabled={isImporting}
+              >
+                <Upload size={20} className="mr-2" />{" "}
+                {isImporting ? "Importing..." : "Import"}
+              </button>
+              <button
+                onClick={handleExport}
+                className="btn-secondary flex items-center"
+                title="Export Universities to CSV"
+                disabled={
+                  isImporting ||
+                  loading ||
+                  !universities ||
+                  universities.length === 0
+                }
+              >
+                <Download size={20} className="mr-2" /> Export
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="btn-primary flex items-center"
+                disabled={isImporting}
+              >
+                <Plus size={20} className="mr-2" /> Add University
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -468,6 +474,7 @@ const Universities = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
+          handleVisibility={handleVisibility}
         />
       </div>
       <Modal

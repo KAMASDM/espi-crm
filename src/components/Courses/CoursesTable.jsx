@@ -24,6 +24,7 @@ const CoursesTable = ({
   onEdit,
   onDelete,
   onView,
+  handleVisibility,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
@@ -217,7 +218,7 @@ const CoursesTable = ({
               <th className="table-header">Financial</th>
               <th className="table-header">Deadline</th>
               <th className="table-header">Status</th>
-              <th className="table-header">Actions</th>
+              {handleVisibility && <th className="table-header">Actions</th>}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -330,31 +331,33 @@ const CoursesTable = ({
                     {getStatusBadge(course.Active)}
                   </td>
 
-                  <td className="table-cell">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => onView(course)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View Details"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        onClick={() => onEdit(course)}
-                        className="text-yellow-600 hover:text-yellow-900"
-                        title="Edit Course"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => onDelete(course.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete Course"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+                  {handleVisibility && (
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => onView(course)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View Details"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={() => onEdit(course)}
+                          className="text-yellow-600 hover:text-yellow-900"
+                          title="Edit Course"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => onDelete(course.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete Course"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

@@ -4,9 +4,8 @@ import {
   PAYMENT_TYPES,
   PAYMENT_STATUS,
   PAYMENT_MODES,
-  AVAILABLE_SERVICES,
 } from "../../utils/constants";
-import { useEnquiries } from "../../hooks/useFirestore";
+import { useEnquiries, useServices } from "../../hooks/useFirestore";
 import { paymentService } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
 import { Upload, FileText, X, Save } from "lucide-react";
@@ -51,8 +50,9 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
   });
 
   const { user } = useAuth();
-  const { data: enquiries, isLoading: enquiriesLoading } = useEnquiries();
   const [loading, setLoading] = useState(false);
+  const { data: enquiries, isLoading: enquiriesLoading } = useEnquiries();
+  const { data: services, isLoading: servicesLoading } = useServices();
 
   const [fileToUpload, setFileToUpload] = useState(null);
   const [fileDisplayName, setFileDisplayName] = useState("");
@@ -261,12 +261,12 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
 
   const calculateServiceTotal = () => {
     return selectedServices.reduce((total, serviceName) => {
-      const service = AVAILABLE_SERVICES.find((s) => s.name === serviceName);
+      const service = services.find((s) => s.serviceName === serviceName);
       return total + (service ? service.price : 0);
     }, 0);
   };
 
-  if (enquiriesLoading && !editData) {
+  if (enquiriesLoading && servicesLoading && !editData) {
     return <Loading size="default" />;
   }
   if (!user) {
@@ -304,7 +304,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
               }`}
             >
               <option value="">Select Student</option>
-              {(enquiries).map((enquiry) => (
+              {enquiries.map((enquiry) => (
                 <option key={enquiry.id} value={enquiry.id}>
                   {enquiry.student_First_Name} {enquiry.student_Last_Name}
                 </option>
@@ -501,29 +501,31 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
               Payment For <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border border-gray-300 rounded-lg">
-              {AVAILABLE_SERVICES.map((service) => (
-                <label
-                  key={service.name}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      value={service.name}
-                      {...register("Payment_For", {
-                        required: "Please select at least one service",
-                      })}
-                      className="form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 mr-2"
-                    />
-                    <span className="text-sm text-gray-700">
-                      {service.name}
+              {services
+                .filter((service) => service.isActive)
+                .map(({ serviceName, servicePrice }, index) => (
+                  <label
+                    key={index}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        value={serviceName}
+                        {...register("Payment_For", {
+                          required: "Please select at least one service",
+                        })}
+                        className="form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 mr-2"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {serviceName}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                     (₹{servicePrice.toLocaleString()})
                     </span>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    ₹{service.price.toLocaleString()}
-                  </span>
-                </label>
-              ))}
+                  </label>
+                ))}
             </div>
             {errors.Payment_For && (
               <p className="text-red-600 text-sm mt-1">

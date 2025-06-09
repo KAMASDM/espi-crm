@@ -10,6 +10,7 @@ import {
   userService,
   branchService,
   detailEnquiryService,
+  serviceService,
 } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
@@ -99,7 +100,6 @@ export const useEnquiries = () => {
     } else if (
       userProfile.branchId &&
       (userProfile.role === USER_ROLES.BRANCH_ADMIN ||
-        userProfile.role === USER_ROLES.BRANCH_MANAGER ||
         userProfile.role === USER_ROLES.RECEPTION ||
         userProfile.role === USER_ROLES.AGENT ||
         userProfile.role === USER_ROLES.COUNSELLOR ||
@@ -143,7 +143,6 @@ export const useDetailEnquiries = () => {
 
     if (
       userProfile.role === USER_ROLES.BRANCH_ADMIN ||
-      userProfile.role === USER_ROLES.BRANCH_MANAGER ||
       userProfile.role === USER_ROLES.COUNSELLOR ||
       userProfile.role === USER_ROLES.PROCESSOR
     ) {
@@ -184,11 +183,20 @@ export const useCourses = () => {
   return { data, loading, error, ...courseService };
 };
 
+export const useServices = () => {
+  const { data, loading, error } = useSubscription("services", [
+    "serviceName",
+    "asc",
+  ]);
+  return { data, loading, error, ...serviceService };
+};
+
 export const useAssessments = () => {
   const buildConstraints = useCallback((userProfile) => {
     if (!userProfile) return null;
 
     const constraints = [];
+
     if (
       userProfile.role === USER_ROLES.SUPERADMIN ||
       userProfile.role === USER_ROLES.PROCESSOR
@@ -196,17 +204,9 @@ export const useAssessments = () => {
       // Sees all
     } else if (
       userProfile.branchId &&
-      (userProfile.role === USER_ROLES.BRANCH_ADMIN ||
-        userProfile.role === USER_ROLES.BRANCH_MANAGER)
+      userProfile.role === USER_ROLES.BRANCH_ADMIN
     ) {
       constraints.push(where("branchId", "==", userProfile.branchId));
-    } else if (userProfile.role === USER_ROLES.PROCESSOR) {
-      constraints.push(where("assignedProcessorId", "==", userProfile.uid));
-      if (userProfile.branchId) {
-        constraints.push(where("branchId", "==", userProfile.branchId));
-      } else {
-        return null;
-      }
     } else if (
       userProfile.role === USER_ROLES.COUNSELLOR &&
       userProfile.branchId
@@ -215,6 +215,7 @@ export const useAssessments = () => {
     } else {
       return null;
     }
+
     return constraints.filter((c) => c != null);
   }, []);
 
@@ -223,6 +224,7 @@ export const useAssessments = () => {
     ["createdAt", "desc"],
     buildConstraints
   );
+
   return { data, loading, error, ...assessmentService };
 };
 
@@ -231,6 +233,7 @@ export const useApplications = () => {
     if (!userProfile) return null;
 
     const constraints = [];
+
     if (
       userProfile.role === USER_ROLES.SUPERADMIN ||
       userProfile.role === USER_ROLES.PROCESSOR
@@ -238,17 +241,9 @@ export const useApplications = () => {
       // Sees all
     } else if (
       userProfile.branchId &&
-      (userProfile.role === USER_ROLES.BRANCH_ADMIN ||
-        userProfile.role === USER_ROLES.BRANCH_MANAGER)
+      userProfile.role === USER_ROLES.BRANCH_ADMIN
     ) {
       constraints.push(where("branchId", "==", userProfile.branchId));
-    } else if (userProfile.role === USER_ROLES.PROCESSOR) {
-      constraints.push(where("assignedProcessorId", "==", userProfile.uid));
-      if (userProfile.branchId) {
-        constraints.push(where("branchId", "==", userProfile.branchId));
-      } else {
-        return null;
-      }
     } else if (
       userProfile.role === USER_ROLES.COUNSELLOR &&
       userProfile.branchId
@@ -257,6 +252,7 @@ export const useApplications = () => {
     } else {
       return null;
     }
+
     return constraints.filter((c) => c != null);
   }, []);
 
@@ -265,6 +261,7 @@ export const useApplications = () => {
     ["createdAt", "desc"],
     buildConstraints
   );
+
   return { data, loading, error, ...applicationService };
 };
 
@@ -278,7 +275,6 @@ export const usePayments = () => {
     } else if (
       userProfile.branchId &&
       (userProfile.role === USER_ROLES.BRANCH_ADMIN ||
-        userProfile.role === USER_ROLES.BRANCH_MANAGER ||
         userProfile.role === USER_ROLES.ACCOUNTANT ||
         userProfile.role === USER_ROLES.RECEPTION)
     ) {

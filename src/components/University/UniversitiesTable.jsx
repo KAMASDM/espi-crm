@@ -47,6 +47,7 @@ const UniversitiesTable = ({
   onEdit,
   onDelete,
   onView,
+  handleVisibility,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -218,7 +219,7 @@ const UniversitiesTable = ({
                   )}
                 </div>
               </th>
-              <th className="table-header">Actions</th>
+              {handleVisibility && <th className="table-header">Actions</th>}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -347,31 +348,33 @@ const UniversitiesTable = ({
                         {formattedDate}
                       </div>
                     </td>
-                    <td className="table-cell">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => onView(university)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View Details"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          onClick={() => onEdit(university)}
-                          className="text-yellow-600 hover:text-yellow-900"
-                          title="Edit University"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => onDelete(university.id)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete University"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+                    {handleVisibility && (
+                      <td className="table-cell">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => onView(university)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => onEdit(university)}
+                            className="text-yellow-600 hover:text-yellow-900"
+                            title="Edit University"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => onDelete(university.id)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete University"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })

@@ -8,7 +8,6 @@ import {
   COUNTRIES,
   ENQUIRY_STATUS,
   EDUCATION_LEVELS,
-  AVAILABLE_SERVICES,
 } from "../../utils/constants";
 import {
   X,
@@ -35,6 +34,7 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
+import { useServices } from "../../hooks/useFirestore";
 
 const storage = getStorage(app);
 
@@ -964,25 +964,24 @@ const Step5Documents = ({ FileUploadField }) => (
   </div>
 );
 
-const Step6ServicesAndStatus = ({ register }) => (
+const Step6ServicesAndStatus = ({ services, register }) => (
   <div className="space-y-6">
     <div>
       <h4 className="text-lg font-semibold text-gray-900 mb-4">
         Confirmed Services
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 border border-gray-300 rounded-lg">
-        {AVAILABLE_SERVICES.map((service) => (
-          <label key={service.name} className="flex items-center">
+        {services.map(({ serviceName, servicePrice }, index) => (
+          <label key={index} className="flex items-center">
             <input
               type="checkbox"
-              value={service.name}
+              value={serviceName}
               {...register("confirmed_services")}
               className="mr-2 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
             />
-            <span className="text-sm text-gray-700">{service.name}</span>
+            <span className="text-sm text-gray-700">{serviceName}</span>
             <span className="ml-auto text-sm text-gray-500">
-              {" "}
-              (₹{service.price.toLocaleString()})
+              (₹{servicePrice.toLocaleString()})
             </span>
           </label>
         ))}
@@ -1042,11 +1041,11 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
         {Object.values(obj || {}).every(
           (val) => !val && val !== 0 && typeof val !== "boolean"
         ) && <p className="text-xs text-gray-400 italic">Not provided</p>}
+      </div>
     </div>
-  </div>
-);
+  );
 
-const renderArrayOfObjects = (arr, title, icon) => (
+  const renderArrayOfObjects = (arr, title, icon) => (
     <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex items-center mb-2">
         {icon && <span className="mr-2 text-gray-500">{icon}</span>}
@@ -1249,6 +1248,9 @@ const DetailEnquiryForm = ({
   editData = null,
 }) => {
   const totalSteps = STEPS.length;
+  const { user } = useAuth();
+  const { data: services } = useServices();
+  const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [filesToUpload, setFilesToUpload] = useState({});
   const [uploadedDocumentsDisplay, setUploadedDocumentsDisplay] = useState({});
@@ -1365,9 +1367,6 @@ const DetailEnquiryForm = ({
     control,
     name: "workExperiences",
   });
-
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const initialFormValues = { ...defaultValues };
@@ -1764,7 +1763,12 @@ const DetailEnquiryForm = ({
         {currentStep === 5 && (
           <Step5Documents FileUploadField={FileUploadFieldComponent} />
         )}
-        {currentStep === 6 && <Step6ServicesAndStatus register={register} />}
+        {currentStep === 6 && (
+          <Step6ServicesAndStatus
+            register={register}
+            services={services.filter((service) => service.isActive)}
+          />
+        )}
         {currentStep === 7 && (
           <Step7Review
             getValues={getValues}

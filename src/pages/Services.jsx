@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Plus,
   AlertTriangle,
@@ -11,106 +11,108 @@ import toast from "react-hot-toast";
 import Modal from "../components/Common/Modal";
 import { USER_ROLES } from "../utils/constants";
 import { useAuth } from "../context/AuthContext";
-import { branchService } from "../services/firestore";
-import BranchForm from "../components/Branch/BranchForm";
-import BranchesTable from "../components/Branch/BranchesTable";
+import ServiceForm from "../components/Service/ServiceForm";
+import ServicesTable from "../components/Service/ServicesTable";
+import { serviceService } from "../services/firestore";
 
-const Branches = () => {
+const Services = () => {
   const { userProfile } = useAuth();
   const [error, setError] = useState(null);
-  const [branches, setBranches] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [branchToDeleteId, setBranchToDeleteId] = useState(null);
-  const [branchToDeleteName, setBranchToDeleteName] = useState("");
+  const [serviceToDeleteId, setServiceToDeleteId] = useState(null);
+  const [serviceToDeleteName, setServiceToDeleteName] = useState("");
 
-  const fetchBranches = async () => {
+  const fetchServices = async () => {
     setLoading(true);
     try {
-      const fetchedBranches = await branchService.getAll();
-      setBranches(fetchedBranches);
+      const fetchedServices = await serviceService.getAll();
+      setServices(fetchedServices);
       setError(null);
     } catch (err) {
-      console.error("Error fetching branches:", err);
+      console.error("Error fetching services:", err);
       setError(err);
-      toast.error("Failed to fetch branches.");
+      toast.error("Failed to fetch services.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBranches();
+    fetchServices();
   }, []);
 
-  const handleEdit = (branch) => {
-    setSelectedBranch(branch);
+  const handleEdit = (service) => {
+    setSelectedService(service);
     setShowEditModal(true);
   };
 
-  const handleDelete = (branchId) => {
-    const branch = branches.find((b) => b.id === branchId);
-    if (branch) {
-      setBranchToDeleteId(branchId);
-      setBranchToDeleteName(branch.name);
+  const handleDelete = (serviceId) => {
+    const service = services.find((s) => s.id === serviceId);
+    if (service) {
+      setServiceToDeleteId(serviceId);
+      setServiceToDeleteName(service.serviceName);
       setShowDeleteModal(true);
     } else {
-      toast.error("Branch not found.");
-      console.error("Branch not found for deletion:", branchId);
+      toast.error("Service not found.");
+      console.error("Service not found for deletion:", serviceId);
     }
   };
 
-  const confirmDeleteBranch = async () => {
-    if (!branchToDeleteId) return;
+  const confirmDeleteService = async () => {
+    if (!serviceToDeleteId) return;
 
     try {
-      await branchService.delete(branchToDeleteId);
-      toast.success(`Branch "${branchToDeleteName}" deleted successfully!`);
-      fetchBranches();
+      await serviceService.delete(serviceToDeleteId);
+      toast.success(`Service "${serviceToDeleteName}" deleted successfully!`);
+      fetchServices();
     } catch (err) {
-      console.error("Error deleting branch:", err);
+      console.error("Error deleting service:", err);
       toast.error(
-        `Failed to delete branch "${branchToDeleteName}". ${err.message || ""}`
+        `Failed to delete service "${serviceToDeleteName}". ${
+          err.message || ""
+        }`
       );
     } finally {
       setShowDeleteModal(false);
-      setBranchToDeleteId(null);
-      setBranchToDeleteName("");
+      setServiceToDeleteId(null);
+      setServiceToDeleteName("");
     }
   };
 
   const handleFormSuccess = (action = "submitted") => {
     setShowAddModal(false);
     setShowEditModal(false);
-    setSelectedBranch(null);
-    fetchBranches();
-    toast.success(`Branch ${action} successfully!`);
+    setSelectedService(null);
+    fetchServices();
+    toast.success(`Service ${action} successfully!`);
   };
 
-  const totalBranchesCount = branches.length;
-  const activeBranchesCount = branches.filter(
-    (b) => b.isActive === true
+  const totalServicesCount = services.length;
+  const activeServicesCount = services.filter(
+    (s) => s.isActive === true
   ).length;
-  const inactiveBranchesCount = branches.filter(
-    (b) => b.isActive === false
+  const inactiveServicesCount = services.filter(
+    (s) => s.isActive === false
   ).length;
+
+  const handleVisibility = userProfile.role === USER_ROLES.SUPERADMIN;
 
   if (error) {
     return (
       <div className="text-center py-12">
         <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Error Loading Branches
+          Error Loading Services
         </h2>
-        <p className="text-red-500 mb-4">
-          {error.message || "An unexpected error occurred."}
-        </p>
+        <p className="text-red-500 mb-4">{error.message}</p>
         <button
-          onClick={fetchBranches}
+          onClick={fetchServices}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
           Try Again
@@ -119,43 +121,24 @@ const Branches = () => {
     );
   }
 
-  if (userProfile?.role !== USER_ROLES.SUPERADMIN) {
-    return (
-      <div className="space-y-6 p-4 md:p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Branches</h1>
-          </div>
-        </div>
-        <div className="text-center py-12 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Access Denied
-          </h2>
-          <p className="text-gray-600">
-            You do not have permission to manage branches.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Branches</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Services</h1>
           <p className="text-sm text-gray-600">
-            Oversee and manage all company branches.
+            Oversee and manage all company services.
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="btn-primary flex items-center"
-          disabled={loading}
-        >
-          <Plus size={18} className="mr-1.5" /> Add Branch
-        </button>
+        {handleVisibility && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary flex items-center"
+            disabled={loading}
+          >
+            <Plus size={18} className="mr-1.5" /> Add Service
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -166,10 +149,10 @@ const Branches = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-700">
-                Total Branches
+                Total Services
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {loading ? "..." : totalBranchesCount}
+                {loading ? "..." : totalServicesCount}
               </p>
             </div>
           </div>
@@ -181,10 +164,10 @@ const Branches = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-700">
-                Active Branches
+                Active Services
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {loading ? "..." : activeBranchesCount}
+                {loading ? "..." : activeServicesCount}
               </p>
             </div>
           </div>
@@ -196,10 +179,10 @@ const Branches = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-700">
-                Inactive Branches
+                Inactive Services
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {loading ? "..." : inactiveBranchesCount}
+                {loading ? "..." : inactiveServicesCount}
               </p>
             </div>
           </div>
@@ -207,22 +190,23 @@ const Branches = () => {
       </div>
 
       <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
-        <BranchesTable
-          branches={branches}
+        <ServicesTable
+          services={services}
           onEdit={handleEdit}
           onDelete={handleDelete}
           loading={loading}
-          totalBranchesCount={totalBranchesCount}
+          handleVisibility={handleVisibility}
+          totalServicesCount={totalServicesCount}
         />
       </div>
 
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Add New Branch"
+        title="Add New Service"
         size="large"
       >
-        <BranchForm
+        <ServiceForm
           onClose={() => setShowAddModal(false)}
           onSuccess={() => handleFormSuccess("added")}
         />
@@ -232,17 +216,17 @@ const Branches = () => {
         isOpen={showEditModal}
         onClose={() => {
           setShowEditModal(false);
-          setSelectedBranch(null);
+          setSelectedService(null);
         }}
-        title="Edit Branch"
+        title="Edit Service"
         size="large"
       >
-        {selectedBranch && (
-          <BranchForm
-            editData={selectedBranch}
+        {selectedService && (
+          <ServiceForm
+            editData={selectedService}
             onClose={() => {
               setShowEditModal(false);
-              setSelectedBranch(null);
+              setSelectedService(null);
             }}
             onSuccess={() => handleFormSuccess("updated")}
           />
@@ -253,8 +237,8 @@ const Branches = () => {
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
-          setBranchToDeleteId(null);
-          setBranchToDeleteName("");
+          setServiceToDeleteId(null);
+          setServiceToDeleteName("");
         }}
         title="Confirm Deletion"
         size="small"
@@ -263,11 +247,11 @@ const Branches = () => {
           <div className="text-center">
             <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
             <h3 className="mb-2 text-lg font-semibold text-gray-900">
-              Delete Branch: {branchToDeleteName}?
+              Delete Service: {serviceToDeleteName}?
             </h3>
             <p className="text-sm text-gray-600 mb-8">
-              Are you sure you want to delete this branch? This action cannot be
-              undone and might affect associated users and data.
+              Are you sure you want to delete this service? This action cannot
+              be undone and might affect associated users and data.
             </p>
           </div>
           <div className="flex justify-center gap-x-4">
@@ -275,8 +259,8 @@ const Branches = () => {
               type="button"
               onClick={() => {
                 setShowDeleteModal(false);
-                setBranchToDeleteId(null);
-                setBranchToDeleteName("");
+                setServiceToDeleteId(null);
+                setServiceToDeleteName("");
               }}
               className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
@@ -285,7 +269,7 @@ const Branches = () => {
             </button>
             <button
               type="button"
-              onClick={confirmDeleteBranch}
+              onClick={confirmDeleteService}
               className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
             >
               Delete
@@ -297,4 +281,4 @@ const Branches = () => {
   );
 };
 
-export default Branches;
+export default Services;
