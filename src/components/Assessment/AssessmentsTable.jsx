@@ -12,10 +12,10 @@ import {
   ExternalLink,
   ClipboardList,
 } from "lucide-react";
-import { format } from "date-fns";
-import { COUNTRIES, ASSESSMENT_STATUS } from "../../utils/constants";
-import Loading from "../Common/Loading";
+import moment from "moment";
 import { Link } from "react-router-dom";
+import Loading from "../Common/Loading";
+import { COUNTRIES, ASSESSMENT_STATUS } from "../../utils/constants";
 
 const AssessmentsTable = ({
   assessments,
@@ -112,9 +112,8 @@ const AssessmentsTable = ({
 
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          statusColors[status] || "bg-gray-100 text-gray-800"
-        }`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100 text-gray-800"
+          }`}
       >
         {status}
       </span>
@@ -360,9 +359,8 @@ const AssessmentsTable = ({
                     <div className="flex items-center text-sm text-gray-500">
                       <Calendar size={14} className="mr-2 text-gray-400" />
                       {assessment.createdAt &&
-                        format(
-                          new Date(assessment.createdAt.toDate()),
-                          "MMM dd, yyyy"
+                        moment(assessment.createdAt.toDate()).format(
+                          "MMM DD, YYYY"
                         )}
                     </div>
                   </td>

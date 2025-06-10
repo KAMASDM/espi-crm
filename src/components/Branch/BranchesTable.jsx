@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { format } from "date-fns";
+import moment from "moment";
 import {
   Edit,
   Home,
@@ -36,7 +36,7 @@ const BranchesTable = ({
     branches.forEach((b) => {
       const date = b.createdAt?.toDate?.();
       if (date) {
-        datesSet.add(format(date, "yyyy-MM"));
+        datesSet.add(moment(date).format("YYYY-MM"));
       }
     });
     return Array.from(datesSet).sort().reverse();
@@ -60,7 +60,7 @@ const BranchesTable = ({
         dateFilter === "all"
           ? true
           : branch.createdAt?.toDate?.() &&
-            format(branch.createdAt.toDate(), "yyyy-MM") === dateFilter;
+            moment(branch.createdAt.toDate()).format("YYYY-MM") === dateFilter; // Match YYYY-MM format
 
       return matchesSearch && matchesStatus && matchesDate;
     });
@@ -175,7 +175,7 @@ const BranchesTable = ({
               <option value="all">All Dates</option>
               {allDates.map((dateStr) => (
                 <option key={dateStr} value={dateStr}>
-                  {format(new Date(dateStr + "-01"), "MMMM yyyy")}{" "}
+                  {moment(dateStr).format("MMMM YYYY")}
                 </option>
               ))}
             </select>
@@ -287,7 +287,7 @@ const BranchesTable = ({
                   </td>
                   <td className="table-cell text-sm font-medium text-gray-500">
                     {branch.createdAt?.toDate &&
-                      format(branch.createdAt.toDate(), "PP")}
+                      moment(branch.createdAt.toDate()).format("MMM DD, YYYY")}
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center space-x-2">

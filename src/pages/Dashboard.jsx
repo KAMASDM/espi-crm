@@ -1,15 +1,15 @@
 import React from "react";
 import { Users, Building2, FileText, CreditCard } from "lucide-react";
 import {
-  useEnquiries,
-  useUniversities,
   useCourses,
-  useAssessments,
-  useApplications,
   usePayments,
+  useEnquiries,
+  useAssessments,
+  useUniversities,
+  useApplications,
 } from "../hooks/useFirestore";
+import moment from "moment";
 import { useAuth } from "../context/AuthContext";
-import { format, isToday, isYesterday, subDays } from "date-fns";
 import Stats from "../components/Dashboard/Stats";
 import QuickAction from "../components/Dashboard/QuickAction";
 import PendingTasks from "../components/Dashboard/PendingTasks";
@@ -17,13 +17,12 @@ import MonthPerformance from "../components/Dashboard/MonthPerformance";
 
 const Dashboard = () => {
   const { user } = useAuth();
-
-  const { data: enquiries } = useEnquiries();
-  const { data: universities } = useUniversities();
   const { data: courses } = useCourses();
-  const { data: assessments } = useAssessments();
-  const { data: applications } = useApplications();
   const { data: payments } = usePayments();
+  const { data: enquiries } = useEnquiries();
+  const { data: assessments } = useAssessments();
+  const { data: universities } = useUniversities();
+  const { data: applications } = useApplications();
 
   const totalRevenue = payments
     .filter((payment) => payment.payment_status === "Paid")
@@ -31,8 +30,8 @@ const Dashboard = () => {
 
   const newEnquiriesLast7Days = enquiries.filter((enquiry) => {
     if (!enquiry.createdAt) return false;
-    const enquiryDate = enquiry.createdAt.toDate();
-    return enquiryDate >= subDays(new Date(), 7);
+    const enquiryDate = moment(enquiry.createdAt.toDate());
+    return enquiryDate.isSameOrAfter(moment().subtract(7, "days"), "day");
   }).length;
 
   const totalActiveUniversities = universities.filter(
@@ -92,30 +91,36 @@ const Dashboard = () => {
 
     enquiries
       .filter((enquiry) => enquiry.createdAt)
-      .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
+      .sort(
+        (a, b) =>
+          moment(b.createdAt.toDate()).valueOf() -
+          moment(a.createdAt.toDate()).valueOf()
+      )
       .slice(0, 3)
       .forEach((enquiry) => {
         activities.push({
           id: `enquiry-${enquiry.id}`,
           type: "enquiry",
           message: `New enquiry from ${enquiry.student_First_Name} ${enquiry.student_Last_Name}`,
-          time: enquiry.createdAt.toDate(),
+          time: moment(enquiry.createdAt.toDate()),
           icon: Users,
         });
       });
 
     applications
       .filter((app) => app.createdAt)
-      .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
+      .sort(
+        (a, b) =>
+          moment(b.createdAt.toDate()).valueOf() -
+          moment(a.createdAt.toDate()).valueOf()
+      )
       .slice(0, 2)
       .forEach((app) => {
         activities.push({
           id: `application-${app.id}`,
           type: "application",
-          message: `Application submitted for assessment ${app.application.slice(
-            -8
-          )}`,
-          time: app.createdAt.toDate(),
+          message: `Application submitted for assessment`,
+          time: moment(app.createdAt.toDate()),
           icon: FileText,
         });
       });
@@ -124,7 +129,10 @@ const Dashboard = () => {
       .filter(
         (payment) => payment.payment_date && payment.payment_status === "Paid"
       )
-      .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date))
+      .sort(
+        (a, b) =>
+          moment(b.payment_date).valueOf() - moment(a.payment_date).valueOf()
+      )
       .slice(0, 2)
       .forEach((payment) => {
         activities.push({
@@ -133,21 +141,23 @@ const Dashboard = () => {
           message: `Payment received of ₹${parseFloat(
             payment.payment_amount
           ).toLocaleString()}`,
-          time: new Date(payment.payment_date),
+          time: moment(payment.payment_date),
           icon: CreditCard,
         });
       });
 
-    return activities.sort((a, b) => b.time - a.time).slice(0, 5);
+    return activities
+      .sort((a, b) => b.time.valueOf() - a.time.valueOf())
+      .slice(0, 5);
   };
 
   const formatActivityTime = (date) => {
-    if (isToday(date)) {
-      return format(date, "HH:mm");
-    } else if (isYesterday(date)) {
+    if (moment(date).isSame(moment(), "day")) {
+      return moment(date).format("HH:mm");
+    } else if (moment(date).isSame(moment().subtract(1, "day"), "day")) {
       return "Yesterday";
     } else {
-      return format(date, "MMM dd");
+      return moment(date).format("MMM DD");
     }
   };
 

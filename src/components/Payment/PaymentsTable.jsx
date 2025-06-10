@@ -3,7 +3,6 @@ import {
   Eye,
   Edit,
   Trash2,
-  Download,
   Calendar,
   Search,
   CheckCircle,
@@ -14,12 +13,12 @@ import {
   IndianRupee,
   Filter,
 } from "lucide-react";
-import { format } from "date-fns";
 import {
   PAYMENT_STATUS,
   PAYMENT_MODES,
   PAYMENT_TYPES,
 } from "../../utils/constants";
+import moment from "moment";
 import Loading from "../Common/Loading";
 
 const PaymentsTable = ({
@@ -297,7 +296,6 @@ const PaymentsTable = ({
             ) : (
               filteredPayments.map((payment) => {
                 const ModeIcon = getModeIcon(payment.payment_mode);
-
                 return (
                   <tr key={payment.id} className="hover:bg-gray-50">
                     <td className="table-cell">
@@ -373,10 +371,7 @@ const PaymentsTable = ({
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar size={14} className="mr-2 text-gray-400" />
                         {payment.payment_date &&
-                          format(
-                            new Date(payment.payment_date),
-                            "MMM dd, yyyy"
-                          )}
+                          moment(payment.payment_date).format("MMM DD, YYYY")}
                       </div>
                     </td>
 

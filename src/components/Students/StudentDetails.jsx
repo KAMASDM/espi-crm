@@ -23,11 +23,8 @@ import {
   Link as LinkIcon,
   MessageSquare,
   Building2,
-  ListPlus,
-  FileStack,
-  Receipt,
 } from "lucide-react";
-import { format } from "date-fns";
+import moment from "moment";
 import {
   useEnquiries,
   useDetailEnquiries,
@@ -40,6 +37,9 @@ import {
   useCourses,
 } from "../../hooks/useFirestore";
 import Loading from "../Common/Loading";
+import AssessmentList from "./DetailComponents/AssessmentList";
+import ApplicationList from "./DetailComponents/ApplicationList";
+import PaymentList from "./DetailComponents/PaymentList";
 
 const DetailItem = ({ icon: Icon, label, value }) => {
   if (
@@ -54,16 +54,17 @@ const DetailItem = ({ icon: Icon, label, value }) => {
   if (Array.isArray(value)) {
     displayValue = value.join(", ");
   } else if (value && typeof value.toDate === "function") {
-    displayValue = format(value.toDate(), "MMM dd,yyyy (hh:mm a)");
+    displayValue = moment(value.toDate()).format("MMM DD,YYYY (hh:mm a)");
   } else if (value instanceof Date) {
-    displayValue = format(value, "MMM dd,yyyy (hh:mm a)");
+    displayValue = moment(value).format("MMM DD,YYYY (hh:mm a)");
   } else if (typeof value === "object" && value.seconds && value.nanoseconds) {
     const date = new Date(value.seconds * 1000 + value.nanoseconds / 1000000);
-    displayValue = format(date, "MMM dd,yyyy (hh:mm a)");
+    displayValue = moment(date).format("MMM DD,YYYY (hh:mm a)");
   } else if (typeof value === "object") {
     try {
       displayValue = JSON.stringify(value, null, 2);
     } catch (e) {
+      console.error(e);
       displayValue = "[Complex Object]";
     }
   }
@@ -173,230 +174,6 @@ const DocumentLinkItem = ({ label, url }) => {
   );
 };
 
-const AssessmentsList = ({ assessments, universitiesMap, coursesMap }) => {
-  if (!assessments || assessments.length === 0) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center text-gray-600 h-full flex flex-col items-center justify-center">
-        <ListPlus size={48} className="text-gray-300 mb-3" />
-        <p>No assessments found for this student.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {assessments.map((assessment) => (
-        <div
-          key={assessment.id}
-          className="bg-white p-5 rounded-lg shadow-sm border border-gray-100"
-        >
-          <h4 className="text-lg font-semibold text-gray-900 mb-2">
-            Assessment ID: {assessment.id}
-          </h4>
-          <div className="space-y-1 text-sm text-gray-700">
-            <p>
-              <span className="font-medium">University:</span>{" "}
-              {universitiesMap[assessment.university]?.univ_name || "N/A"}
-            </p>
-            <p>
-              <span className="font-medium">Course:</span>{" "}
-              {coursesMap[assessment.course_interested]?.course_name || "N/A"}
-            </p>
-            <p>
-              <span className="font-medium">Level:</span>{" "}
-              {assessment.level_applying_for}
-            </p>
-            <p>
-              <span className="font-medium">Intake:</span>{" "}
-              {assessment.intake_interested}
-            </p>
-            <p>
-              <span className="font-medium">Specialization:</span>{" "}
-              {assessment.specialisation}
-            </p>
-            <p>
-              <span className="font-medium">Status:</span>{" "}
-              <span
-                className={`font-semibold ${
-                  assessment.ass_status === "Pending"
-                    ? "text-orange-500"
-                    : "text-green-600"
-                }`}
-              >
-                {assessment.ass_status}
-              </span>
-            </p>
-            <p>
-              <span className="font-medium">Fee:</span>{" "}
-              {assessment.application_fee} {assessment.fee_currency}
-            </p>
-            <p>
-              <span className="font-medium">Tuition:</span>{" "}
-              {assessment.tution_fee} {assessment.fee_currency}
-            </p>
-            {assessment.notes && (
-              <p>
-                <span className="font-medium">Notes:</span>{" "}
-                {assessment.notes.substring(0, 50)}
-                {assessment.notes.length > 50 ? "..." : ""}
-              </p>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const ApplicationsList = ({ applications, usersMap, branchesMap }) => {
-  if (!applications || applications.length === 0) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center text-gray-600 h-full flex flex-col items-center justify-center">
-        <FileStack size={48} className="text-gray-300 mb-3" />
-        <p>No applications found for this student.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {applications.map((app) => (
-        <div
-          key={app.id}
-          className="bg-white p-5 rounded-lg shadow-sm border border-gray-100"
-        >
-          <h4 className="text-lg font-semibold text-gray-900 mb-2">
-            Application ID: {app.id}
-          </h4>
-          <div className="space-y-1 text-sm text-gray-700">
-            <p>
-              <span className="font-medium">Status:</span>{" "}
-              <span
-                className={`font-semibold ${
-                  app.application_status === "Draft"
-                    ? "text-gray-500"
-                    : "text-blue-600"
-                }`}
-              >
-                {app.application_status}
-              </span>
-            </p>
-
-            <p>
-              <span className="font-medium">Student Display Name:</span>{" "}
-              {app.studentDisplayName}
-            </p>
-            <p>
-              <span className="font-medium">Created By:</span>{" "}
-              {usersMap[app.createdBy]?.displayName || "N/A"}
-            </p>
-            <p>
-              <span className="font-medium">Branch:</span>{" "}
-              {branchesMap[app.branchId]?.branchName || "N/A"}
-            </p>
-            {app.passport && (
-              <p>
-                <span className="font-medium">Passport:</span>{" "}
-                <a
-                  href={app.passport}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  View
-                </a>
-              </p>
-            )}
-            {app.notes && (
-              <p>
-                <span className="font-medium">Notes:</span>{" "}
-                {app.notes.substring(0, 50)}
-                {app.notes.length > 50 ? "..." : ""}
-              </p>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const PaymentsList = ({ payments, applicationsMap, usersMap }) => {
-  if (!payments || payments.length === 0) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center text-gray-600 h-full flex flex-col items-center justify-center">
-        <Receipt size={48} className="text-gray-300 mb-3" />
-        <p>No payments found for this student.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {payments.map((payment) => (
-        <div
-          key={payment.id}
-          className="bg-white p-5 rounded-lg shadow-sm border border-gray-100"
-        >
-          <h4 className="text-lg font-semibold text-gray-900 mb-2">
-            Payment ID: {payment.id.substring(0, 8)}...
-          </h4>
-          <div className="space-y-1 text-sm text-gray-700">
-            <p>
-              <span className="font-medium">Amount:</span> {payment.currency}{" "}
-              {payment.amount}
-            </p>
-            <p>
-              <span className="font-medium">Method:</span>{" "}
-              {payment.paymentMethod}
-            </p>
-            <p>
-              <span className="font-medium">Status:</span>{" "}
-              <span
-                className={`font-semibold ${
-                  payment.status === "Completed"
-                    ? "text-green-600"
-                    : "text-orange-500"
-                }`}
-              >
-                {payment.status}
-              </span>
-            </p>
-            <p>
-              <span className="font-medium">For Application:</span>{" "}
-              {applicationsMap[payment.applicationId]?.id?.substring(0, 8) +
-                "..." || "N/A"}
-            </p>
-            <p>
-              <span className="font-medium">Received By:</span>{" "}
-              {usersMap[payment.receivedBy]?.displayName || "N/A"}
-            </p>
-            {payment.receiptUrl && (
-              <p>
-                <span className="font-medium">Receipt:</span>{" "}
-                <a
-                  href={payment.receiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  View Receipt
-                </a>
-              </p>
-            )}
-            {payment.createdAt && (
-              <p>
-                <span className="font-medium">Paid At:</span>{" "}
-                {format(payment.createdAt.toDate(), "MMM dd,yyyy (hh:mm a)")}
-              </p>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
 const StudentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -444,12 +221,6 @@ const StudentDetails = () => {
       return acc;
     }, {}) || {};
 
-  const applicationsMap =
-    allApplications?.reduce((acc, app) => {
-      acc[app.id] = app;
-      return acc;
-    }, {}) || {};
-
   useEffect(() => {
     if (id && allEnquiries && !enquiriesLoading) {
       const foundStudent = allEnquiries.find((enquiry) => enquiry.id === id);
@@ -490,8 +261,8 @@ const StudentDetails = () => {
     )
   );
 
-  const studentPayments = allPayments?.filter((payment) =>
-    studentApplications?.some((app) => app.id === payment.applicationId)
+  const studentPayments = allPayments?.filter(
+    (payment) => payment.Memo_For === student?.id
   );
 
   if (
@@ -549,13 +320,10 @@ const StudentDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-6 rounded-lg shadow-md mb-6">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4 sm:mb-0">
           {student.student_First_Name} {student.student_Last_Name}
-          <span className="block text-base font-medium text-gray-500 mt-1">
-            Student ID: {student.id}
-          </span>
         </h1>
         <button
           onClick={() => navigate(-1)}
@@ -585,7 +353,7 @@ const StudentDetails = () => {
             }`}
             onClick={() => setActiveTab("detailEnquiry")}
           >
-            Detailed Enquiry
+            Detail Enquiry
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
@@ -595,7 +363,7 @@ const StudentDetails = () => {
             }`}
             onClick={() => setActiveTab("assessments")}
           >
-            Assessments ({studentAssessments?.length || 0})
+            Assessments ({studentAssessments?.length})
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
@@ -605,7 +373,7 @@ const StudentDetails = () => {
             }`}
             onClick={() => setActiveTab("applications")}
           >
-            Applications ({studentApplications?.length || 0})
+            Applications ({studentApplications?.length})
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
@@ -615,7 +383,7 @@ const StudentDetails = () => {
             }`}
             onClick={() => setActiveTab("payments")}
           >
-            Payments ({studentPayments?.length || 0})
+            Payments ({studentPayments?.length})
           </button>
         </div>
       </div>
@@ -738,12 +506,6 @@ const StudentDetails = () => {
         {activeTab === "detailEnquiry" &&
           (selectedDetailEnquiry ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                <h2 className="text-2xl font-bold text-gray-900 border-b pb-3 mb-6">
-                  Detailed Application Information
-                </h2>
-              </div>
-
               <NestedDetailsCard
                 icon={GraduationCap}
                 title="Current Education Details"
@@ -979,27 +741,22 @@ const StudentDetails = () => {
           ))}
 
         {activeTab === "assessments" && (
-          <AssessmentsList
+          <AssessmentList
+            coursesMap={coursesMap}
             assessments={studentAssessments}
             universitiesMap={universitiesMap}
-            coursesMap={coursesMap}
           />
         )}
 
         {activeTab === "applications" && (
-          <ApplicationsList
+          <ApplicationList
+            assessments={studentAssessments}
             applications={studentApplications}
-            usersMap={usersMap}
-            branchesMap={branchesMap}
           />
         )}
 
         {activeTab === "payments" && (
-          <PaymentsList
-            payments={studentPayments}
-            applicationsMap={applicationsMap}
-            usersMap={usersMap}
-          />
+          <PaymentList payments={studentPayments} student={student} />
         )}
       </div>
     </div>

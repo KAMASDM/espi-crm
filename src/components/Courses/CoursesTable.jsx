@@ -13,9 +13,9 @@ import {
   ExternalLink,
   GraduationCap,
 } from "lucide-react";
-import { format } from "date-fns";
-import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
+import moment from "moment";
 import Loading from "../Common/Loading";
+import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
 
 const CoursesTable = ({
   courses,
@@ -315,9 +315,8 @@ const CoursesTable = ({
                     {course.Application_deadline ? (
                       <div className="flex items-center text-sm text-gray-900">
                         <Calendar size={14} className="mr-2 text-gray-400" />
-                        {format(
-                          new Date(course.Application_deadline),
-                          "MMM dd, yyyy"
+                        {moment(course.Application_deadline).format(
+                          "MMM DD, YYYY"
                         )}
                       </div>
                     ) : (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom"; // Import Link
+import { Link } from "react-router-dom";
+import moment from "moment";
 import {
   Eye,
   Edit,
@@ -17,10 +18,9 @@ import {
   Building2,
   UserCheck,
 } from "lucide-react";
-import { format } from "date-fns";
+import Loading from "../Common/Loading";
 import { ENQUIRY_STATUS } from "../../utils/constants";
 import { branchService, userService } from "../../services/firestore";
-import Loading from "../Common/Loading";
 
 const InlineNoteEditor = ({
   initialNote = "",
@@ -183,8 +183,8 @@ const StudentsTable = ({
       const aValue = a[sortField];
       const bValue = b[sortField];
       if (sortField === "createdAt") {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
         return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
       }
       if (aValue === undefined || aValue === null) return 1;
@@ -402,18 +402,17 @@ const StudentsTable = ({
                   typeof student.createdAt.toDate === "function"
                 ) {
                   try {
-                    formattedDate = format(
-                      student.createdAt.toDate(),
-                      "MMM dd, yyyy"
+                    formattedDate = moment(student.createdAt.toDate()).format(
+                      "MMM DD, YYYY"
                     );
                   } catch (error) {
-                    console.log("error", error);
+                    console.log("Error formatting Firestore date:", error);
                   }
                 } else if (student.createdAt) {
                   try {
-                    const parsedDate = new Date(student.createdAt);
-                    if (!isNaN(parsedDate)) {
-                      formattedDate = format(parsedDate, "MMM dd, yyyy");
+                    const parsedDate = moment(student.createdAt);
+                    if (parsedDate.isValid()) {
+                      formattedDate = parsedDate.format("MMM DD, YYYY");
                     } else {
                       formattedDate = "Invalid Date";
                     }

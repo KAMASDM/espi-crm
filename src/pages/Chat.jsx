@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useChats } from "../hooks/useChat";
 import { useAuth } from "../context/AuthContext";
 import Loading from "../components/Common/Loading";
-import { formatDistanceToNowStrict } from "date-fns";
+import moment from "moment";
 import ChatWindow from "../components/Chat/ChatWindow";
 import NewChatModal from "../components/Chat/NewChatModal";
 import { Search, Plus, Users, MessageSquare, Hash } from "lucide-react";
@@ -27,7 +27,7 @@ const Chat = () => {
 
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
-    return formatDistanceToNowStrict(timestamp.toDate(), { addSuffix: true });
+    return moment(timestamp.toDate()).fromNow();
   };
 
   const handleChatCreated = (newChatData) => {
@@ -98,7 +98,6 @@ const Chat = () => {
               {filteredChats.map((chat) => {
                 const unreadCount = chat.unreadCount?.[currentUser?.uid] || 0;
                 let chatName = chat.name;
-                let chatAvatarInitial = chat.name?.[0]?.toUpperCase() || "?";
                 let AvatarIcon = Hash;
                 let avatarBg = "bg-purple-100";
                 let avatarText = "text-purple-600";
@@ -109,8 +108,6 @@ const Chat = () => {
                   );
                   const otherMemberInfo = chat.memberInfo?.[otherMemberId];
                   chatName = otherMemberInfo?.displayName || "Unknown User";
-                  chatAvatarInitial =
-                    otherMemberInfo?.displayName?.[0]?.toUpperCase() || "U";
                   AvatarIcon = Users;
                   avatarBg = "bg-blue-100";
                   avatarText = "text-blue-600";
