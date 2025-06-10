@@ -153,7 +153,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200">
           <div className="flex items-center">
             <GraduationCap className="text-primary-600" size={32} />
             <h2 className="ml-3 text-xl font-bold text-gray-900">ESPI-CRM</h2>

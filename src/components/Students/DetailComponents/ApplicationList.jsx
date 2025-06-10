@@ -286,7 +286,7 @@ const ApplicationList = ({ applications, assessments }) => {
           Showing {filteredApplications.length} of {applications.length}{" "}
           applications.
         </div>
-        <div className="table-container overflow-x-auto">
+        <div className="table-container">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
