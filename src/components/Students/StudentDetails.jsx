@@ -178,24 +178,24 @@ const StudentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const { data: allUsers, loading: usersLoading } = useUsers();
+  const { data: allCourses, loading: coursesLoading } = useCourses();
+  const { data: allBranches, loading: branchesLoading } = useBranches();
+  const { data: allPayments, loading: paymentsLoading } = usePayments();
   const { data: allEnquiries, loading: enquiriesLoading } = useEnquiries();
-  const { data: allDetailEnquiries, loading: detailEnquiriesLoading } =
-    useDetailEnquiries();
   const { data: allAssessments, loading: assessmentsLoading } =
     useAssessments();
   const { data: allApplications, loading: applicationsLoading } =
     useApplications();
-  const { data: allBranches, loading: branchesLoading } = useBranches();
-  const { data: allPayments, loading: paymentsLoading } = usePayments();
-  const { data: allUsers, loading: usersLoading } = useUsers();
   const { data: allUniversities, loading: universitiesLoading } =
     useUniversities();
-  const { data: allCourses, loading: coursesLoading } = useCourses();
+  const { data: allDetailEnquiries, loading: detailEnquiriesLoading } =
+    useDetailEnquiries();
 
-  const [student, setStudent] = useState(null);
-  const [selectedDetailEnquiry, setSelectedDetailEnquiry] = useState(null);
   const [error, setError] = useState(null);
+  const [student, setStudent] = useState(null);
   const [activeTab, setActiveTab] = useState("enquiry");
+  const [selectedDetailEnquiry, setSelectedDetailEnquiry] = useState(null);
 
   const universitiesMap =
     allUniversities?.reduce((acc, uni) => {
@@ -251,18 +251,16 @@ const StudentDetails = () => {
     detailEnquiriesLoading,
   ]);
 
-  const studentAssessments = allAssessments?.filter(
-    (assessment) => assessment.enquiry === id
-  );
-
-  const studentApplications = allApplications?.filter((application) =>
-    studentAssessments?.some(
-      (assessment) => assessment.id === application.assessmentId
-    )
-  );
-
   const studentPayments = allPayments?.filter(
-    (payment) => payment.Memo_For === student?.id
+    ({ Memo_For }) => Memo_For === student?.id
+  );
+
+  const studentAssessments = allAssessments?.filter(
+    ({ enquiry }) => enquiry === student?.id
+  );
+
+  const studentApplications = allApplications?.filter(({ assessmentId }) =>
+    studentAssessments?.some(({ id }) => id === assessmentId)
   );
 
   if (
@@ -321,16 +319,24 @@ const StudentDetails = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-6 rounded-lg shadow-md mb-6">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4 sm:mb-0">
-          {student.student_First_Name} {student.student_Last_Name}
-        </h1>
-        <button
-          onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200 flex items-center"
-        >
-          <ArrowLeft size={18} className="mr-2" /> Back to Students
-        </button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {student.student_First_Name} {student.student_Last_Name}
+          </h1>
+          <p className="text-gray-600">
+            {student.student_email} - {student.student_city},{" "}
+            {student.student_state}, {student.student_country}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="btn-primary flex items-center"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft size={18} className="mr-2" /> Back to Students
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
@@ -363,7 +369,7 @@ const StudentDetails = () => {
             }`}
             onClick={() => setActiveTab("assessments")}
           >
-            Assessments ({studentAssessments?.length})
+            Assessment ({studentAssessments?.length})
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
@@ -373,7 +379,7 @@ const StudentDetails = () => {
             }`}
             onClick={() => setActiveTab("applications")}
           >
-            Applications ({studentApplications?.length})
+            Application ({studentApplications?.length})
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
@@ -383,7 +389,7 @@ const StudentDetails = () => {
             }`}
             onClick={() => setActiveTab("payments")}
           >
-            Payments ({studentPayments?.length})
+            Payment ({studentPayments?.length})
           </button>
         </div>
       </div>

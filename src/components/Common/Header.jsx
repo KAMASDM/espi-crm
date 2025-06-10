@@ -67,17 +67,23 @@ const Header = ({ setSidebarOpen }) => {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100"
+              className="flex items-center space-x-3 p-0.5 rounded-lg hover:bg-gray-100"
             >
-              {user?.photoURL ? (
+              {user.photoURL ? (
                 <img
                   src={user.photoURL}
                   alt={user.displayName}
                   className="w-8 h-8 rounded-full"
                 />
               ) : (
-                <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
-                  <User size={16} className="text-white" />
+                <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold text-xs uppercase">
+                  {user.displayName
+                    ? user.displayName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)
+                    : ""}
                 </div>
               )}
               <span className="text-sm font-medium text-gray-700">

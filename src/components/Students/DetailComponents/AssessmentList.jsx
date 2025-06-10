@@ -169,7 +169,7 @@ const AssessmentList = ({ assessments, universitiesMap, coursesMap }) => {
           Showing {filteredAssessments.length} of {assessments.length}{" "}
           assessments
         </div>
-        <div className="table-container overflow-x-auto">
+        <div className="table-container">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -227,11 +227,9 @@ const AssessmentList = ({ assessments, universitiesMap, coursesMap }) => {
                       className="mx-auto mb-2 text-gray-300"
                       size={48}
                     />
-                    <p>No matching assessments found.</p>
+                    <p>No assessments found</p>
                     {searchTerm && (
-                      <p className="text-sm">
-                        Try adjusting your search terms.
-                      </p>
+                      <p className="text-sm">Try adjusting your search terms</p>
                     )}
                   </td>
                 </tr>
