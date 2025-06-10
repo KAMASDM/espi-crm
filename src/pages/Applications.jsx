@@ -61,14 +61,6 @@ const Applications = () => {
     toast.success(`Application ${action} successfully!`);
   };
 
-  const handleExport = () => {
-    toast.info("Export functionality will be implemented soon!");
-  };
-
-  const handleImport = () => {
-    toast.info("Import functionality will be implemented soon!");
-  };
-
   const safeApplications = Array.isArray(applications) ? applications : [];
 
   const draftApplications = safeApplications.filter(
@@ -94,7 +86,6 @@ const Applications = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={handleImport}
             className="btn-secondary flex items-center"
             disabled={isLoading}
           >
@@ -102,9 +93,8 @@ const Applications = () => {
             Import
           </button>
           <button
-            onClick={handleExport}
             className="btn-secondary flex items-center"
-            disabled={isLoading || safeApplications.length === 0}
+            disabled={isLoading || !safeApplications.length}
           >
             <Download size={20} className="mr-2" />
             Export

@@ -11,10 +11,10 @@ import {
   IndianRupee,
   ExternalLink,
   ClipboardList,
+  Loader2,
 } from "lucide-react";
 import moment from "moment";
 import { Link } from "react-router-dom";
-import Loading from "../Common/Loading";
 import { COUNTRIES, ASSESSMENT_STATUS } from "../../utils/constants";
 
 const AssessmentsTable = ({
@@ -112,17 +112,14 @@ const AssessmentsTable = ({
 
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100 text-gray-800"
-          }`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          statusColors[status] || "bg-gray-100 text-gray-800"
+        }`}
       >
         {status}
       </span>
     );
   };
-
-  if (loading) {
-    return <Loading size="default" />;
-  }
 
   return (
     <div className="space-y-4">
@@ -242,7 +239,14 @@ const AssessmentsTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAssessments.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="table-cell text-center py-8">
+                  <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
+                  <p className="text-gray-500">Loading assessments...</p>
+                </td>
+              </tr>
+            ) : filteredAssessments.length === 0 ? (
               <tr>
                 <td
                   colSpan="7"

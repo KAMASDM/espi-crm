@@ -12,6 +12,7 @@ import {
   User,
   IndianRupee,
   Filter,
+  Loader2,
 } from "lucide-react";
 import {
   PAYMENT_STATUS,
@@ -19,7 +20,6 @@ import {
   PAYMENT_TYPES,
 } from "../../utils/constants";
 import moment from "moment";
-import Loading from "../Common/Loading";
 
 const PaymentsTable = ({
   payments,
@@ -131,10 +131,6 @@ const PaymentsTable = ({
 
     return modeIcons[mode] || CreditCard;
   };
-
-  if (loading) {
-    return <Loading size="default" />;
-  }
 
   return (
     <div className="space-y-4">
@@ -277,7 +273,14 @@ const PaymentsTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredPayments.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="table-cell text-center py-8">
+                  <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
+                  <p className="text-gray-500">Loading payments...</p>
+                </td>
+              </tr>
+            ) : filteredPayments.length === 0 ? (
               <tr>
                 <td
                   colSpan="7"
