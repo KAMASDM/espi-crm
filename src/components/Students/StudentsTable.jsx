@@ -17,8 +17,8 @@ import {
   X,
   Building2,
   UserCheck,
+  Loader2,
 } from "lucide-react";
-import Loading from "../Common/Loading";
 import { ENQUIRY_STATUS } from "../../utils/constants";
 import { branchService, userService } from "../../services/firestore";
 
@@ -243,10 +243,6 @@ const StudentsTable = ({
     }
   };
 
-  if (loading) {
-    return <Loading size="default" />;
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col lg:flex-row gap-4">
@@ -384,7 +380,14 @@ const StudentsTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredStudents.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="table-cell text-center py-8">
+                  <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
+                  <p className="text-gray-500">Loading students...</p>
+                </td>
+              </tr>
+            ) : filteredStudents.length === 0 ? (
               <tr>
                 <td
                   colSpan="10"

@@ -447,16 +447,14 @@ const Courses = () => {
                 onClick={handleExport}
                 className="btn-secondary flex items-center"
                 title="Export Courses to CSV"
-                disabled={
-                  isImporting || isLoading || !courses || courses.length === 0
-                }
+                disabled={isImporting || isLoading || !courses.length}
               >
                 <Download size={20} className="mr-2" /> Export
               </button>
               <button
                 onClick={() => setShowAddModal(true)}
                 className="btn-primary flex items-center"
-                disabled={isImporting || isLoading}
+                disabled={isLoading}
               >
                 <Plus size={20} className="mr-2" /> Add Course
               </button>
@@ -592,7 +590,7 @@ const Courses = () => {
         <CoursesTable
           courses={courses}
           universities={universities}
-          loading={isLoading || isImporting}
+          loading={isLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}

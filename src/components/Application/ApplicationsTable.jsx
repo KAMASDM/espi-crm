@@ -18,7 +18,6 @@ import {
 import moment from "moment";
 import { saveAs } from "file-saver";
 import { PDFDocument } from "pdf-lib";
-import Loading from "../Common/Loading";
 import { APPLICATION_STATUS } from "../../utils/constants";
 
 const DOCUMENT_KEYS_FOR_COUNT = [
@@ -216,10 +215,6 @@ const ApplicationsTable = ({
     }
   };
 
-  if (loading) {
-    return <Loading size="default" />;
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 ">
@@ -307,7 +302,14 @@ const ApplicationsTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredApplications.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="8" className="table-cell text-center py-8">
+                  <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
+                  <p className="text-gray-500">Loading applications...</p>
+                </td>
+              </tr>
+            ) : filteredApplications.length === 0 ? (
               <tr>
                 <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                   <FileText className="mx-auto mb-2 text-gray-300" size={48} />
