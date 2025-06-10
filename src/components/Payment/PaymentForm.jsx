@@ -154,7 +154,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
   };
 
   const onSubmit = async (dataFromForm) => {
-    console.log("Form data from RHF:", dataFromForm);
     setLoading(true);
     const toastId = toast.loading(
       editData ? "Updating payment..." : "Recording payment..."
@@ -170,7 +169,6 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
           try {
             const oldFileRef = ref(storage, originalFileUrl);
             await deleteObject(oldFileRef);
-            console.log(`Old payment document ${originalFileUrl} deleted.`);
           } catch (deleteError) {
             console.warn(
               `Could not delete old file ${originalFileUrl}:`,
@@ -262,7 +260,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
   const calculateServiceTotal = () => {
     return selectedServices.reduce((total, serviceName) => {
       const service = services.find((s) => s.serviceName === serviceName);
-      return total + (service ? service.price : 0);
+      return total + (service ? Number(service.servicePrice) : 0);
     }, 0);
   };
 
@@ -522,7 +520,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
                       </span>
                     </div>
                     <span className="text-sm text-gray-500">
-                     (₹{servicePrice.toLocaleString()})
+                      (₹{servicePrice.toLocaleString()})
                     </span>
                   </label>
                 ))}
@@ -540,7 +538,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
                 Selected Services Total
               </h5>
               <p className="text-3xl font-bold text-blue-900">
-                ₹{calculateServiceTotal().toLocaleString()}
+                ₹{calculateServiceTotal()}
               </p>
               <p className="text-sm text-blue-700 mt-1">
                 Based on {selectedServices.length} selected service

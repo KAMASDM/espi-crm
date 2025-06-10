@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { format, isToday, isYesterday } from "date-fns";
+import moment from "moment";
 
 const MessageList = ({ messages, currentUser }) => {
   const messagesEndRef = useRef(null);
@@ -14,13 +14,15 @@ const MessageList = ({ messages, currentUser }) => {
 
   const formatMessageTimestamp = (timestamp) => {
     if (!timestamp) return "";
-    const date = timestamp.toDate();
-    if (isToday(date)) {
-      return format(date, "HH:mm");
-    } else if (isYesterday(date)) {
-      return `Yesterday ${format(date, "HH:mm")}`;
+
+    const date = moment(timestamp.toDate());
+
+    if (date.isSame(moment(), "day")) {
+      return date.format("HH:mm");
+    } else if (date.isSame(moment().subtract(1, "day"), "day")) {
+      return `Yesterday ${date.format("HH:mm")}`;
     }
-    return format(date, "MMM dd, HH:mm");
+    return date.format("MMM DD, HH:mm");
   };
 
   return (

@@ -1491,12 +1491,10 @@ const DetailEnquiryForm = ({
 
   const onSubmitHandler = async (formDataFromHook) => {
     if (!user || !user.uid) {
-      console.log("User not authenticated. Cannot save profile.");
       setLoading(false);
       return;
     }
     if (!selectedEnquiry || !selectedEnquiry.id) {
-      console.log("Associated enquiry ID is missing. Cannot save profile.");
       setLoading(false);
       return;
     }

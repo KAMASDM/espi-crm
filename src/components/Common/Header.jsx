@@ -46,7 +46,7 @@ const Header = ({ setSidebarOpen }) => {
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
       >
-        <Shield size={12} className="mr-1" /> {roleName || "Unknown"}
+        <Shield size={12} className="mr-1" /> {roleName}
       </span>
     );
   };
@@ -61,12 +61,6 @@ const Header = ({ setSidebarOpen }) => {
           >
             <Menu size={20} />
           </button>
-
-          <div className="hidden md:flex items-center ml-4">
-            {userProfile?.role && (
-              <div className="ml-3">{getRoleBadge(userProfile.role)}</div>
-            )}
-          </div>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -86,8 +80,11 @@ const Header = ({ setSidebarOpen }) => {
                   <User size={16} className="text-white" />
                 </div>
               )}
-              <span className="hidden md:block text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700">
                 {user?.displayName}
+                {userProfile?.role && (
+                  <div className="mt-1">{getRoleBadge(userProfile.role)}</div>
+                )}
               </span>
             </button>
 

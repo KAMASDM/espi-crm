@@ -15,11 +15,11 @@ import {
   User,
   Loader2,
 } from "lucide-react";
-import { format } from "date-fns";
-import { APPLICATION_STATUS } from "../../utils/constants";
-import Loading from "../Common/Loading";
-import { PDFDocument } from "pdf-lib";
+import moment from "moment";
 import { saveAs } from "file-saver";
+import { PDFDocument } from "pdf-lib";
+import Loading from "../Common/Loading";
+import { APPLICATION_STATUS } from "../../utils/constants";
 
 const DOCUMENT_KEYS_FOR_COUNT = [
   "sop",
@@ -267,9 +267,6 @@ const ApplicationsTable = ({
                 Student Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Application ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Assessment Details
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -351,21 +348,6 @@ const ApplicationsTable = ({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                            <FileText className="text-indigo-600" size={20} />
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            APP-
-                            {application.id && application.id.slice(-8)}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
                         {assessment?.specialisation}
                       </div>
@@ -427,9 +409,8 @@ const ApplicationsTable = ({
                           className="mr-1.5 text-gray-400 flex-shrink-0"
                         />
                         {application.createdAt?.toDate &&
-                          format(
-                            application.createdAt.toDate(),
-                            "MMM dd, yyyy"
+                          moment(application.createdAt.toDate()).format(
+                            "MMM DD, YYYY"
                           )}
                       </div>
                     </td>

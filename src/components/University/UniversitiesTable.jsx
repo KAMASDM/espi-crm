@@ -14,7 +14,7 @@ import {
   Building2,
   CheckCircle,
 } from "lucide-react";
-import { format } from "date-fns";
+import moment from "moment";
 import Loading from "../Common/Loading";
 import { COUNTRIES, CURRENCIES } from "../../utils/constants";
 
@@ -33,7 +33,7 @@ const countryToCurrencyCodeMap = {
 const getCurrencySymbolForCountry = (countryCode) => {
   const targetCurrencyCode = countryToCurrencyCodeMap[countryCode];
   if (targetCurrencyCode) {
-    const currency = CURRENCIES.find((c) => c.code === targetCurrencyCode); //
+    const currency = CURRENCIES.find((c) => c.code === targetCurrencyCode);
     if (currency) {
       return currency.symbol;
     }
@@ -244,18 +244,17 @@ const UniversitiesTable = ({
                   typeof university.createdAt.toDate === "function"
                 ) {
                   try {
-                    formattedDate = format(
-                      university.createdAt.toDate(),
-                      "MMM dd, yyyy"
-                    );
+                    formattedDate = moment(
+                      university.createdAt.toDate()
+                    ).format("MMM DD, YYYY");
                   } catch (error) {
                     console.error("Error formatting date:", error);
                   }
                 } else if (university.createdAt) {
                   try {
-                    const parsedDate = new Date(university.createdAt);
-                    if (!isNaN(parsedDate)) {
-                      formattedDate = format(parsedDate, "MMM dd, yyyy");
+                    const parsedDate = moment(university.createdAt);
+                    if (parsedDate.isValid()) {
+                      formattedDate = parsedDate.format("MMM DD, YYYY");
                     } else {
                       formattedDate = "Invalid Date";
                     }
@@ -331,10 +330,7 @@ const UniversitiesTable = ({
                         {university.deadline && (
                           <div className="text-sm text-gray-500">
                             Deadline:{" "}
-                            {format(
-                              new Date(university.deadline),
-                              "MMM dd, yyyy"
-                            )}
+                            {moment(university.deadline).format("MMM DD, YYYY")}
                           </div>
                         )}
                       </div>

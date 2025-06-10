@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { format } from "date-fns";
+import moment from "moment";
 import {
   Edit,
   Home,
@@ -11,8 +11,8 @@ import {
   ArrowUpNarrowWide,
   ArrowDownWideNarrow,
   ArrowUpDown,
-  Loader2, 
-  PlusCircle, 
+  Loader2,
+  PlusCircle,
 } from "lucide-react";
 
 const ServicesTable = ({
@@ -38,7 +38,7 @@ const ServicesTable = ({
     services.forEach((s) => {
       const date = s.createdAt?.toDate?.();
       if (date) {
-        datesSet.add(format(date, "yyyy-MM"));
+        datesSet.add(moment(date).format("YYYY-MM"));
       }
     });
     return Array.from(datesSet).sort().reverse();
@@ -61,7 +61,7 @@ const ServicesTable = ({
         dateFilter === "all"
           ? true
           : service.createdAt?.toDate?.() &&
-            format(service.createdAt.toDate(), "yyyy-MM") === dateFilter;
+            moment(service.createdAt.toDate()).format("YYYY-MM") === dateFilter;
 
       const servicePrice = parseFloat(service.servicePrice);
       let matchesPrice = true;
@@ -196,7 +196,7 @@ const ServicesTable = ({
               <option value="all">All Dates</option>
               {allDates.map((dateStr) => (
                 <option key={dateStr} value={dateStr}>
-                  {format(new Date(dateStr + "-01"), "MMMM yyyy")}
+                  {moment(dateStr).format("MMMM YYYY")}
                 </option>
               ))}
             </select>
@@ -314,7 +314,7 @@ const ServicesTable = ({
                   </td>
                   <td className="table-cell text-sm font-medium text-gray-500">
                     {service.createdAt?.toDate &&
-                      format(service.createdAt.toDate(), "PP")}
+                      moment(service.createdAt.toDate()).format("MMM DD, YYYY")}
                   </td>
                   {handleVisibility && (
                     <td className="table-cell">
