@@ -23,6 +23,8 @@ import PersonalContactCard from "./StudentDetailComponents/PersonalContactCard";
 import AcademicInterestsCard from "./StudentDetailComponents/AcademicInterestsCard";
 import EnquiryStatusCard from "./StudentDetailComponents/EnquiryStatusCard";
 import DetailEnquiryContent from "./StudentDetailComponents/DetailEnquiryContent";
+import AssessmentForm from "../Assessment/AssessmentForm";
+import ApplicationForm from "../Application/ApplicationForm";
 
 const StudentDetails = () => {
   const { id } = useParams();
@@ -49,7 +51,9 @@ const StudentDetails = () => {
   const [showEditEnquiryModal, setShowEditEnquiryModal] = useState(false);
   const [showEditDetailEnquiryModal, setShowEditDetailEnquiryModal] =
     useState(false);
-
+  const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
+  const [showEditApplicationModal, setShowEditApplicationModal] =
+    useState(false);
   const universitiesMap =
     allUniversities?.reduce((acc, uni) => {
       acc[uni.id] = uni;
@@ -124,12 +128,28 @@ const StudentDetails = () => {
     setShowEditDetailEnquiryModal(true);
   };
 
+  const handleAssessmentAction = () => {
+    setShowEditAssessmentModal(true);
+  };
+
+  const handleApplicationAction = () => {
+    setShowEditApplicationModal(true);
+  };
+
   const handleEnquiryFormSuccess = () => {
     setShowEditEnquiryModal(false);
   };
 
   const handleDetailEnquiryFormSuccess = () => {
     setShowEditDetailEnquiryModal(false);
+  };
+
+  const handleAssessmentFormSuccess = () => {
+    setShowEditAssessmentModal(false);
+  };
+
+  const handleApplicationFormSuccess = () => {
+    setShowEditApplicationModal(false);
   };
 
   if (
@@ -280,6 +300,32 @@ const StudentDetails = () => {
               <Edit size={16} />
             </button>
           )}
+          {activeTab === "assessments" && (
+            <button
+              onClick={handleAssessmentAction}
+              className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
+              title={
+                studentAssessments?.length > 0
+                  ? "Edit Latest Assessment"
+                  : "Add New Assessment"
+              }
+            >
+              <Edit size={16} />
+            </button>
+          )}
+          {activeTab === "applications" && (
+            <button
+              onClick={handleApplicationAction}
+              className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
+              title={
+                studentApplications?.length > 0
+                  ? "Edit Latest Application"
+                  : "Add New Application"
+              }
+            >
+              <Edit size={16} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -347,6 +393,44 @@ const StudentDetails = () => {
           editData={selectedDetailEnquiry}
           onClose={() => setShowEditDetailEnquiryModal(false)}
           onSuccess={handleDetailEnquiryFormSuccess}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showEditAssessmentModal}
+        onClose={() => setShowEditAssessmentModal(false)}
+        title={
+          studentAssessments?.length > 0
+            ? "Edit Assessment"
+            : "Add New Assessment"
+        }
+        size="full"
+      >
+        <AssessmentForm
+          editData={
+            studentAssessments?.length > 0 ? studentAssessments[0] : null
+          }
+          onClose={() => setShowEditAssessmentModal(false)}
+          onSuccess={handleAssessmentFormSuccess}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showEditApplicationModal}
+        onClose={() => setShowEditApplicationModal(false)}
+        title={
+          studentApplications?.length > 0
+            ? "Edit Application"
+            : "Add New Application"
+        }
+        size="full"
+      >
+        <ApplicationForm
+          editData={
+            studentApplications?.length > 0 ? studentApplications[0] : null
+          }
+          onClose={() => setShowEditApplicationModal(false)}
+          onSuccess={handleApplicationFormSuccess}
         />
       </Modal>
     </div>
