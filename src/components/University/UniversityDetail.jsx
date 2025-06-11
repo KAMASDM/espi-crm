@@ -42,7 +42,7 @@ const UniversityDetail = ({ university, isOpen, onClose }) => {
     return "$";
   };
 
-  const appFeeSymbol = getCurrencySymbolForCountry(university.country);
+  const appFeeSymbol = getCurrencySymbolForCountry(university?.country);
 
   const getCountryName = (countryCode) =>
     COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
