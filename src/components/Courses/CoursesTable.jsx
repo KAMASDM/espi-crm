@@ -8,7 +8,6 @@ import {
   XCircle,
   Calendar,
   BookOpen,
-  IndianRupee,
   CheckCircle,
   ExternalLink,
   GraduationCap,
@@ -297,18 +296,14 @@ const CoursesTable = ({
                   <td className="table-cell">
                     <div className="space-y-1">
                       {course.Application_fee && (
-                        <div className="flex items-center text-sm text-gray-900">
-                          <IndianRupee
-                            size={14}
-                            className="mr-1 text-gray-400"
-                          />
-                          App Fee: {course.Application_fee_currency || "$"}
-                          {course.Application_fee}
+                        <div className="text-sm text-gray-900">
+                          Application Fee: {course.Application_fee} (
+                          {course.Application_fee_currency})
                         </div>
                       )}
                       {course.Yearly_Tuition_fee && (
                         <div className="text-sm text-gray-500">
-                          Tuition: ${course.Yearly_Tuition_fee}/year
+                          Tuition Fee: {course.Yearly_Tuition_fee}/year
                         </div>
                       )}
                     </div>

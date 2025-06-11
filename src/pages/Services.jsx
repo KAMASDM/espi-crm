@@ -11,9 +11,9 @@ import toast from "react-hot-toast";
 import Modal from "../components/Common/Modal";
 import { USER_ROLES } from "../utils/constants";
 import { useAuth } from "../context/AuthContext";
+import { serviceService } from "../services/firestore";
 import ServiceForm from "../components/Service/ServiceForm";
 import ServicesTable from "../components/Service/ServicesTable";
-import { serviceService } from "../services/firestore";
 
 const Services = () => {
   const { userProfile } = useAuth();

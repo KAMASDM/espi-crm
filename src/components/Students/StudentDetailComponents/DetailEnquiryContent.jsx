@@ -1,11 +1,11 @@
 import React from "react";
 import { Info } from "lucide-react";
-import EducationalDetailsSection from "./EducationalDetailsSection";
+import DocumentsCard from "./DocumentsCard";
 import ExamScoresSection from "./ExamScoresSection";
 import WorkExperienceCard from "./WorkExperienceCard";
 import FinancialOtherInfoCard from "./FinancialOtherInfoCard";
-import DocumentsCard from "./DocumentsCard";
 import ConfirmedServicesCard from "./ConfirmedServicesCard";
+import EducationalDetailsSection from "./EducationalDetailsSection";
 
 const DetailEnquiryContent = ({ selectedDetailEnquiry }) => {
   if (!selectedDetailEnquiry) {

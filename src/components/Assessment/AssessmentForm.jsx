@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
+import Loading from "../Common/Loading";
+import { useAuth } from "../../context/AuthContext";
+import { assessmentService } from "../../services/firestore";
 import {
   INTAKES,
   COUNTRIES,
@@ -14,10 +18,6 @@ import {
   useEnquiries,
   useUniversities,
 } from "../../hooks/useFirestore";
-import Loading from "../Common/Loading";
-import { useAuth } from "../../context/AuthContext";
-import { assessmentService } from "../../services/firestore";
-import { Save, X } from "lucide-react";
 
 const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -29,9 +29,9 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
     reset,
   } = useForm({});
   const { user } = useAuth();
-  const { data: enquiries, loading: enquiriesLoading } = useEnquiries();
   const { data: detailEnquiries } = useDetailEnquiries();
   const { data: courses, loading: coursesLoading } = useCourses();
+  const { data: enquiries, loading: enquiriesLoading } = useEnquiries();
   const { data: universities, loading: universitiesLoading } =
     useUniversities();
 
@@ -221,10 +221,6 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             fullName = enquiry.student_Last_Name;
           }
 
-          if (enquiry.student_email) {
-            fullName += ` - ${enquiry.student_email}`;
-          }
-
           filteredEnquiryOptions.push({
             id: enquiry.id,
             fullName: fullName,
@@ -263,85 +259,147 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
     }
 
     return (
-      <p className="text-sm text-gray-800 mb-1">
-        <span className="font-semibold">{label}:</span> {displayValue}
-      </p>
+      <div className="py-2 px-4">
+        <p className="text-sm text-gray-800">
+          <span className="font-semibold">{label}:</span> {displayValue}
+        </p>
+      </div>
     );
   };
 
   return (
     <div className="flex flex-col md:flex-row gap-6 h-full">
-      {" "}
-      <div className="md:w-1/3 p-4 bg-gray-50 border-r border-gray-200 rounded-lg shadow-sm overflow-y-auto">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">
-          Student Details
-        </h3>
-        {selectedEnquiryDetails ? (
-          <div>
-            {renderDetail(
-              "First Name",
-              selectedEnquiryDetails.student_First_Name
-            )}
-            {renderDetail(
-              "Last Name",
-              selectedEnquiryDetails.student_Last_Name
-            )}
-            {renderDetail("Email", selectedEnquiryDetails.student_email)}
-            {renderDetail("Phone", selectedEnquiryDetails.student_phone)}
-            {renderDetail(
-              "Alternate Phone",
-              selectedEnquiryDetails.alternate_phone
-            )}
-            {renderDetail("Address", selectedEnquiryDetails.student_address)}
-            {renderDetail("City", selectedEnquiryDetails.student_city)}
-            {renderDetail("State", selectedEnquiryDetails.student_state)}
-            {renderDetail(
-              "Country (Student)",
-              selectedEnquiryDetails.student_country
-            )}
-            {renderDetail("Passport", selectedEnquiryDetails.student_passport)}
-            {renderDetail(
-              "Current Education",
-              selectedEnquiryDetails.current_education
-            )}
-            {renderDetail(
-              "Interested Services",
-              selectedEnquiryDetails.Interested_Services
-            )}
-            {renderDetail(
-              "Source of Enquiry",
-              selectedEnquiryDetails.Source_Enquiry
-            )}
-            {renderDetail(
-              "Enquiry Status",
-              selectedEnquiryDetails.enquiry_status
-            )}
-            {renderDetail(
-              "Countries Interested",
-              selectedEnquiryDetails.country_interested
-            )}
-            {renderDetail(
-              "Intake Interested",
-              selectedEnquiryDetails.intake_interested
-            )}
-            {renderDetail(
-              "University Interested",
-              selectedEnquiryDetails.university_interested
-            )}
-            {renderDetail("Notes", selectedEnquiryDetails.notes)}
+      {selectedEnquiryDetails && (
+        <div className="md:w-1/3 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-2 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800">
+                Student Details
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-200 bg-gray-100">
+                  <h4 className="text-md font-medium text-gray-800">
+                    Personal Information
+                  </h4>
+                </div>
+                <div className="divide-y divide-gray-200">
+                  {renderDetail(
+                    "First Name",
+                    selectedEnquiryDetails.student_First_Name
+                  )}
+                  {renderDetail(
+                    "Last Name",
+                    selectedEnquiryDetails.student_Last_Name
+                  )}
+                  {renderDetail(
+                    "Passport",
+                    selectedEnquiryDetails.student_passport
+                  )}
+                  {renderDetail(
+                    "Enquiry Status",
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedEnquiryDetails.enquiry_status === "New"
+                          ? "bg-blue-100 text-blue-800"
+                          : selectedEnquiryDetails.enquiry_status ===
+                            "Follow Up"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : selectedEnquiryDetails.enquiry_status ===
+                            "Converted"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {selectedEnquiryDetails.enquiry_status}
+                    </span>
+                  )}
+                  {renderDetail(
+                    "Source of Enquiry",
+                    selectedEnquiryDetails.Source_Enquiry
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-200 bg-gray-100">
+                  <h4 className="text-md font-medium text-gray-800">
+                    Contact Information
+                  </h4>
+                </div>
+                <div className="divide-y divide-gray-200">
+                  {renderDetail("Phone", selectedEnquiryDetails.student_phone)}
+                  {renderDetail(
+                    "Alternate Phone",
+                    selectedEnquiryDetails.alternate_phone
+                  )}
+                  {renderDetail(
+                    "Email",
+                    <a
+                      href={`mailto:${selectedEnquiryDetails.student_email}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {selectedEnquiryDetails.student_email}
+                    </a>
+                  )}
+                  {renderDetail(
+                    "Address",
+                    selectedEnquiryDetails.student_address
+                  )}
+                  {renderDetail("City", selectedEnquiryDetails.student_city)}
+                  {renderDetail("State", selectedEnquiryDetails.student_state)}
+                  {renderDetail(
+                    "Country",
+                    selectedEnquiryDetails.student_country
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-200 bg-gray-100">
+                  <h4 className="text-md font-medium text-gray-800">
+                    Education & Interest
+                  </h4>
+                </div>
+                <div className="divide-y divide-gray-200">
+                  {renderDetail(
+                    "Current Education",
+                    selectedEnquiryDetails.current_education
+                  )}
+                  {renderDetail(
+                    "Interested Services",
+                    selectedEnquiryDetails.Interested_Services
+                  )}
+                  {renderDetail(
+                    "Countries Interested",
+                    selectedEnquiryDetails.country_interested
+                  )}
+                  {renderDetail(
+                    "Intake Interested",
+                    selectedEnquiryDetails.intake_interested
+                  )}
+                  {renderDetail(
+                    "University",
+                    universities.find(
+                      (uni) =>
+                        uni.id === selectedEnquiryDetails.university_interested
+                    )?.univ_name
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <p className="text-gray-600 text-sm">
-            Select a student to view their details here.
-          </p>
-        )}
-      </div>
+        </div>
+      )}
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="md:w-2/3 space-y-6 flex flex-col"
+        className={`${
+          selectedEnquiryDetails ? "md:w-2/3" : "md:w-full"
+        } space-y-6 flex flex-col`}
       >
         <div className="flex-grow overflow-y-auto pr-4">
-          {" "}
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-4">
               Student & Basic Information
@@ -358,9 +416,9 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select Student</option>
-                  {enquiriesForDropdown.map((enquiryOption) => (
-                    <option key={enquiryOption.id} value={enquiryOption.id}>
-                      {enquiryOption.fullName}
+                  {enquiriesForDropdown.map((enquiry, index) => (
+                    <option key={index} value={enquiry.id}>
+                      {enquiry.fullName}
                     </option>
                   ))}
                 </select>
@@ -381,8 +439,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select Country</option>
-                  {COUNTRIES.map((country) => (
-                    <option key={country.code} value={country.code}>
+                  {COUNTRIES.map((country, index) => (
+                    <option key={index} value={country.code}>
                       {country.name}
                     </option>
                   ))}
@@ -404,9 +462,9 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select University</option>
-                  {filteredUniversities.map((uni) => (
-                    <option key={uni.id} value={uni.id}>
-                      {uni.univ_name}
+                  {filteredUniversities.map((university, index) => (
+                    <option key={index} value={university.id}>
+                      {university.univ_name}
                     </option>
                   ))}
                 </select>
@@ -427,8 +485,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select Level</option>
-                  {COURSE_LEVELS.map((level) => (
-                    <option key={level} value={level}>
+                  {COURSE_LEVELS.map((level, index) => (
+                    <option key={index} value={level}>
                       {level}
                     </option>
                   ))}
@@ -441,15 +499,15 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Course Interested
+                  Course
                 </label>
                 <select
                   {...register("course_interested")}
                   className="input-field"
                 >
                   <option value="">Select Course</option>
-                  {filteredCourses.map((course) => (
-                    <option key={course.id} value={course.id}>
+                  {filteredCourses.map((course, index) => (
+                    <option key={index} value={course.id}>
                       {course.course_name}
                     </option>
                   ))}
@@ -464,8 +522,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select Intake</option>
-                  {INTAKES.map((intake) => (
-                    <option key={intake.name} value={intake.name}>
+                  {INTAKES.map((intake, index) => (
+                    <option key={index} value={intake.name}>
                       {intake.name}
                     </option>
                   ))}
@@ -474,7 +532,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </div>
           </div>
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">
+            <h4 className="text-lg font-semibold text-gray-900 mt-4 mb-4">
               Course Details
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -514,7 +572,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </div>
           </div>
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">
+            <h4 className="text-lg font-semibold text-gray-900 mt-4 mb-4">
               Financial Information
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -546,8 +604,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                 </label>
                 <select {...register("fee_currency")} className="input-field">
                   <option value="">Select Currency</option>
-                  {CURRENCIES.map((currency) => (
-                    <option key={currency.code} value={currency.code}>
+                  {CURRENCIES.map((currency, index) => (
+                    <option key={index} value={currency.code}>
                       {currency.code} - {currency.name}
                     </option>
                   ))}
@@ -556,7 +614,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </div>
           </div>
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">
+            <h4 className="text-lg font-semibold text-gray-900 mt-4 mb-4">
               Assessment Status & Notes
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -566,8 +624,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                 </label>
                 <select {...register("ass_status")} className="input-field">
                   <option value="">Select Status</option>
-                  {ASSESSMENT_STATUS.map((status) => (
-                    <option key={status} value={status}>
+                  {ASSESSMENT_STATUS.map((status, index) => (
+                    <option key={index} value={status}>
                       {status}
                     </option>
                   ))}

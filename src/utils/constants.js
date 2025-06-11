@@ -120,33 +120,43 @@ export const PAYMENT_MODES = [
 // Intakes
 export const INTAKES = [
   { name: "Fall 2024", month: "September", year: "2024" },
+
   { name: "Spring 2025", month: "January", year: "2025" },
   { name: "Summer 2025", month: "May", year: "2025" },
   { name: "Fall 2025", month: "September", year: "2025" },
+
   { name: "Spring 2026", month: "January", year: "2026" },
   { name: "Summer 2026", month: "May", year: "2026" },
   { name: "Fall 2026", month: "September", year: "2026" },
+
   { name: "Spring 2027", month: "January", year: "2027" },
   { name: "Summer 2027", month: "May", year: "2027" },
   { name: "Fall 2027", month: "September", year: "2027" },
+
   { name: "Spring 2028", month: "January", year: "2028" },
   { name: "Summer 2028", month: "May", year: "2028" },
   { name: "Fall 2028", month: "September", year: "2028" },
+
   { name: "Spring 2029", month: "January", year: "2029" },
   { name: "Summer 2029", month: "May", year: "2029" },
   { name: "Fall 2029", month: "September", year: "2029" },
+
   { name: "Spring 2030", month: "January", year: "2030" },
   { name: "Summer 2030", month: "May", year: "2030" },
   { name: "Fall 2030", month: "September", year: "2030" },
+
   { name: "Spring 2031", month: "January", year: "2031" },
   { name: "Summer 2031", month: "May", year: "2031" },
   { name: "Fall 2031", month: "September", year: "2031" },
+
   { name: "Spring 2032", month: "January", year: "2032" },
   { name: "Summer 2032", month: "May", year: "2032" },
   { name: "Fall 2032", month: "September", year: "2032" },
+
   { name: "Spring 2033", month: "January", year: "2033" },
   { name: "Summer 2033", month: "May", year: "2033" },
   { name: "Fall 2033", month: "September", year: "2033" },
+  
   { name: "Spring 2034", month: "January", year: "2034" },
   { name: "Summer 2034", month: "May", year: "2034" },
   { name: "Fall 2034", month: "September", year: "2034" },
@@ -169,32 +179,6 @@ export const DOCUMENTS_REQUIRED = [
   "Financial Documents",
   "Photographs",
   "Other",
-];
-
-// Admission Status
-export const ADMISSION_STATUS = [
-  "Application Started",
-  "Documents Submitted",
-  "Application Submitted",
-  "Under Review",
-  "Interview Scheduled",
-  "Decision Pending",
-  "Admitted",
-  "Rejected",
-  "Waitlisted",
-];
-
-// Visa Status
-export const VISA_STATUS = [
-  "Not Applied",
-  "Documents Preparation",
-  "Application Submitted",
-  "Biometrics Scheduled",
-  "Interview Scheduled",
-  "Under Review",
-  "Approved",
-  "Rejected",
-  "Visa Issued",
 ];
 
 // User Roles
@@ -256,18 +240,7 @@ export const CURRENCIES = [
 
 export const USER_ROLE_LIST = Object.values(USER_ROLES);
 
-// Master modules that only Superadmin can manage
-export const MASTER_MODULES = [
-  "Countries",
-  "Universities",
-  "Courses",
-  "Intakes",
-  "Services", // Add more as needed
-];
-
-// ==== ROLE PERMISSIONS AND NAVIGATION ====
-
-// Define permissions for each role
+// Define Permissions for each Role
 export const ROLE_PERMISSIONS = {
   [USER_ROLES.SUPERADMIN]: {
     canViewAllBranches: true,
@@ -474,150 +447,10 @@ export const ROLE_PERMISSIONS = {
   },
 };
 
-// Navigation menu items with role-based visibility
-export const MENU_ITEMS = [
-  {
-    id: "dashboard",
-    name: "Dashboard",
-    path: "/",
-    icon: "dashboard",
-    roles: Object.values(USER_ROLES), // All roles can see dashboard
-  },
-  {
-    id: "students",
-    name: "Students",
-    path: "/students",
-    icon: "enquiry",
-    roles: [
-      USER_ROLES.SUPERADMIN,
-      USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.AGENT,
-      USER_ROLES.COUNSELLOR,
-      USER_ROLES.RECEPTION,
-    ],
-  },
-  {
-    id: "assessments",
-    name: "Assessments",
-    path: "/assessments",
-    icon: "assessment",
-    roles: [
-      USER_ROLES.SUPERADMIN,
-      USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.PROCESSOR,
-      USER_ROLES.COUNSELLOR,
-    ],
-  },
-  {
-    id: "applications",
-    name: "Applications",
-    path: "/applications",
-    icon: "application",
-    roles: [
-      USER_ROLES.SUPERADMIN,
-      USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.PROCESSOR,
-      USER_ROLES.COUNSELLOR,
-    ],
-  },
-  {
-    id: "payments",
-    name: "Payments",
-    path: "/payments",
-    icon: "payment",
-    roles: [
-      USER_ROLES.SUPERADMIN,
-      USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.ACCOUNTANT,
-      USER_ROLES.RECEPTION,
-    ],
-  },
-  {
-    id: "universities",
-    name: "Universities",
-    path: "/universities",
-    icon: "university",
-    roles: [
-      USER_ROLES.SUPERADMIN,
-      USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.COUNSELLOR,
-      USER_ROLES.PROCESSOR,
-      USER_ROLES.AGENT,
-    ],
-  },
-  {
-    id: "courses",
-    name: "Courses",
-    path: "/courses",
-    icon: "course",
-    roles: [
-      USER_ROLES.SUPERADMIN,
-      USER_ROLES.BRANCH_ADMIN,
-      USER_ROLES.COUNSELLOR,
-      USER_ROLES.PROCESSOR,
-      USER_ROLES.AGENT,
-    ],
-  },
-  {
-    id: "users",
-    name: "Users",
-    path: "/users",
-    icon: "user",
-    roles: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
-  },
-  {
-    id: "branches",
-    name: "Branches",
-    path: "/branches",
-    icon: "branch",
-    roles: [USER_ROLES.SUPERADMIN],
-  },
-  {
-    id: "reports",
-    name: "Reports",
-    path: "/reports",
-    icon: "report",
-    roles: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
-  },
-  {
-    id: "chat",
-    name: "Chat",
-    path: "/chat",
-    icon: "chat",
-    roles: Object.values(USER_ROLES), // All roles can access messaging
-  },
-  {
-    id: "settings",
-    name: "Settings",
-    path: "/settings",
-    icon: "settings",
-    roles: [USER_ROLES.SUPERADMIN],
-  },
-];
-
 // Helper function to check if user has permission
 export const hasPermission = (userRole, permission) => {
   const permissions = ROLE_PERMISSIONS[userRole];
   return permissions ? permissions[permission] : false;
-};
-
-// Helper function to get visible menu items for a role
-export const getVisibleMenuItems = (userRole) => {
-  if (!userRole) return [];
-  return MENU_ITEMS.filter((item) => item.roles.includes(userRole));
-};
-
-// Helper function to check if user can access a specific module
-export const canAccessModule = (userRole, moduleName) => {
-  const menuItem = MENU_ITEMS.find(
-    (item) => item.name.toLowerCase() === moduleName.toLowerCase()
-  );
-  return menuItem ? menuItem.roles.includes(userRole) : false;
-};
-
-// Helper function to get user's accessible modules
-export const getAccessibleModules = (userRole) => {
-  return getVisibleMenuItems(userRole).map((item) => item.name);
 };
 
 export default {
@@ -633,17 +466,10 @@ export default {
   PAYMENT_MODES,
   INTAKES,
   DOCUMENTS_REQUIRED,
-  ADMISSION_STATUS,
-  VISA_STATUS,
   USER_ROLES,
   USER_ROLE_LIST,
-  MASTER_MODULES,
   INDIAN_STATES,
   CURRENCIES,
   ROLE_PERMISSIONS,
-  MENU_ITEMS,
   hasPermission,
-  getVisibleMenuItems,
-  canAccessModule,
-  getAccessibleModules,
 };

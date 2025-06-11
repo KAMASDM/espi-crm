@@ -373,7 +373,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
     }
   };
 
-  const FileUploadFieldComponent = ({ name, label, accept = "*/*" }) => {
+  const FileUploadFieldComponent = ({ name, label, accept = ".pdf" }) => {
     const currentFileDisplayName = fileDisplayNames[name];
 
     return (
@@ -528,67 +528,63 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
           <FileUploadFieldComponent
             name="passport"
             label="Passport"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="diploma_marksheet"
             label="Diploma Marksheet"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="bachelor_marksheet"
             label="Bachelor's Marksheet"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="master_marksheet"
             label="Master's Marksheet"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="ielts"
             label="IELTS Score Report"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="toefl"
             label="TOEFL Score Report"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="gre"
             label="GRE Score Report"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="gmat"
             label="GMAT Score Report"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="pte"
             label="PTE Score Report"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="sop"
             label="Statement of Purpose (SOP)"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf"
           />
-          <FileUploadFieldComponent
-            name="cv"
-            label="CV/Resume"
-            accept=".pdf,.doc,.docx"
-          />
+          <FileUploadFieldComponent name="cv" label="CV/Resume" accept=".pdf" />
           <FileUploadFieldComponent
             name="work_experience"
             label="Work Experience Letter"
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            accept=".pdf"
           />
           <FileUploadFieldComponent
             name="other_documents"
             label="Other Documents"
-            accept="*/*"
+            accept=".pdf"
           />
         </div>
       </div>

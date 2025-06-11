@@ -1,5 +1,5 @@
 import React from "react";
-import { COUNTRIES } from "../../utils/constants";
+import { COUNTRIES, CURRENCIES } from "../../utils/constants";
 import {
   MapPin,
   Phone,
@@ -12,14 +12,38 @@ import {
   AlertTriangle,
   X,
   Building,
-  IndianRupee,
   FileText,
   Archive,
   ThumbsUp,
   ThumbsDown,
 } from "lucide-react";
 
+const countryToCurrency = {
+  US: "USD",
+  CA: "CAD",
+  GB: "GBP",
+  AU: "AUD",
+  DE: "EUR",
+  FR: "EUR",
+  NL: "EUR",
+  SG: "SGD",
+  IN: "INR",
+};
+
 const UniversityDetail = ({ university, isOpen, onClose }) => {
+  const getCurrencySymbolForCountry = (countryCode) => {
+    const targetCurrencyCode = countryToCurrency[countryCode];
+    if (targetCurrencyCode) {
+      const currency = CURRENCIES.find((c) => c.code === targetCurrencyCode);
+      if (currency) {
+        return currency.symbol;
+      }
+    }
+    return "$";
+  };
+
+  const appFeeSymbol = getCurrencySymbolForCountry(university.country);
+
   const getCountryName = (countryCode) =>
     COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
 
@@ -164,14 +188,10 @@ const UniversityDetail = ({ university, isOpen, onClose }) => {
                 </div>
                 <div className="flex items-center justify-center rounded-lg bg-purple-100 p-3 text-sm font-medium text-purple-700 shadow-sm">
                   <Archive className="mr-1.5 h-4 w-4" />
-                  Backlogs: {university.Backlogs_allowed || "N/A"}
+                  Backlogs: {university.Backlogs_allowed || 0}
                 </div>
-                <div className="flex items-center justify-center rounded-lg bg-amber-100 p-3 text-sm font-medium text-amber-700 shadow-sm">
-                  <IndianRupee className="mr-1.5 h-4 w-4" />
-                  Fee:{" "}
-                  {university.Application_fee
-                    ? `₹ ${university.Application_fee}`
-                    : "N/A"}
+                <div className="rounded-lg bg-amber-100 p-3 text-sm font-medium text-amber-700 shadow-sm">
+                  Fee: {university.Application_fee} {appFeeSymbol}
                 </div>
               </section>
               <section className="rounded-xl bg-white p-6 shadow-lg">

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useAuth } from "../../context/AuthContext";
+import { courseService } from "../../services/firestore";
+import { useUniversities } from "../../hooks/useFirestore";
 import {
   INTAKES,
   COUNTRIES,
@@ -8,10 +12,6 @@ import {
   COURSE_LEVELS,
   DOCUMENTS_REQUIRED,
 } from "../../utils/constants";
-import { useAuth } from "../../context/AuthContext";
-import { courseService } from "../../services/firestore";
-import { useUniversities } from "../../hooks/useFirestore";
-import { Save, X } from "lucide-react";
 
 const CourseForm = ({ onClose, onSuccess, editData = null }) => {
   const {

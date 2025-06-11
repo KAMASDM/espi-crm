@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { useForm, useFieldArray } from "react-hook-form";
 import app from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { useServices } from "../../hooks/useFirestore";
 import { firestoreService } from "../../services/firestore";
 import {
   COUNTRIES,
@@ -34,7 +35,6 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import { useServices } from "../../hooks/useFirestore";
 
 const storage = getStorage(app);
 
@@ -881,84 +881,79 @@ const Step5Documents = ({ FileUploadField }) => (
       Document Uploads
     </h4>
     <p className="text-xs text-gray-500 mb-3">
-      Please upload relevant documents. PDF, JPG, JPEG, PNG formats are
-      accepted.
+      Please upload relevant documents. PDF format is accepted.
     </p>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <FileUploadField
         name="tenth_Document"
         label="10th Grade Certificate"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="twelveth_Document"
         label="12th Grade Certificate"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="graduation_Marksheet"
         label="Graduation Marksheet(s)"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="graduation_Certificate"
         label="Graduation Certificate"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="ug_Marksheet"
         label="All UG Marksheets (if applicable)"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="ug_Certificate"
         label="UG Degree Certificate (if applicable)"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="work_Experience_Document"
         label="Work Experience Letter(s)"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="passport_Document"
         label="Passport (First & Last Page)"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="offer_Letter"
         label="Offer Letter (if any)"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
-      <FileUploadField
-        name="ielts_Result"
-        label="IELTS TRF"
-        accept=".pdf,.jpg,.jpeg,.png"
-      />
+      <FileUploadField name="ielts_Result" label="IELTS TRF" accept=".pdf" />
       <FileUploadField
         name="toefl_Result"
         label="TOEFL Score Report"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="pte_Result"
         label="PTE Score Report"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="duolingo_Result"
         label="Duolingo Test Report"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="gre_Result"
         label="GRE Score Report"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
       <FileUploadField
         name="gmat_Result"
         label="GMAT Score Report"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
       />
     </div>
   </div>
@@ -1476,7 +1471,7 @@ const DetailEnquiryForm = ({
     if (isValid && currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     } else if (!isValid) {
-      console.log(
+      toast.error(
         "Please fill all required fields in this section correctly.",
         { id: "validationError" }
       );
@@ -1492,10 +1487,12 @@ const DetailEnquiryForm = ({
   const onSubmitHandler = async (formDataFromHook) => {
     if (!user || !user.uid) {
       setLoading(false);
+      toast.error("User not authenticated.");
       return;
     }
     if (!selectedEnquiry || !selectedEnquiry.id) {
       setLoading(false);
+      toast.error("No enquiry selected for update.");
       return;
     }
 
@@ -1512,6 +1509,12 @@ const DetailEnquiryForm = ({
         const fileOrUrl = filesToUpload[fieldName];
         if (fileOrUrl instanceof File) {
           const file = fileOrUrl;
+          if (file.type !== "application/pdf") {
+            toast.error(`Only PDF files are accepted for ${file.name}.`);
+            setLoading(false);
+            return;
+          }
+
           const uploadToastId = toast.loading(`Uploading ${file.name}...`, {
             duration: 10000,
           });
@@ -1530,10 +1533,13 @@ const DetailEnquiryForm = ({
                 "state_changed",
                 (snapshot) => {},
                 (error) => {
-                  console.log("error", error);
-                  console.log("error", {
-                    id: uploadToastId,
-                  });
+                  console.error("Upload error:", error);
+                  toast.error(
+                    `Upload failed for ${file.name}: ${error.message}`,
+                    {
+                      id: uploadToastId,
+                    }
+                  );
                   reject(
                     new Error(
                       `Upload failed for ${file.name}: ${error.message}`
@@ -1550,10 +1556,13 @@ const DetailEnquiryForm = ({
                       resolve();
                     })
                     .catch((error) => {
-                      console.log("error", error);
-                      console.log("error", {
-                        id: uploadToastId,
-                      });
+                      console.error("Get download URL error:", error);
+                      toast.error(
+                        `Failed to get download URL for ${file.name}`,
+                        {
+                          id: uploadToastId,
+                        }
+                      );
                       reject(error);
                     });
                 }
@@ -1605,7 +1614,8 @@ const DetailEnquiryForm = ({
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.log("error", error);
+      console.error("Submission error:", error);
+      toast.error("Failed to submit detailed profile.", { id: toastIdSubmit });
     } finally {
       setLoading(false);
     }
@@ -1613,6 +1623,10 @@ const DetailEnquiryForm = ({
 
   const handleFileUpload = (fieldName, file) => {
     if (file) {
+      if (file.type !== "application/pdf") {
+        toast.error("Only PDF files are accepted.");
+        return;
+      }
       setFilesToUpload((prev) => ({ ...prev, [fieldName]: file }));
       setUploadedDocumentsDisplay((prev) => ({
         ...prev,
@@ -1650,8 +1664,8 @@ const DetailEnquiryForm = ({
     );
   };
 
-  const FileUploadFieldComponent = ({ name, label, accept = "*/*" }) => {
-    const displayFileName = uploadedDocumentsDisplay[name];
+  const FileUploadFieldComponent = ({ name, label, accept = ".pdf" }) => {
+    const currentFileDisplayName = uploadedDocumentsDisplay[name];
 
     return (
       <div>
@@ -1660,15 +1674,20 @@ const DetailEnquiryForm = ({
         </label>
         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
           <div className="space-y-1 text-center">
-            {displayFileName ? (
+            {currentFileDisplayName ? (
               <div className="flex flex-col items-center justify-center space-y-1">
                 <div className="flex items-center space-x-2">
-                  <FileText className="text-green-600" size={24} />
+                  <FileText
+                    className="text-green-600 flex-shrink-0"
+                    size={24}
+                  />
                   <span
                     className="text-sm text-green-600 truncate max-w-xs"
-                    title={displayFileName}
+                    title={currentFileDisplayName}
                   >
-                    {displayFileName}
+                    {currentFileDisplayName.length > 25
+                      ? `${currentFileDisplayName.slice(0, 22)}...`
+                      : currentFileDisplayName}
                   </span>
                 </div>
                 <button
@@ -1684,31 +1703,33 @@ const DetailEnquiryForm = ({
                 <Upload className="mx-auto text-gray-400" size={24} />
                 <div className="flex text-sm text-gray-600">
                   <label
-                    htmlFor={name}
+                    htmlFor={`${name}-file-input-applicationform`}
                     className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
                   >
                     <span>Upload a file</span>
                     <input
-                      id={name}
+                      id={`${name}-file-input-applicationform`}
+                      name={name}
                       type="file"
                       className="sr-only"
                       accept={accept}
-                      onChange={(e) =>
-                        handleFileUpload(name, e.target.files[0])
-                      }
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleFileUpload(name, e.target.files[0]);
+                        }
+                        e.target.value = null;
+                      }}
                     />
                   </label>
                   <p className="pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-gray-500">
-                  {accept.replace(/\./g, "").toUpperCase()} files
-                </p>
+                <p className="text-xs text-gray-500">PDF files</p>
               </>
             )}
           </div>
         </div>
         {errors[name] && (
-          <p className="text-xs text-red-500 mt-1">{errors[name].message}</p>
+          <p className="text-red-600 text-sm mt-1">{errors[name].message}</p>
         )}
       </div>
     );

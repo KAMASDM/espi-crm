@@ -8,7 +8,6 @@ import {
   Filter,
   Calendar,
   Building2,
-  IndianRupee,
   ExternalLink,
   ClipboardList,
   Loader2,
@@ -336,17 +335,13 @@ const AssessmentsTable = ({
                   <td className="table-cell">
                     <div className="space-y-1">
                       {assessment.application_fee && (
-                        <div className="flex items-center text-sm text-gray-900">
-                          <IndianRupee
-                            size={14}
-                            className="mr-1 text-gray-400"
-                          />
-                          App: {assessment.application_fee}
+                        <div className="text-sm text-gray-900">
+                          Application Fee: {assessment.application_fee}
                         </div>
                       )}
                       {assessment.tution_fee && (
                         <div className="text-sm text-gray-500">
-                          Tuition: {assessment.tution_fee}
+                          Tuition Fee: {assessment.tution_fee}
                         </div>
                       )}
                       {assessment.fee_currency && (

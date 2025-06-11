@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { GraduationCap } from "lucide-react";
-import { signInWithGoogle } from "../services/auth";
 import toast from "react-hot-toast";
+import { GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { signInWithGoogle } from "../services/auth";
 
 const Login = () => {
   const navigate = useNavigate();

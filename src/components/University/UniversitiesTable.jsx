@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import moment from "moment";
 import {
   Eye,
   Edit,
@@ -15,10 +16,9 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
-import moment from "moment";
 import { COUNTRIES, CURRENCIES } from "../../utils/constants";
 
-const countryToCurrencyCodeMap = {
+const countryToCurrency = {
   US: "USD",
   CA: "CAD",
   GB: "GBP",
@@ -31,7 +31,7 @@ const countryToCurrencyCodeMap = {
 };
 
 const getCurrencySymbolForCountry = (countryCode) => {
-  const targetCurrencyCode = countryToCurrencyCodeMap[countryCode];
+  const targetCurrencyCode = countryToCurrency[countryCode];
   if (targetCurrencyCode) {
     const currency = CURRENCIES.find((c) => c.code === targetCurrencyCode);
     if (currency) {
@@ -326,8 +326,8 @@ const UniversitiesTable = ({
                         {university.Application_fee != null &&
                           university.Application_fee !== "" && (
                             <div className="text-sm text-gray-900">
-                              Fee: {appFeeSymbol}
-                              {university.Application_fee}
+                              Fee: {university.Application_fee}{" "}
+                              {appFeeSymbol}
                             </div>
                           )}
                         {university.deadline && (

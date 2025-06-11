@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronUp } from "lucide-react";
 import React, { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const ModernSection = ({
   title,
