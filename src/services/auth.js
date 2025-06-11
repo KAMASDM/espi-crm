@@ -110,8 +110,3 @@ export const getUserBranchId = () => {
   const profile = getCurrentUserProfile();
   return profile?.branchId;
 };
-
-export const getUserRole = () => {
-  const profile = getCurrentUserProfile();
-  return profile?.role;
-};

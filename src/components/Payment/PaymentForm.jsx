@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
+import { Upload, FileText, X, Save } from "lucide-react";
+import Loading from "../Common/Loading";
+import app from "../../services/firebase";
+import { useAuth } from "../../context/AuthContext";
+import { paymentService } from "../../services/firestore";
+import { useEnquiries, useServices } from "../../hooks/useFirestore";
 import {
   PAYMENT_TYPES,
   PAYMENT_STATUS,
   PAYMENT_MODES,
 } from "../../utils/constants";
-import { useEnquiries, useServices } from "../../hooks/useFirestore";
-import { paymentService } from "../../services/firestore";
-import { useAuth } from "../../context/AuthContext";
-import { Upload, FileText, X, Save } from "lucide-react";
-import toast from "react-hot-toast";
 import {
   getStorage,
   ref,
@@ -17,8 +19,6 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import app from "../../services/firebase";
-import Loading from "../Common/Loading";
 
 const storage = getStorage(app);
 
@@ -123,14 +123,9 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
         toast.error("File size must be less than 10MB");
         return;
       }
-      const allowedTypes = [
-        "application/pdf",
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-      ];
+      const allowedTypes = ["application/pdf"];
       if (!allowedTypes.includes(file.type)) {
-        toast.error("Only PDF, JPG, JPEG, and PNG files are allowed");
+        toast.error("Only PDF files are allowed");
         return;
       }
       setFileToUpload(file);
@@ -267,6 +262,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
   if (enquiriesLoading && servicesLoading && !editData) {
     return <Loading size="default" />;
   }
+
   if (!user) {
     return (
       <div className="p-6 text-center">
@@ -591,7 +587,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
                       name={PAYMENT_DOCUMENT_FIELD_NAME}
                       type="file"
                       className="sr-only"
-                      accept=".pdf,.jpg,.jpeg,.png"
+                      accept=".pdf"
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
                           handleFileUpload(e.target.files[0]);
@@ -602,9 +598,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
                   </label>
                   <p className="pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-gray-500">
-                  PDF, JPG, JPEG, PNG up to 10MB
-                </p>
+                <p className="text-xs text-gray-500">PDF up to 10MB</p>
               </>
             )}
           </div>

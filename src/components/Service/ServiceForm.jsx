@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { serviceService } from "../../services/firestore";
-import { Save, X } from "lucide-react";
 
 const ServiceForm = ({ onClose, onSuccess, editData = null }) => {
   const {

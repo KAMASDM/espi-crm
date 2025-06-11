@@ -8,10 +8,10 @@ import {
   Save,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Loading from "../Common/Loading";
 import { useChatUsers } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { chatService } from "../../services/firestore";
-import Loading from "../Common/Loading";
 
 const NewChatModal = ({ onClose, onChatCreated }) => {
   const { user: currentUser } = useAuth();

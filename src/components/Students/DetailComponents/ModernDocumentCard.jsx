@@ -1,13 +1,12 @@
 import React, { useState } from "react";
-import { PDFDocument } from 'pdf-lib';
-import { saveAs } from 'file-saver';
+import { saveAs } from "file-saver";
 import {
   AlertTriangle,
   CheckCircle,
   Download,
   Eye,
   FileText,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -42,20 +41,30 @@ const ModernDocumentCard = ({ label, docNameValue }) => {
   };
 
   return (
-    <div className={`group relative p-4 rounded-xl border-2 transition-all duration-300 ${docNameValue
-        ? "border-green-200 bg-green-50 hover:border-green-300 hover:shadow-md"
-        : "border-gray-200 bg-gray-50 hover:border-gray-300"
-      }`}>
+    <div
+      className={`group relative p-4 rounded-xl border-2 transition-all duration-300 ${
+        docNameValue
+          ? "border-green-200 bg-green-50 hover:border-green-300 hover:shadow-md"
+          : "border-gray-200 bg-gray-50 hover:border-gray-300"
+      }`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center flex-1 min-w-0">
-          <div className={`p-2 rounded-lg mr-3 ${docNameValue ? "bg-green-100" : "bg-gray-100"
-            }`}>
-            <FileText size={18} className={
-              docNameValue ? "text-green-600" : "text-gray-400"
-            } />
+          <div
+            className={`p-2 rounded-lg mr-3 ${
+              docNameValue ? "bg-green-100" : "bg-gray-100"
+            }`}
+          >
+            <FileText
+              size={18}
+              className={docNameValue ? "text-green-600" : "text-gray-400"}
+            />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-medium text-gray-900 truncate" title={label}>
+            <h4
+              className="text-sm font-medium text-gray-900 truncate"
+              title={label}
+            >
               {label}
             </h4>
           </div>
@@ -89,7 +98,9 @@ const ModernDocumentCard = ({ label, docNameValue }) => {
           ) : (
             <div className="flex items-center">
               <AlertTriangle size={16} className="text-amber-500 mr-1" />
-              <span className="text-xs text-amber-600 font-medium">Missing</span>
+              <span className="text-xs text-amber-600 font-medium">
+                Missing
+              </span>
             </div>
           )}
         </div>

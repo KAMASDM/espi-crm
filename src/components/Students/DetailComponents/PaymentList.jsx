@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import moment from "moment";
 import {
-  Eye,
-  Edit,
-  Trash2,
   Calendar,
   Search,
   CheckCircle,
@@ -16,7 +13,6 @@ import {
   Filter,
 } from "lucide-react";
 
-// Assuming these constants are available from your project utils
 const PAYMENT_STATUS = [
   "Paid",
   "Pending",
@@ -24,10 +20,9 @@ const PAYMENT_STATUS = [
   "Partially Paid",
   "Cancelled",
 ];
-const PAYMENT_TYPES = ["Application Fee", "Tuition Fee", "Visa Fee"];
 
-// Helper function for status badges
 const getStatusBadge = (status) => {
+
   const statusConfig = {
     Paid: { color: "bg-green-100 text-green-800", icon: CheckCircle },
     Pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -37,6 +32,7 @@ const getStatusBadge = (status) => {
   };
   const config = statusConfig[status] || statusConfig["Pending"];
   const Icon = config.icon;
+
   return (
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
@@ -47,7 +43,6 @@ const getStatusBadge = (status) => {
   );
 };
 
-// Helper function for payment mode icons
 const getModeIcon = (mode) => {
   const modeIcons = {
     Cash: IndianRupee,

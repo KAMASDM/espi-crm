@@ -1,4 +1,5 @@
 import { useState } from "react";
+import moment from "moment";
 import {
   Eye,
   Edit,
@@ -19,7 +20,6 @@ import {
   PAYMENT_MODES,
   PAYMENT_TYPES,
 } from "../../utils/constants";
-import moment from "moment";
 
 const PaymentsTable = ({
   payments,

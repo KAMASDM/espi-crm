@@ -22,7 +22,6 @@ import InfoCard from "./DetailComponents/InfoCard";
 import ScoreCard from "./DetailComponents/ScoreCard";
 import StatusBadge from "./DetailComponents/StatusBadge";
 import ModernSection from "./DetailComponents/ModernSection";
-import ModernDocumentCard from "./DetailComponents/ModernDocumentCard";
 import ExperienceTimeline from "./DetailComponents/ExperienceTimeline";
 import DocumentLibrarySection from "./DetailComponents/DocumentLibrarySection";
 

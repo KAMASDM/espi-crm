@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   useEnquiries,
   useDetailEnquiries,
@@ -12,17 +12,17 @@ import {
   useUniversities,
   useCourses,
 } from "../../hooks/useFirestore";
+import Modal from "../Common/Modal";
 import Loading from "../Common/Loading";
+import EnquiryForm from "./EnquiryForm";
+import PaymentList from "./DetailComponents/PaymentList";
+import DetailEnquiryForm from "../Forms/DetailEnquiryForm";
 import AssessmentList from "./DetailComponents/AssessmentList";
 import ApplicationList from "./DetailComponents/ApplicationList";
-import PaymentList from "./DetailComponents/PaymentList";
 import PersonalContactCard from "./StudentDetailComponents/PersonalContactCard";
 import AcademicInterestsCard from "./StudentDetailComponents/AcademicInterestsCard";
 import EnquiryStatusCard from "./StudentDetailComponents/EnquiryStatusCard";
 import DetailEnquiryContent from "./StudentDetailComponents/DetailEnquiryContent";
-import Modal from "../Common/Modal";
-import EnquiryForm from "./EnquiryForm";
-import DetailEnquiryForm from "../Forms/DetailEnquiryForm";
 
 const StudentDetails = () => {
   const { id } = useParams();

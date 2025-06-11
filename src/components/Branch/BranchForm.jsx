@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { USER_ROLES } from "../../utils/constants";
 import { branchService, userService } from "../../services/firestore";
-import { Save, X } from "lucide-react";
 
 const BranchForm = ({ onClose, onSuccess, editData = null }) => {
   const {

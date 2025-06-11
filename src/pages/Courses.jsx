@@ -8,8 +8,8 @@ import { downloadAsCSV } from "../utils/helpers";
 import { firestoreService } from "../services/firestore";
 import CourseForm from "../components/Courses/CourseForm";
 import CoursesTable from "../components/Courses/CoursesTable";
-import { useCourses, useUniversities } from "../hooks/useFirestore";
 import CourseDetail from "../components/Courses/CourseDetail";
+import { useCourses, useUniversities } from "../hooks/useFirestore";
 import {
   COURSE_LEVELS,
   CURRENCIES,

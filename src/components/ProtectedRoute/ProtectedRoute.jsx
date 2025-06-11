@@ -1,8 +1,8 @@
 import React from "react";
 import { toast } from "react-hot-toast";
-import { useAuth } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
 import Loading from "../Common/Loading";
+import { useAuth } from "../../context/AuthContext";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, userProfile, loading } = useAuth();
