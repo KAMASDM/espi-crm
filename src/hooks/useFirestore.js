@@ -136,7 +136,8 @@ export const useDetailEnquiries = () => {
     if (
       userProfile.role === USER_ROLES.SUPERADMIN ||
       userProfile.role === USER_ROLES.PROCESSOR ||
-      userProfile.role === USER_ROLES.BRANCH_ADMIN
+      userProfile.role === USER_ROLES.BRANCH_ADMIN ||
+      userProfile.role === USER_ROLES.COUNSELLOR
     ) {
       return constraints;
     }
@@ -297,18 +298,7 @@ export const useUsers = () => {
   const buildConstraints = useCallback((userProfile) => {
     if (!userProfile) return null;
 
-    const constraints = [];
-    if (userProfile.role === USER_ROLES.SUPERADMIN) {
-      // Sees all
-    } else if (
-      userProfile.role === USER_ROLES.BRANCH_ADMIN &&
-      userProfile.branchId
-    ) {
-      constraints.push(where("branchId", "==", userProfile.branchId));
-    } else {
-      return null;
-    }
-    return constraints.filter((c) => c != null);
+    return [];
   }, []);
 
   const { data, loading, error } = useSubscription(

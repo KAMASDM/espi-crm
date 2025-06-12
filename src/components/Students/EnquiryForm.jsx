@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import {
   INTAKES,
   COUNTRIES,
+  USER_ROLES,
   INDIAN_STATES,
   ENQUIRY_STATUS,
   ENQUIRY_SOURCES,
@@ -14,11 +15,17 @@ import {
   userService,
   branchService,
   enquiryService,
+  notificationService,
 } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
 import { useServices, useUniversities } from "../../hooks/useFirestore";
 
-const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
+const EnquiryForm = ({
+  onClose,
+  onSuccess,
+  editData = null,
+  allUsers = [],
+}) => {
   const {
     register,
     handleSubmit,
@@ -29,9 +36,9 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
     defaultValues: editData || {},
   });
   const { user, userProfile } = useAuth();
-  const { data: universities } = useUniversities();
   const { data: services } = useServices();
-  const [users, setUsers] = useState([]);
+  const { data: universities } = useUniversities();
+  const [users, setUsers] = useState(allUsers);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -47,24 +54,31 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         setBranchesLoading(true);
         const fetchedBranches = await branchService.getAll();
         setBranches(fetchedBranches || []);
-
-        setUsersLoading(true);
-        const fetchedUsers = await userService.getAll();
-        setUsers(fetchedUsers || []);
-      } catch (error) {
-        console.log("error", error);
-      } finally {
         setBranchesLoading(false);
+      } catch (error) {
+        console.error("Error fetching branches:", error);
+      }
+
+      if (allUsers.length === 0) {
+        try {
+          setUsersLoading(true);
+          const fetchedUsers = await userService.getAll();
+          setUsers(fetchedUsers || []);
+          setUsersLoading(false);
+        } catch (error) {
+          console.error("Error fetching users for form:", error);
+        }
+      } else {
         setUsersLoading(false);
+        setUsers(allUsers);
       }
     };
 
     fetchReferenceData();
-  }, []);
-
+  }, [allUsers]);
   useEffect(() => {
     if (userProfile && !editData) {
-      if (userProfile.branchId && userProfile.role !== "Superadmin") {
+      if (userProfile.branchId && userProfile.role !== USER_ROLES.SUPERADMIN) {
         setValue("branchId", userProfile.branchId);
       }
       setValue("assignedUserId", userProfile.uid);
@@ -87,12 +101,14 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
   }, [selectedCountries, universities]);
 
   const getAvailableUsers = () => {
-    if (userProfile?.role === "Superadmin") {
+    if (!users || users.length === 0) return [];
+    if (userProfile?.role === USER_ROLES.SUPERADMIN) {
       if (selectedBranchId) {
         return users.filter(
           (user) =>
             user.isActive &&
-            (user.branchId === selectedBranchId || user.role === "Superadmin")
+            (user.branchId === selectedBranchId ||
+              user.role === USER_ROLES.SUPERADMIN)
         );
       }
       return users.filter((user) => user.isActive);
@@ -100,29 +116,32 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
       return users.filter(
         (user) =>
           user.isActive &&
-          (user.branchId === userProfile.branchId || user.role === "Superadmin")
+          (user.branchId === userProfile.branchId ||
+            user.role === USER_ROLES.SUPERADMIN)
       );
     }
-
     return users.filter((user) => user.isActive);
   };
 
   const getAvailableBranches = () => {
-    if (userProfile?.role === "Superadmin") {
+    if (!branches || branches.length === 0) return [];
+    if (userProfile?.role === USER_ROLES.SUPERADMIN) {
       return branches.filter((branch) => branch.isActive);
     } else if (userProfile?.branchId) {
       return branches.filter(
         (branch) => branch.isActive && branch.id === userProfile.branchId
       );
     }
-
     return [];
   };
 
   const onSubmit = async (data) => {
-    try {
-      setLoading(true);
+    setLoading(true);
+    const toastId = toast.loading(
+      editData ? "Updating enquiry..." : "Creating enquiry..."
+    );
 
+    try {
       const enquiryData = {
         ...data,
         branchId: data.branchId || userProfile?.branchId || null,
@@ -132,23 +151,87 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
         updatedAt: new Date(),
       };
 
-      if (!enquiryData.branchId && userProfile?.role !== "Superadmin") {
-        setLoading(false);
-        return;
+      if (!user || !user.uid) {
+        throw new Error("Authentication error: User not logged in.");
+      }
+      if (
+        !enquiryData.branchId &&
+        userProfile?.role !== USER_ROLES.SUPERADMIN
+      ) {
+        throw new Error("Please assign the enquiry to a branch.");
       }
 
+      let enquiryId;
       if (editData) {
-        await enquiryService.update(editData.id, enquiryData);
-        toast.success("Enquiry updated successfully!");
+        enquiryId = editData.id;
+        await enquiryService.update(enquiryId, enquiryData);
+        toast.success("Enquiry updated successfully!", { id: toastId });
       } else {
-        await enquiryService.create(enquiryData);
-        toast.success("Enquiry created successfully!");
+        enquiryId = await enquiryService.create(enquiryData);
+        toast.success("Enquiry created successfully!", { id: toastId });
+      }
+
+      const notificationRecipients = [];
+
+      const superadmins = users.filter(
+        (u) =>
+          u.role === USER_ROLES.SUPERADMIN && u.isActive && u.id !== user.uid
+      );
+      superadmins.forEach((sa) => notificationRecipients.push(sa.id));
+
+      if (enquiryData.branchId) {
+        const branchAdmin = users.find(
+          (u) =>
+            u.role === USER_ROLES.BRANCH_ADMIN &&
+            u.branchId === enquiryData.branchId &&
+            u.isActive &&
+            u.id !== user.uid
+        );
+        if (branchAdmin && !notificationRecipients.includes(branchAdmin.id)) {
+          notificationRecipients.push(branchAdmin.id);
+        }
+      }
+
+      console.log("Attempting to send notification...");
+      console.log("Calculated recipients:", notificationRecipients);
+      console.log("All users available for selection:", users);
+      console.log("Current user profile:", userProfile);
+      console.log("Enquiry Data being saved:", enquiryData);
+
+      if (notificationRecipients.length > 0) {
+        const studentFullName = `${data.student_First_Name || ""} ${
+          data.student_Last_Name || ""
+        }`.trim();
+        const notificationTitle = editData
+          ? "Enquiry Updated"
+          : "New Enquiry Created";
+        const notificationBody = editData
+          ? `Enquiry for ${studentFullName} has been updated by ${userProfile.displayName}.`
+          : `A new enquiry for ${studentFullName} has been created by ${userProfile.displayName}.`;
+        const notificationLink = `/students/${enquiryId}/details`;
+
+        await notificationService.send(
+          notificationTitle,
+          notificationBody,
+          notificationRecipients,
+          "enquiry",
+          notificationLink
+        );
+        console.log("Notification send triggered successfully in client.");
+      } else {
+        console.warn(
+          "No valid recipients found for notification. Not sending."
+        );
       }
 
       onSuccess();
       onClose();
     } catch (error) {
-      console.log("error", error);
+      console.error("Error saving enquiry or sending notification:", error);
+      toast.error(
+        error.message || "Failed to save enquiry. Check console for details.",
+        { id: toastId }
+      );
     } finally {
       setLoading(false);
     }
@@ -161,24 +244,24 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
           Assignment Information
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {userProfile?.role == "Superadmin" && (
+          {userProfile?.role === USER_ROLES.SUPERADMIN && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Branch {userProfile?.role !== "Superadmin" ? "*" : ""}
+                Branch {userProfile?.role !== USER_ROLES.SUPERADMIN ? "*" : ""}
               </label>
 
               <select
                 {...register("branchId", {
                   required:
-                    userProfile?.role !== "Superadmin"
+                    userProfile?.role !== USER_ROLES.SUPERADMIN
                       ? "Branch is required"
                       : false,
                 })}
                 className="input-field"
-                disabled={userProfile?.role !== "Superadmin" || branchesLoading}
+                disabled={branchesLoading}
               >
-                <option value={userProfile?.branchId}>
-                  {userProfile?.role === "Superadmin"
+                <option value="">
+                  {userProfile?.role === USER_ROLES.SUPERADMIN
                     ? "Select Branch (Optional)"
                     : "Loading..."}
                 </option>
@@ -196,7 +279,7 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
                   {errors.branchId.message}
                 </p>
               )}
-              {userProfile?.role !== "Superadmin" && (
+              {userProfile?.role !== USER_ROLES.SUPERADMIN && (
                 <p className="text-xs text-gray-500 mt-1">
                   Enquiry will be assigned to your branch
                 </p>
@@ -214,17 +297,19 @@ const EnquiryForm = ({ onClose, onSuccess, editData = null }) => {
                 required: "Please assign this enquiry to someone",
               })}
               className="input-field"
-              disabled={usersLoading || userProfile?.role !== "Superadmin"}
+              disabled={usersLoading}
               value={
-                userProfile?.role === "Superadmin"
-                  ? undefined
+                userProfile?.role === USER_ROLES.SUPERADMIN
+                  ? watch("assignedUserId")
                   : userProfile?.uid || ""
               }
               onChange={
-                userProfile?.role === "Superadmin" ? undefined : () => {}
+                userProfile?.role === USER_ROLES.SUPERADMIN
+                  ? (e) => setValue("assignedUserId", e.target.value)
+                  : () => {} // Prevent changes for non-Superadmins
               }
             >
-              {userProfile?.role === "Superadmin" ? (
+              {userProfile?.role === USER_ROLES.SUPERADMIN ? (
                 <>
                   <option value="">Select User</option>
                   {getAvailableUsers().map((user, index) => (
