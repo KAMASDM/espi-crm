@@ -18,6 +18,7 @@ import {
   Building2,
   UserCheck,
   Loader2,
+  Shield,
 } from "lucide-react";
 import { ENQUIRY_STATUS } from "../../utils/constants";
 import { branchService, userService } from "../../services/firestore";
@@ -81,7 +82,8 @@ const StudentsTable = ({
   onUpdateStatus,
   onUpdateNote,
   onUpdateAssignment,
-  currentUserProfile,
+  userRole,
+  userBranch,
   handleVisibility,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -96,17 +98,41 @@ const StudentsTable = ({
   const [branches, setBranches] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
 
-  const filteredStudentss =
-    currentUserProfile.role === "Superadmin" ||
-    currentUserProfile.role === "Reception"
-      ? students
-      : currentUserProfile.role === "Branch Admin"
-      ? students.filter(
-          (student) => student.branchId === currentUserProfile.branchId
-        )
-      : students.filter(
-          (student) => student.assignedUserId === currentUserProfile.id
-        );
+  const getRoleBadge = (role) => {
+    let bgColor = "bg-gray-100";
+    let textColor = "text-gray-800";
+    let roleName = "";
+
+    if (role === "Superadmin") {
+      bgColor = "bg-red-100";
+      textColor = "text-red-800";
+      roleName = "Super Admin";
+    } else if (role === "Branch Admin" || role === "Branch Manager") {
+      bgColor = "bg-purple-100";
+      textColor = "text-purple-800";
+      roleName = "Branch Admin";
+    } else if (role === "Counsellor" || role === "Processor") {
+      bgColor = "bg-blue-100";
+      textColor = "text-blue-800";
+      roleName = role === "Counsellor" ? "Counsellor" : "Processor";
+    } else if (role === "Reception" || role === "Accountant") {
+      bgColor = "bg-yellow-100";
+      textColor = "text-yellow-800";
+      roleName = role === "Reception" ? "Receptionist" : "Accountant";
+    } else if (role === "Agent") {
+      bgColor = "bg-green-100";
+      textColor = "text-green-800";
+      roleName = "Agent";
+    }
+
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
+      >
+        <Shield size={12} className="mr-1" /> {roleName}
+      </span>
+    );
+  };
 
   useEffect(() => {
     const fetchReferenceData = async () => {
@@ -131,34 +157,37 @@ const StudentsTable = ({
     return acc;
   }, {});
 
+  const userMap = users.reduce((acc, user) => {
+    acc[user.id] = { displayName: user.displayName, role: user.role };
+    return acc;
+  }, {});
+
   const getBranchName = (branchId) => {
     if (!branchId) return "No Branch";
     if (branchesLoading) return "Loading...";
     return branchMap[branchId];
   };
 
+  const getCreatedByUserDetails = (userId) => {
+    if (!userId) return { displayName: "N/A", role: "N/A" };
+    const user = userMap[userId];
+    return user;
+  };
+
   const getAvailableUsers = () => {
-    if (
-      currentUserProfile?.role === "Superadmin" ||
-      currentUserProfile?.role === "Reception"
-    ) {
+    if (userRole === "Superadmin" || userRole === "Reception") {
       return users;
-    } else if (currentUserProfile?.role === "Counsellor") {
+    } else if (userRole === "Counsellor") {
       return [];
-    } else if (
-      currentUserProfile?.role === "Branch Admin" &&
-      currentUserProfile?.branchId
-    ) {
+    } else if (userRole === "Branch Admin" && userBranch) {
       return users.filter(
-        (user) =>
-          user.branchId === currentUserProfile.branchId &&
-          user.role === "Counsellor"
+        (user) => user.branchId === userBranch && user.role === "Counsellor"
       );
     }
     return [];
   };
 
-  const filteredStudents = filteredStudentss
+  const filteredStudents = students
     .filter((student) => {
       const searchTermLower = searchTerm.toLowerCase();
       const matchesSearch =
@@ -280,43 +309,50 @@ const StudentsTable = ({
             </select>
           </div>
 
-          <div className="relative">
-            <Building2
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={16}
-            />
-            <select
-              value={branchFilter}
-              onChange={(e) => setBranchFilter(e.target.value)}
-              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">All Branches</option>
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.branchName}
-                </option>
-              ))}
-            </select>
-          </div>
+          {userRole === "Superadmin" ||
+            userRole === "Branch Admin" ||
+            (userRole === "Agent" && (
+              <div className="relative">
+                <Building2
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={16}
+                />
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">All Branches</option>
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.branchName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
 
-          <div className="relative">
-            <UserCheck
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={16}
-            />
-            <select
-              value={assignmentFilter}
-              onChange={(e) => setAssignmentFilter(e.target.value)}
-              className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">All Assigned To</option>
-              {getAvailableUsers().map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.displayName}
-                </option>
-              ))}
-            </select>
-          </div>
+          {userRole === "Superadmin" ||
+            (userRole === "Branch Admin" && (
+              <div className="relative">
+                <UserCheck
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={16}
+                />
+                <select
+                  value={assignmentFilter}
+                  onChange={(e) => setAssignmentFilter(e.target.value)}
+                  className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">All Assigned To</option>
+                  {getAvailableUsers().map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
         </div>
       </div>
 
@@ -344,8 +380,7 @@ const StudentsTable = ({
               <th className="table-header">Contact</th>
               <th className="table-header">Location</th>
               <th className="table-header">Branch</th>
-              {(currentUserProfile.role === "Superadmin" ||
-                currentUserProfile.role === "Branch Admin") && (
+              {(userRole === "Superadmin" || userRole === "Branch Admin") && (
                 <th className="table-header">Assigned To</th>
               )}
               <th className="table-header">Education</th>
@@ -363,6 +398,9 @@ const StudentsTable = ({
                 </div>
               </th>
               <th className="table-header w-48">Notes</th>
+              {(userRole === "Superadmin" || userRole === "Branch Admin") && (
+                <th className="table-header">Created By</th>
+              )}
               <th
                 onClick={() => handleSort("createdAt")}
                 className="table-header cursor-pointer hover:bg-gray-100"
@@ -382,7 +420,7 @@ const StudentsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="7" className="table-cell text-center py-8">
+                <td colSpan="11" className="table-cell text-center py-8">
                   <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
                   <p className="text-gray-500">Loading students...</p>
                 </td>
@@ -390,7 +428,7 @@ const StudentsTable = ({
             ) : filteredStudents.length === 0 ? (
               <tr>
                 <td
-                  colSpan="10"
+                  colSpan="11"
                   className="table-cell text-center text-gray-500 py-8"
                 >
                   <User className="mx-auto mb-2 text-gray-300" size={48} />
@@ -423,6 +461,10 @@ const StudentsTable = ({
                     console.error("Error formatting date (other type):", error);
                   }
                 }
+
+                const createdByUserDetails = getCreatedByUserDetails(
+                  student.createdBy
+                );
 
                 return (
                   <tr key={student.id} className="hover:bg-gray-50">
@@ -482,8 +524,8 @@ const StudentsTable = ({
                       </div>
                     </td>
 
-                    {(currentUserProfile.role === "Superadmin" ||
-                      currentUserProfile.role === "Branch Admin") && (
+                    {(userRole === "Superadmin" ||
+                      userRole === "Branch Admin") && (
                       <td className="table-cell">
                         <select
                           value={student.assignedUserId || ""}
@@ -570,6 +612,18 @@ const StudentsTable = ({
                       )}
                     </td>
 
+                    {(userRole === "Superadmin" ||
+                      userRole === "Branch Admin") && (
+                      <td className="table-cell">
+                        <div className="text-sm text-gray-900">
+                          <div>{createdByUserDetails?.displayName}</div>
+                          <div className="mt-1">
+                            {getRoleBadge(createdByUserDetails?.role)}
+                          </div>
+                        </div>
+                      </td>
+                    )}
+
                     <td className="table-cell">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar size={14} className="mr-2 text-gray-400" />
@@ -577,9 +631,11 @@ const StudentsTable = ({
                       </div>
                     </td>
 
-                    {handleVisibility && (
-                      <td className="table-cell">
-                        <div className="flex items-center space-x-1">
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-1">
+                        {(userRole === "Superadmin" ||
+                          userRole === "Branch Admin" ||
+                          userRole === "Counsellor") && (
                           <button
                             onClick={() => onView(student)}
                             className="p-1 text-blue-600 hover:text-blue-900"
@@ -587,6 +643,8 @@ const StudentsTable = ({
                           >
                             <Eye size={16} />
                           </button>
+                        )}
+                        {handleVisibility && (
                           <button
                             onClick={() => onEdit(student)}
                             className="p-1 text-yellow-600 hover:text-yellow-900"
@@ -594,6 +652,8 @@ const StudentsTable = ({
                           >
                             <Edit size={16} />
                           </button>
+                        )}
+                        {userRole === "Superadmin" && (
                           <button
                             onClick={() => onDelete(student.id)}
                             className="p-1 text-red-600 hover:text-red-900"
@@ -601,9 +661,9 @@ const StudentsTable = ({
                           >
                             <Trash2 size={16} />
                           </button>
-                        </div>
-                      </td>
-                    )}
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 );
               })

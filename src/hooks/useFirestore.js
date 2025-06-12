@@ -95,13 +95,15 @@ export const useEnquiries = () => {
     if (!userProfile) return null;
 
     const constraints = [];
-    if (userProfile.role === USER_ROLES.SUPERADMIN) {
+    if (
+      userProfile.role === USER_ROLES.SUPERADMIN ||
+      userProfile.role === USER_ROLES.AGENT
+    ) {
       // No additional filters
     } else if (
       userProfile.branchId &&
       (userProfile.role === USER_ROLES.BRANCH_ADMIN ||
         userProfile.role === USER_ROLES.RECEPTION ||
-        userProfile.role === USER_ROLES.AGENT ||
         userProfile.role === USER_ROLES.COUNSELLOR ||
         userProfile.role === USER_ROLES.PROCESSOR)
     ) {
