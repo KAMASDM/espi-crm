@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Papa from "papaparse";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -11,9 +11,10 @@ import {
   X,
 } from "lucide-react";
 import Modal from "../components/Common/Modal";
+import { USER_ROLES } from "../utils/constants";
 import { downloadAsCSV } from "../utils/helpers";
 import { useAuth } from "../context/AuthContext";
-import { useEnquiries } from "../hooks/useFirestore";
+import { useEnquiries, useUsers } from "../hooks/useFirestore";
 import EnquiryForm from "../components/Students/EnquiryForm";
 import StudentsTable from "../components/Students/StudentsTable";
 
@@ -36,6 +37,7 @@ const Students = () => {
     delete: deleteEnquiry,
   } = useEnquiries();
   const navigate = useNavigate();
+  const { data: allUsers } = useUsers();
   const { user, userProfile } = useAuth();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -49,12 +51,22 @@ const Students = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
 
-  const filteredStudents =
-    userProfile.role === "Superadmin"
-      ? students
-      : userProfile.role === "Branch Admin"
-      ? students.filter((student) => student.branchId === userProfile.branchId)
-      : students.filter((student) => student.assignedUserId === userProfile.id);
+  const filteredStudents = useMemo(() => {
+    if (!userProfile || !students) return [];
+    if (userProfile.role === USER_ROLES.SUPERADMIN) {
+      return students;
+    } else if (userProfile.role === USER_ROLES.BRANCH_ADMIN) {
+      return students.filter(
+        (student) => student.branchId === userProfile.branchId
+      );
+    } else if (
+      userProfile.role === USER_ROLES.COUNSELLOR ||
+      userProfile.role === USER_ROLES.RECEPTION
+    ) {
+      return students;
+    }
+    return [];
+  }, [students, userProfile]);
 
   useEffect(() => {
     if (error) {
@@ -304,10 +316,10 @@ const Students = () => {
   };
 
   const handleVisibility =
-    userProfile.role === "Superadmin" ||
-    userProfile.role === "Branch Admin" ||
-    userProfile.role === "Counsellor" ||
-    userProfile.role === "Reception";
+    userProfile.role === USER_ROLES.SUPERADMIN ||
+    userProfile.role === USER_ROLES.BRANCH_ADMIN ||
+    userProfile.role === USER_ROLES.COUNSELLOR ||
+    userProfile.role === USER_ROLES.RECEPTION;
 
   return (
     <div className="space-y-6">
@@ -495,6 +507,7 @@ const Students = () => {
         size="large"
       >
         <EnquiryForm
+          allUsers={allUsers}
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
             setShowAddModal(false);
@@ -508,6 +521,7 @@ const Students = () => {
         size="large"
       >
         <EnquiryForm
+          allUsers={allUsers}
           editData={selectedStudent}
           onClose={() => setShowEditModal(false)}
           onSuccess={() => {

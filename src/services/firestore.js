@@ -558,3 +558,27 @@ export const chatService = {
     }
   },
 };
+
+export const notificationService = {
+  async send(title, body, recipientIds, type = "system", link = "") {
+    try {
+      if (!Array.isArray(recipientIds) || recipientIds.length === 0) {
+        console.warn("Notification: No recipients specified.");
+        return;
+      }
+
+      await firestoreService.create("notifications", {
+        title,
+        body,
+        recipientIds,
+        type,
+        link,
+        readBy: [],
+        timestamp: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      throw error;
+    }
+  },
+};
