@@ -60,10 +60,13 @@ const Students = () => {
         (student) => student.branchId === userProfile.branchId
       );
     } else if (
+      userProfile.role === USER_ROLES.AGENT ||
       userProfile.role === USER_ROLES.COUNSELLOR ||
       userProfile.role === USER_ROLES.RECEPTION
     ) {
-      return students;
+      return students.filter(
+        (student) => student.createdBy === userProfile.uid
+      );
     }
     return [];
   }, [students, userProfile]);
@@ -71,7 +74,6 @@ const Students = () => {
   useEffect(() => {
     if (error) {
       console.error("Error fetching enquiries:", error);
-      toast.error("Failed to load student enquiries.");
     }
   }, [error]);
 
@@ -319,7 +321,8 @@ const Students = () => {
     userProfile.role === USER_ROLES.SUPERADMIN ||
     userProfile.role === USER_ROLES.BRANCH_ADMIN ||
     userProfile.role === USER_ROLES.COUNSELLOR ||
-    userProfile.role === USER_ROLES.RECEPTION;
+    userProfile.role === USER_ROLES.RECEPTION ||
+    userProfile.role === USER_ROLES.AGENT;
 
   return (
     <div className="space-y-6">
@@ -439,22 +442,20 @@ const Students = () => {
         {[
           {
             title: "Total Students",
-            value: filteredStudents?.length,
+            value: students?.length,
             color: "blue",
             subtext: "All enquiries",
           },
           {
             title: "New Enquiries",
-            value: filteredStudents?.filter((s) => s.enquiry_status === "New")
-              .length,
+            value: students?.filter((s) => s.enquiry_status === "New").length,
             color: "green",
             subtext: "Require attention",
           },
           {
             title: "In Progress",
-            value: filteredStudents?.filter(
-              (s) => s.enquiry_status === "In Progress"
-            ).length,
+            value: students?.filter((s) => s.enquiry_status === "In Progress")
+              .length,
             color: "yellow",
             subtext: "Active cases",
           },
@@ -488,7 +489,7 @@ const Students = () => {
       </div>
       <div className="card">
         <StudentsTable
-          students={students}
+          students={filteredStudents}
           loading={loading}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -496,7 +497,8 @@ const Students = () => {
           onUpdateStatus={handleUpdateStudentStatus}
           onUpdateNote={handleUpdateStudentNote}
           onUpdateAssignment={handleUpdateStudentAssignment}
-          currentUserProfile={userProfile}
+          userRole={userProfile?.role}
+          userBranch={userProfile?.branchId}
           handleVisibility={handleVisibility}
         />
       </div>

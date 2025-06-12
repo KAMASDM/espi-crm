@@ -38,6 +38,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         USER_ROLES.BRANCH_ADMIN,
         USER_ROLES.COUNSELLOR,
         USER_ROLES.RECEPTION,
+        USER_ROLES.AGENT,
       ],
     },
     {

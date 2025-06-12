@@ -56,7 +56,7 @@ const EnquiryForm = ({
         setBranches(fetchedBranches || []);
         setBranchesLoading(false);
       } catch (error) {
-        console.error("Error fetching branches:", error);
+        console.log("error", error);
       }
 
       if (allUsers.length === 0) {
@@ -66,7 +66,7 @@ const EnquiryForm = ({
           setUsers(fetchedUsers || []);
           setUsersLoading(false);
         } catch (error) {
-          console.error("Error fetching users for form:", error);
+          console.log("error", error);
         }
       } else {
         setUsersLoading(false);
@@ -76,6 +76,7 @@ const EnquiryForm = ({
 
     fetchReferenceData();
   }, [allUsers]);
+
   useEffect(() => {
     if (userProfile && !editData) {
       if (userProfile.branchId && userProfile.role !== USER_ROLES.SUPERADMIN) {
@@ -125,7 +126,10 @@ const EnquiryForm = ({
 
   const getAvailableBranches = () => {
     if (!branches || branches.length === 0) return [];
-    if (userProfile?.role === USER_ROLES.SUPERADMIN) {
+    if (
+      userProfile?.role === USER_ROLES.SUPERADMIN ||
+      userProfile?.role === USER_ROLES.AGENT
+    ) {
       return branches.filter((branch) => branch.isActive);
     } else if (userProfile?.branchId) {
       return branches.filter(
@@ -137,16 +141,13 @@ const EnquiryForm = ({
 
   const onSubmit = async (data) => {
     setLoading(true);
-    const toastId = toast.loading(
-      editData ? "Updating enquiry..." : "Creating enquiry..."
-    );
 
     try {
       const enquiryData = {
         ...data,
-        branchId: data.branchId || userProfile?.branchId || null,
-        assignedUserId: data.assignedUserId || userProfile?.uid || null,
-        assigned_users: data.assignedUserId || userProfile?.uid || null,
+        branchId: data.branchId || userProfile?.branchId,
+        assignedUserId: data.assignedUserId || userProfile?.uid,
+        assigned_users: data.assignedUserId || userProfile?.uid,
         createdBy: user.uid,
         updatedAt: new Date(),
       };
@@ -165,10 +166,10 @@ const EnquiryForm = ({
       if (editData) {
         enquiryId = editData.id;
         await enquiryService.update(enquiryId, enquiryData);
-        toast.success("Enquiry updated successfully!", { id: toastId });
+        toast.success("Enquiry updated successfully!");
       } else {
         enquiryId = await enquiryService.create(enquiryData);
-        toast.success("Enquiry created successfully!", { id: toastId });
+        toast.success("Enquiry created successfully!");
       }
 
       const notificationRecipients = [];
@@ -192,12 +193,6 @@ const EnquiryForm = ({
         }
       }
 
-      console.log("Attempting to send notification...");
-      console.log("Calculated recipients:", notificationRecipients);
-      console.log("All users available for selection:", users);
-      console.log("Current user profile:", userProfile);
-      console.log("Enquiry Data being saved:", enquiryData);
-
       if (notificationRecipients.length > 0) {
         const studentFullName = `${data.student_First_Name || ""} ${
           data.student_Last_Name || ""
@@ -217,21 +212,15 @@ const EnquiryForm = ({
           "enquiry",
           notificationLink
         );
-        console.log("Notification send triggered successfully in client.");
+        console.log("Notification Send Successfully");
       } else {
-        console.warn(
-          "No valid recipients found for notification. Not sending."
-        );
+        console.log("No notification recipients found.");
       }
 
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Error saving enquiry or sending notification:", error);
-      toast.error(
-        error.message || "Failed to save enquiry. Check console for details.",
-        { id: toastId }
-      );
+      console.log("error", error);
     } finally {
       setLoading(false);
     }
@@ -244,10 +233,14 @@ const EnquiryForm = ({
           Assignment Information
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {userProfile?.role === USER_ROLES.SUPERADMIN && (
+          {(userProfile?.role === USER_ROLES.SUPERADMIN ||
+            userProfile?.role === USER_ROLES.AGENT) && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Branch {userProfile?.role !== USER_ROLES.SUPERADMIN ? "*" : ""}
+                Branch{" "}
+                {userProfile?.role !== USER_ROLES.SUPERADMIN
+                  ? "*"
+                  : "(Optional)"}
               </label>
 
               <select
@@ -258,11 +251,17 @@ const EnquiryForm = ({
                       : false,
                 })}
                 className="input-field"
-                disabled={branchesLoading}
+                disabled={
+                  branchesLoading ||
+                  (userProfile?.role !== USER_ROLES.SUPERADMIN &&
+                    userProfile?.role !== USER_ROLES.AGENT)
+                }
               >
                 <option value="">
                   {userProfile?.role === USER_ROLES.SUPERADMIN
                     ? "Select Branch (Optional)"
+                    : userProfile?.role === USER_ROLES.AGENT
+                    ? "Select Branch"
                     : "Loading..."}
                 </option>
                 {getAvailableBranches().map((branch) => (
@@ -279,10 +278,16 @@ const EnquiryForm = ({
                   {errors.branchId.message}
                 </p>
               )}
-              {userProfile?.role !== USER_ROLES.SUPERADMIN && (
+              {userProfile?.role === USER_ROLES.AGENT ? (
                 <p className="text-xs text-gray-500 mt-1">
-                  Enquiry will be assigned to your branch
+                  Select the branch this enquiry belongs to.
                 </p>
+              ) : (
+                userProfile?.role !== USER_ROLES.SUPERADMIN && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enquiry will be assigned to your branch.
+                  </p>
+                )
               )}
             </div>
           )}
