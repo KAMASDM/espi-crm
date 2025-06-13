@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
+import emailjs from "@emailjs/browser";
 import {
   INTAKES,
   COUNTRIES,
@@ -19,6 +20,10 @@ import {
 } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
 import { useServices, useUniversities } from "../../hooks/useFirestore";
+
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 const EnquiryForm = ({
   onClose,
@@ -101,6 +106,155 @@ const EnquiryForm = ({
     }
   }, [selectedCountries, universities]);
 
+  const sendEmailNotification = async (recipient, templateParams) => {
+    if (!recipient.email) {
+      console.warn(
+        `Skipping email for ${
+          recipient.displayName || "user"
+        } as they have no email address.`
+      );
+      return;
+    }
+
+    if (EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY" || !EMAILJS_PUBLIC_KEY) {
+      const errorMsg =
+        "EmailJS Public Key is not configured. Please update it in EnquiryForm.jsx.";
+      toast.error(errorMsg, { duration: 4000 });
+      return;
+    }
+
+    try {
+      const emailParams = {
+        ...templateParams,
+        recipient_email: recipient.email,
+        recipientName: recipient.displayName || "Admin",
+      };
+
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        emailParams,
+        EMAILJS_PUBLIC_KEY
+      );
+    } catch (error) {
+      toast.error(
+        `Failed to send email to ${recipient.displayName}. Details: ${
+          error.text || error.message
+        }`
+      );
+    }
+  };
+
+  const onSubmit = async (data) => {
+    setLoading(true);
+
+    try {
+      const enquiryData = {
+        ...data,
+        branchId: data.branchId || userProfile?.branchId,
+        assignedUserId: data.assignedUserId || userProfile?.uid,
+        assigned_users: data.assignedUserId || userProfile?.uid,
+        createdBy: user.uid,
+        updatedAt: new Date(),
+      };
+
+      if (!user || !user.uid) {
+        throw new Error("Authentication error: User not logged in.");
+      }
+      if (
+        !enquiryData.branchId &&
+        userProfile?.role !== USER_ROLES.SUPERADMIN
+      ) {
+        throw new Error("Please assign the enquiry to a branch.");
+      }
+
+      let enquiryId;
+      if (editData) {
+        enquiryId = editData.id;
+        await enquiryService.update(enquiryId, enquiryData);
+        toast.success("Enquiry updated successfully!");
+      } else {
+        enquiryId = await enquiryService.create(enquiryData);
+        toast.success("Enquiry created successfully!");
+      }
+
+      const studentFullName = `${data.student_First_Name || ""} ${
+        data.student_Last_Name || ""
+      }`.trim();
+      const notificationTitle = editData
+        ? "Enquiry Updated"
+        : "New Enquiry Created";
+      const notificationBody = editData
+        ? `Enquiry for ${studentFullName} has been updated by ${userProfile.displayName}.`
+        : `A new enquiry for ${studentFullName} has been created by ${userProfile.displayName}.`;
+      const notificationLink = `/students/${enquiryId}/details`;
+
+      const notificationRecipientIds = new Set();
+      const emailRecipients = new Map();
+
+      const superadmins = users.filter(
+        (u) =>
+          u.role === USER_ROLES.SUPERADMIN && u.isActive && u.id !== user.uid
+      );
+      superadmins.forEach((sa) => {
+        notificationRecipientIds.add(sa.id);
+        if (!emailRecipients.has(sa.id)) emailRecipients.set(sa.id, sa);
+      });
+
+      if (enquiryData.branchId) {
+        const branchAdmin = users.find(
+          (u) =>
+            u.role === USER_ROLES.BRANCH_ADMIN &&
+            u.branchId === enquiryData.branchId &&
+            u.isActive &&
+            u.id !== user.uid
+        );
+        if (branchAdmin) {
+          notificationRecipientIds.add(branchAdmin.id);
+          if (!emailRecipients.has(branchAdmin.id))
+            emailRecipients.set(branchAdmin.id, branchAdmin);
+        }
+      }
+
+      const finalRecipientIds = Array.from(notificationRecipientIds);
+      if (finalRecipientIds.length > 0) {
+        await notificationService.send(
+          notificationTitle,
+          notificationBody,
+          finalRecipientIds,
+          "enquiry",
+          notificationLink
+        );
+      }
+
+      const finalEmailRecipients = Array.from(emailRecipients.values());
+      if (finalEmailRecipients.length > 0) {
+        const templateParams = {
+          actionText: notificationTitle,
+          bodyText: notificationBody,
+          studentName: studentFullName,
+          enquiryId: enquiryId,
+          link: `${window.location.origin}${notificationLink}`,
+        };
+
+        await Promise.all(
+          finalEmailRecipients.map((recipient) =>
+            sendEmailNotification(recipient, templateParams)
+          )
+        );
+      } else {
+        console.log("No notification recipients found.");
+      }
+
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error(error.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getAvailableUsers = () => {
     if (!users || users.length === 0) return [];
     if (userProfile?.role === USER_ROLES.SUPERADMIN) {
@@ -137,93 +291,6 @@ const EnquiryForm = ({
       );
     }
     return [];
-  };
-
-  const onSubmit = async (data) => {
-    setLoading(true);
-
-    try {
-      const enquiryData = {
-        ...data,
-        branchId: data.branchId || userProfile?.branchId,
-        assignedUserId: data.assignedUserId || userProfile?.uid,
-        assigned_users: data.assignedUserId || userProfile?.uid,
-        createdBy: user.uid,
-        updatedAt: new Date(),
-      };
-
-      if (!user || !user.uid) {
-        throw new Error("Authentication error: User not logged in.");
-      }
-      if (
-        !enquiryData.branchId &&
-        userProfile?.role !== USER_ROLES.SUPERADMIN
-      ) {
-        throw new Error("Please assign the enquiry to a branch.");
-      }
-
-      let enquiryId;
-      if (editData) {
-        enquiryId = editData.id;
-        await enquiryService.update(enquiryId, enquiryData);
-        toast.success("Enquiry updated successfully!");
-      } else {
-        enquiryId = await enquiryService.create(enquiryData);
-        toast.success("Enquiry created successfully!");
-      }
-
-      const notificationRecipients = [];
-
-      const superadmins = users.filter(
-        (u) =>
-          u.role === USER_ROLES.SUPERADMIN && u.isActive && u.id !== user.uid
-      );
-      superadmins.forEach((sa) => notificationRecipients.push(sa.id));
-
-      if (enquiryData.branchId) {
-        const branchAdmin = users.find(
-          (u) =>
-            u.role === USER_ROLES.BRANCH_ADMIN &&
-            u.branchId === enquiryData.branchId &&
-            u.isActive &&
-            u.id !== user.uid
-        );
-        if (branchAdmin && !notificationRecipients.includes(branchAdmin.id)) {
-          notificationRecipients.push(branchAdmin.id);
-        }
-      }
-
-      if (notificationRecipients.length > 0) {
-        const studentFullName = `${data.student_First_Name || ""} ${
-          data.student_Last_Name || ""
-        }`.trim();
-        const notificationTitle = editData
-          ? "Enquiry Updated"
-          : "New Enquiry Created";
-        const notificationBody = editData
-          ? `Enquiry for ${studentFullName} has been updated by ${userProfile.displayName}.`
-          : `A new enquiry for ${studentFullName} has been created by ${userProfile.displayName}.`;
-        const notificationLink = `/students/${enquiryId}/details`;
-
-        await notificationService.send(
-          notificationTitle,
-          notificationBody,
-          notificationRecipients,
-          "enquiry",
-          notificationLink
-        );
-        console.log("Notification Send Successfully");
-      } else {
-        console.log("No notification recipients found.");
-      }
-
-      onSuccess();
-      onClose();
-    } catch (error) {
-      console.log("error", error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -311,7 +378,7 @@ const EnquiryForm = ({
               onChange={
                 userProfile?.role === USER_ROLES.SUPERADMIN
                   ? (e) => setValue("assignedUserId", e.target.value)
-                  : () => {} // Prevent changes for non-Superadmins
+                  : () => {}
               }
             >
               {userProfile?.role === USER_ROLES.SUPERADMIN ? (

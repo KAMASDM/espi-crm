@@ -6,7 +6,7 @@ import {
   onSnapshot,
   orderBy,
   doc,
-  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -64,37 +64,13 @@ export const useNotifications = () => {
     return () => unsubscribe();
   }, [user]);
 
-  const markAsRead = async (notificationId) => {
-    if (!user || !notificationId) return;
+  const deleteNotification = async (notificationId) => {
     try {
       const notificationRef = doc(db, "notifications", notificationId);
-      await updateDoc(notificationRef, {
-        readBy: [
-          ...(notifications.find((n) => n.id === notificationId)?.readBy || []),
-          user.uid,
-        ],
-      });
-    } catch (err) {
-      console.error("Error marking notification as read:", err);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    if (!user) return;
-    try {
-      const unreadNotifications = notifications.filter(
-        (n) => !n.readBy?.includes(user.uid)
-      );
-      const batch = db.batch();
-      unreadNotifications.forEach((n) => {
-        const notificationRef = doc(db, "notifications", n.id);
-        batch.update(notificationRef, {
-          readBy: [...(n.readBy || []), user.uid],
-        });
-      });
-      await batch.commit();
-    } catch (err) {
-      console.error("Error marking all notifications as read:", err);
+      await deleteDoc(notificationRef);
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      throw error;
     }
   };
 
@@ -103,7 +79,6 @@ export const useNotifications = () => {
     unreadCount,
     loading,
     error,
-    markAsRead,
-    markAllAsRead,
+    deleteNotification,
   };
 };
