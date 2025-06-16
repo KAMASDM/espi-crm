@@ -42,28 +42,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       ],
     },
     {
-      name: "Universities",
-      href: "/universities",
-      icon: Building2,
-      roles: [
-        USER_ROLES.SUPERADMIN,
-        USER_ROLES.BRANCH_ADMIN,
-        USER_ROLES.COUNSELLOR,
-        USER_ROLES.PROCESSOR,
-      ],
-    },
-    {
-      name: "Courses",
-      href: "/courses",
-      icon: BookOpen,
-      roles: [
-        USER_ROLES.SUPERADMIN,
-        USER_ROLES.BRANCH_ADMIN,
-        USER_ROLES.COUNSELLOR,
-        USER_ROLES.PROCESSOR,
-      ],
-    },
-    {
       name: "Assessments",
       href: "/assessments",
       icon: ClipboardList,
@@ -100,16 +78,26 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       roles: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
     },
     {
-      name: "Chat",
-      href: "/chat",
-      icon: MessageCircle,
-      roles: Object.values(USER_ROLES),
+      name: "Universities",
+      href: "/universities",
+      icon: Building2,
+      roles: [
+        USER_ROLES.SUPERADMIN,
+        USER_ROLES.BRANCH_ADMIN,
+        USER_ROLES.COUNSELLOR,
+        USER_ROLES.PROCESSOR,
+      ],
     },
     {
-      name: "Users",
-      href: "/users",
-      icon: UsersIcon,
-      roles: [USER_ROLES.SUPERADMIN],
+      name: "Courses",
+      href: "/courses",
+      icon: BookOpen,
+      roles: [
+        USER_ROLES.SUPERADMIN,
+        USER_ROLES.BRANCH_ADMIN,
+        USER_ROLES.COUNSELLOR,
+        USER_ROLES.PROCESSOR,
+      ],
     },
     {
       name: "Services",
@@ -126,6 +114,18 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       name: "Branches",
       href: "/branches",
       icon: Briefcase,
+      roles: [USER_ROLES.SUPERADMIN],
+    },
+    {
+      name: "Chat",
+      href: "/chat",
+      icon: MessageCircle,
+      roles: Object.values(USER_ROLES),
+    },
+    {
+      name: "Users",
+      href: "/users",
+      icon: UsersIcon,
       roles: [USER_ROLES.SUPERADMIN],
     },
   ];
