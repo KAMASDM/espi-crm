@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Edit } from "lucide-react";
+import { ArrowLeft, Edit, Plus } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   useEnquiries,
@@ -25,10 +25,59 @@ import EnquiryStatusCard from "./StudentDetailComponents/EnquiryStatusCard";
 import DetailEnquiryContent from "./StudentDetailComponents/DetailEnquiryContent";
 import AssessmentForm from "../Assessment/AssessmentForm";
 import ApplicationForm from "../Application/ApplicationForm";
+import PaymentForm from "../Payment/PaymentForm";
+import { useAuth } from "../../context/AuthContext";
+import { USER_ROLES } from "../../utils/constants";
+
+const permissions = {
+  enquiry: {
+    edit: [
+      USER_ROLES.SUPERADMIN,
+      USER_ROLES.BRANCH_ADMIN,
+      USER_ROLES.COUNSELLOR,
+    ],
+  },
+  detailEnquiry: {
+    add: [
+      USER_ROLES.SUPERADMIN,
+      USER_ROLES.BRANCH_ADMIN,
+      USER_ROLES.COUNSELLOR,
+    ],
+    edit: [
+      USER_ROLES.SUPERADMIN,
+      USER_ROLES.BRANCH_ADMIN,
+      USER_ROLES.COUNSELLOR,
+    ],
+  },
+  assessment: {
+    add: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN, USER_ROLES.PROCESSOR],
+    edit: [
+      USER_ROLES.SUPERADMIN,
+      USER_ROLES.BRANCH_ADMIN,
+      USER_ROLES.PROCESSOR,
+    ],
+  },
+  application: {
+    add: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN, USER_ROLES.PROCESSOR],
+    edit: [
+      USER_ROLES.SUPERADMIN,
+      USER_ROLES.BRANCH_ADMIN,
+      USER_ROLES.PROCESSOR,
+    ],
+  },
+  payment: {
+    add: [
+      USER_ROLES.SUPERADMIN,
+      USER_ROLES.BRANCH_ADMIN,
+      USER_ROLES.ACCOUNTANT,
+    ],
+  },
+};
 
 const StudentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { userProfile } = useAuth();
 
   const { data: allUsers, loading: usersLoading } = useUsers();
   const { data: allCourses, loading: coursesLoading } = useCourses();
@@ -48,35 +97,47 @@ const StudentDetails = () => {
   const [student, setStudent] = useState(null);
   const [activeTab, setActiveTab] = useState("enquiry");
   const [selectedDetailEnquiry, setSelectedDetailEnquiry] = useState(null);
-  const [showEditEnquiryModal, setShowEditEnquiryModal] = useState(false);
-  const [showEditDetailEnquiryModal, setShowEditDetailEnquiryModal] =
-    useState(false);
-  const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
-  const [showEditApplicationModal, setShowEditApplicationModal] =
-    useState(false);
-  const universitiesMap =
-    allUniversities?.reduce((acc, uni) => {
-      acc[uni.id] = uni;
-      return acc;
-    }, {}) || {};
+  const [showEnquiryModal, setShowEnquiryModal] = useState(false);
+  const [showDetailEnquiryModal, setShowDetailEnquiryModal] = useState(false);
+  const [showAssessmentModal, setShowAssessmentModal] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const coursesMap =
-    allCourses?.reduce((acc, course) => {
-      acc[course.id] = course;
-      return acc;
-    }, {}) || {};
+  const universitiesMap = React.useMemo(
+    () =>
+      allUniversities?.reduce((acc, uni) => {
+        acc[uni.id] = uni;
+        return acc;
+      }, {}) || {},
+    [allUniversities]
+  );
 
-  const usersMap =
-    allUsers?.reduce((acc, user) => {
-      acc[user.id] = user;
-      return acc;
-    }, {}) || {};
+  const coursesMap = React.useMemo(
+    () =>
+      allCourses?.reduce((acc, course) => {
+        acc[course.id] = course;
+        return acc;
+      }, {}) || {},
+    [allCourses]
+  );
 
-  const branchesMap =
-    allBranches?.reduce((acc, branch) => {
-      acc[branch.id] = branch;
-      return acc;
-    }, {}) || {};
+  const usersMap = React.useMemo(
+    () =>
+      allUsers?.reduce((acc, user) => {
+        acc[user.id] = user;
+        return acc;
+      }, {}) || {},
+    [allUsers]
+  );
+
+  const branchesMap = React.useMemo(
+    () =>
+      allBranches?.reduce((acc, branch) => {
+        acc[branch.id] = branch;
+        return acc;
+      }, {}) || {},
+    [allBranches]
+  );
 
   useEffect(() => {
     if (id && allEnquiries && !enquiriesLoading) {
@@ -111,48 +172,29 @@ const StudentDetails = () => {
   const studentPayments = allPayments?.filter(
     ({ Memo_For }) => Memo_For === student?.id
   );
-
   const studentAssessments = allAssessments?.filter(
     ({ enquiry }) => enquiry === student?.id
   );
-
   const studentApplications = allApplications?.filter(({ assessmentId }) =>
     studentAssessments?.some(({ id }) => id === assessmentId)
   );
 
-  const handleEditEnquiry = () => {
-    setShowEditEnquiryModal(true);
+  const hasEnquiry = !!student;
+  const hasDetailEnquiry = !!selectedDetailEnquiry;
+  const hasAssessments = studentAssessments?.length > 0;
+  const hasApplications = studentApplications?.length > 0;
+
+  const hasPermission = (section, action) => {
+    if (!userProfile || !userProfile.role) return false;
+    const allowedRoles = permissions[section]?.[action];
+    return allowedRoles?.includes(userProfile.role);
   };
 
-  const handleEditDetailEnquiry = () => {
-    setShowEditDetailEnquiryModal(true);
+  const handleSuccess = (modalSetter) => {
+    modalSetter(false);
   };
 
-  const handleAssessmentAction = () => {
-    setShowEditAssessmentModal(true);
-  };
-
-  const handleApplicationAction = () => {
-    setShowEditApplicationModal(true);
-  };
-
-  const handleEnquiryFormSuccess = () => {
-    setShowEditEnquiryModal(false);
-  };
-
-  const handleDetailEnquiryFormSuccess = () => {
-    setShowEditDetailEnquiryModal(false);
-  };
-
-  const handleAssessmentFormSuccess = () => {
-    setShowEditAssessmentModal(false);
-  };
-
-  const handleApplicationFormSuccess = () => {
-    setShowEditApplicationModal(false);
-  };
-
-  if (
+  const isLoading =
     enquiriesLoading ||
     detailEnquiriesLoading ||
     assessmentsLoading ||
@@ -161,8 +203,9 @@ const StudentDetails = () => {
     paymentsLoading ||
     usersLoading ||
     universitiesLoading ||
-    coursesLoading
-  ) {
+    coursesLoading;
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loading size="lg" />
@@ -218,14 +261,12 @@ const StudentDetails = () => {
             {student.student_state}, {student.student_country}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            className="btn-primary flex items-center"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft size={18} className="mr-2" /> Back to Students
-          </button>
-        </div>
+        <button
+          className="btn-primary flex items-center"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft size={18} className="mr-2" /> Back to Students
+        </button>
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
@@ -241,91 +282,139 @@ const StudentDetails = () => {
             >
               Enquiry
             </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
-                activeTab === "detailEnquiry"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
-              onClick={() => setActiveTab("detailEnquiry")}
-            >
-              Detail Enquiry
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
-                activeTab === "assessments"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
-              onClick={() => setActiveTab("assessments")}
-            >
-              Assessment ({studentAssessments?.length})
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
-                activeTab === "applications"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
-              onClick={() => setActiveTab("applications")}
-            >
-              Application ({studentApplications?.length})
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
-                activeTab === "payments"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
-              onClick={() => setActiveTab("payments")}
-            >
-              Payment ({studentPayments?.length})
-            </button>
+            {hasEnquiry && (
+              <button
+                className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
+                  activeTab === "detailEnquiry"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+                onClick={() => setActiveTab("detailEnquiry")}
+              >
+                Detail Enquiry
+              </button>
+            )}
+            {hasDetailEnquiry && (
+              <button
+                className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
+                  activeTab === "assessments"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+                onClick={() => setActiveTab("assessments")}
+              >
+                Assessment ({studentAssessments?.length || 0})
+              </button>
+            )}
+            {hasAssessments && (
+              <button
+                className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
+                  activeTab === "applications"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+                onClick={() => setActiveTab("applications")}
+              >
+                Application ({studentApplications?.length || 0})
+              </button>
+            )}
+            {hasApplications && (
+              <button
+                className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
+                  activeTab === "payments"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+                onClick={() => setActiveTab("payments")}
+              >
+                Payment ({studentPayments?.length || 0})
+              </button>
+            )}
           </div>
-          {activeTab === "enquiry" && (
-            <button
-              onClick={handleEditEnquiry}
-              className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
-              title="Edit Student Enquiry"
-            >
-              <Edit size={16} />
-            </button>
-          )}
-          {activeTab === "detailEnquiry" && selectedDetailEnquiry && (
-            <button
-              onClick={handleEditDetailEnquiry}
-              className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
-              title="Edit Detailed Enquiry Profile"
-            >
-              <Edit size={16} />
-            </button>
-          )}
-          {activeTab === "assessments" && (
-            <button
-              onClick={handleAssessmentAction}
-              className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
-              title={
-                studentAssessments?.length > 0
-                  ? "Edit Latest Assessment"
-                  : "Add New Assessment"
-              }
-            >
-              <Edit size={16} />
-            </button>
-          )}
-          {activeTab === "applications" && (
-            <button
-              onClick={handleApplicationAction}
-              className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
-              title={
-                studentApplications?.length > 0
-                  ? "Edit Latest Application"
-                  : "Add New Application"
-              }
-            >
-              <Edit size={16} />
-            </button>
-          )}
+          <div className="flex items-center">
+            {activeTab === "enquiry" && hasPermission("enquiry", "edit") && (
+              <button
+                onClick={() => setShowEnquiryModal(true)}
+                className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
+                title="Edit Enquiry"
+              >
+                <Edit size={16} />
+              </button>
+            )}
+            {activeTab === "detailEnquiry" &&
+              (hasDetailEnquiry
+                ? hasPermission("detailEnquiry", "edit") && (
+                    <button
+                      onClick={() => setShowDetailEnquiryModal(true)}
+                      className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
+                      title="Edit Detail Enquiry"
+                    >
+                      <Edit size={16} />
+                    </button>
+                  )
+                : hasPermission("detailEnquiry", "add") && (
+                    <button
+                      onClick={() => setShowDetailEnquiryModal(true)}
+                      className="btn-secondary btn-xs flex items-center mb-2 px-2 py-1 text-sm"
+                      title="Add Detail Enquiry"
+                    >
+                      <Plus size={14} className="mr-1" /> Add
+                    </button>
+                  ))}
+            {activeTab === "assessments" &&
+              hasDetailEnquiry &&
+              (hasAssessments
+                ? hasPermission("assessment", "edit") && (
+                    <button
+                      onClick={() => setShowAssessmentModal(true)}
+                      className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
+                      title="Edit Assessment"
+                    >
+                      <Edit size={16} />
+                    </button>
+                  )
+                : hasPermission("assessment", "add") && (
+                    <button
+                      onClick={() => setShowAssessmentModal(true)}
+                      className="btn-secondary btn-xs flex items-center mb-2 px-2 py-1 text-sm"
+                      title="Add Assessment"
+                    >
+                      <Plus size={14} className="mr-1" /> Add
+                    </button>
+                  ))}
+            {activeTab === "applications" &&
+              hasAssessments &&
+              (hasApplications
+                ? hasPermission("application", "edit") && (
+                    <button
+                      onClick={() => setShowApplicationModal(true)}
+                      className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
+                      title="Edit Application"
+                    >
+                      <Edit size={16} />
+                    </button>
+                  )
+                : hasPermission("application", "add") && (
+                    <button
+                      onClick={() => setShowApplicationModal(true)}
+                      className="btn-secondary btn-xs flex items-center mb-2 px-2 py-1 text-sm"
+                      title="Add Application"
+                    >
+                      <Plus size={14} className="mr-1" /> Add
+                    </button>
+                  ))}
+            {activeTab === "payments" &&
+              hasApplications &&
+              hasPermission("payment", "add") && (
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  className="btn-secondary btn-xs flex items-center mb-2 px-2 py-1 text-sm"
+                  title="Add Payment"
+                >
+                  <Plus size={14} className="mr-1" /> Add
+                </button>
+              )}
+          </div>
         </div>
       </div>
 
@@ -348,7 +437,6 @@ const StudentDetails = () => {
         {activeTab === "detailEnquiry" && (
           <DetailEnquiryContent selectedDetailEnquiry={selectedDetailEnquiry} />
         )}
-
         {activeTab === "assessments" && (
           <AssessmentList
             coursesMap={coursesMap}
@@ -356,81 +444,83 @@ const StudentDetails = () => {
             universitiesMap={universitiesMap}
           />
         )}
-
         {activeTab === "applications" && (
           <ApplicationList
             assessments={studentAssessments}
             applications={studentApplications}
           />
         )}
-
         {activeTab === "payments" && (
           <PaymentList payments={studentPayments} student={student} />
         )}
       </div>
 
       <Modal
-        isOpen={showEditEnquiryModal}
-        onClose={() => setShowEditEnquiryModal(false)}
+        isOpen={showEnquiryModal}
+        onClose={() => setShowEnquiryModal(false)}
         title="Edit Student Enquiry"
         size="large"
       >
         <EnquiryForm
           editData={student}
-          onClose={() => setShowEditEnquiryModal(false)}
-          onSuccess={handleEnquiryFormSuccess}
+          onClose={() => setShowEnquiryModal(false)}
+          onSuccess={() => handleSuccess(setShowEnquiryModal)}
         />
       </Modal>
 
       <Modal
-        isOpen={showEditDetailEnquiryModal}
-        onClose={() => setShowEditDetailEnquiryModal(false)}
-        title="Edit Detailed Student Profile"
+        isOpen={showDetailEnquiryModal}
+        onClose={() => setShowDetailEnquiryModal(false)}
+        title={
+          hasDetailEnquiry ? "Edit Detailed Profile" : "Add Detailed Profile"
+        }
         size="full"
       >
         <DetailEnquiryForm
           selectedEnquiry={student}
           editData={selectedDetailEnquiry}
-          onClose={() => setShowEditDetailEnquiryModal(false)}
-          onSuccess={handleDetailEnquiryFormSuccess}
+          onClose={() => setShowDetailEnquiryModal(false)}
+          onSuccess={() => handleSuccess(setShowDetailEnquiryModal)}
         />
       </Modal>
 
       <Modal
-        isOpen={showEditAssessmentModal}
-        onClose={() => setShowEditAssessmentModal(false)}
-        title={
-          studentAssessments?.length > 0
-            ? "Edit Assessment"
-            : "Add New Assessment"
-        }
+        isOpen={showAssessmentModal}
+        onClose={() => setShowAssessmentModal(false)}
+        title={hasAssessments ? "Edit Assessment" : "Add New Assessment"}
         size="full"
       >
         <AssessmentForm
-          editData={
-            studentAssessments?.length > 0 ? studentAssessments[0] : null
-          }
-          onClose={() => setShowEditAssessmentModal(false)}
-          onSuccess={handleAssessmentFormSuccess}
+          editData={hasAssessments ? studentAssessments[0] : null}
+          onClose={() => setShowAssessmentModal(false)}
+          onSuccess={() => handleSuccess(setShowAssessmentModal)}
+          studentId={student?.id}
         />
       </Modal>
 
       <Modal
-        isOpen={showEditApplicationModal}
-        onClose={() => setShowEditApplicationModal(false)}
-        title={
-          studentApplications?.length > 0
-            ? "Edit Application"
-            : "Add New Application"
-        }
+        isOpen={showApplicationModal}
+        onClose={() => setShowApplicationModal(false)}
+        title={hasApplications ? "Edit Application" : "Add New Application"}
         size="full"
       >
         <ApplicationForm
-          editData={
-            studentApplications?.length > 0 ? studentApplications[0] : null
-          }
-          onClose={() => setShowEditApplicationModal(false)}
-          onSuccess={handleApplicationFormSuccess}
+          editData={hasApplications ? studentApplications[0] : null}
+          onClose={() => setShowApplicationModal(false)}
+          onSuccess={() => handleSuccess(setShowApplicationModal)}
+          studentId={student?.id}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        title="Add New Payment"
+        size="large"
+      >
+        <PaymentForm
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={() => handleSuccess(setShowPaymentModal)}
         />
       </Modal>
     </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -19,7 +19,12 @@ import {
   useUniversities,
 } from "../../hooks/useFirestore";
 
-const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
+const AssessmentForm = ({
+  onClose,
+  onSuccess,
+  editData = null,
+  studentId = null,
+}) => {
   const {
     register,
     handleSubmit,
@@ -56,8 +61,9 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         setSelectedEnquiryDetails(initialEnquiry);
       }
     } else {
+      const initialEnquiryId = studentId || "";
       reset({
-        enquiry: "",
+        enquiry: initialEnquiryId,
         student_country: "",
         university: "",
         level_applying_for: "",
@@ -69,12 +75,19 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
         application_fee: "",
         tution_fee: "",
         fee_currency: "",
-        ass_status: "",
+        ass_status: "Pending",
         notes: "",
       });
-      setSelectedEnquiryDetails(null);
+      if (initialEnquiryId && enquiries) {
+        const initialEnquiry = enquiries.find(
+          (enq) => enq.id === initialEnquiryId
+        );
+        setSelectedEnquiryDetails(initialEnquiry);
+      } else {
+        setSelectedEnquiryDetails(null);
+      }
     }
-  }, [editData, reset, enquiries, enquiriesLoading]);
+  }, [editData, studentId, reset, enquiries, enquiriesLoading]);
 
   useEffect(() => {
     if (universitiesLoading) return;
@@ -116,13 +129,13 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
           selectedEnquiry.country_interested.length > 0
         ) {
           setValue("student_country", selectedEnquiry.country_interested[0]);
-        } else {
+        } else if (!watch("student_country")) {
           setValue("student_country", "");
         }
 
         if (selectedEnquiry.intake_interested) {
           setValue("intake_interested", selectedEnquiry.intake_interested);
-        } else {
+        } else if (!watch("intake_interested")) {
           setValue("intake_interested", "");
         }
       }
@@ -131,22 +144,20 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
       setValue("intake_interested", "");
       setSelectedEnquiryDetails(null);
     }
-  }, [selectedEnquiryId, enquiries, setValue, editData]);
+  }, [selectedEnquiryId, enquiries, setValue, editData, watch]);
 
   useEffect(() => {
     if (selectedUniversityId && universities) {
       const selectedUniversity = universities.find(
         (uni) => uni.id === selectedUniversityId
       );
-      if (selectedUniversity) {
-        if (selectedUniversity.Application_fee) {
-          setValue("application_fee", selectedUniversity.Application_fee);
-        }
+      if (selectedUniversity?.Application_fee) {
+        setValue("application_fee", selectedUniversity.Application_fee);
       }
     } else if (!selectedUniversityId && !editData) {
       setValue("application_fee", "");
     }
-  }, [selectedUniversityId, universities, setValue, editData]);
+  }, [selectedUniversityId, universities, setValue]);
 
   useEffect(() => {
     if (selectedCourseId && courses) {
@@ -155,7 +166,10 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
       );
       if (selectedCourse) {
         setValue("specialisation", selectedCourse.specialisation_tag || "");
-        setValue("application_fee", selectedCourse.Application_fee || "");
+        setValue(
+          "application_fee",
+          selectedCourse.Application_fee || watch("application_fee")
+        );
         setValue("tution_fee", selectedCourse.Yearly_Tuition_fee || "");
         setValue("fee_currency", selectedCourse.Application_fee_currency || "");
       }
@@ -164,15 +178,15 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
       setValue("tution_fee", "");
       setValue("fee_currency", "");
     }
-  }, [selectedCourseId, courses, setValue, editData]);
+  }, [selectedCourseId, courses, setValue, editData, watch]);
 
   const onSubmit = async (dataFromForm) => {
     if (!user || !user.uid) {
-      setLoading(false);
+      toast.error("Authentication Error. Please log in again.");
       return;
     }
+    setLoading(true);
     try {
-      setLoading(true);
       const assessmentPayload = {
         ...dataFromForm,
         assigned_users: user.uid,
@@ -260,7 +274,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
 
     return (
       <div className="py-2 px-4">
-        <p className="text-sm text-gray-800">
+        <p className="text-sm text-gray-800 break-words">
           <span className="font-semibold">{label}:</span> {displayValue}
         </p>
       </div>
@@ -277,10 +291,9 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                 Student Details
               </h3>
             </div>
-
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-200 bg-gray-100">
+            <div className="space-y-4 p-2">
+              <div className="bg-gray-50 rounded-lg shadow-sm">
+                <div className="p-3 border-b border-gray-200 bg-gray-100">
                   <h4 className="text-md font-medium text-gray-800">
                     Personal Information
                   </h4>
@@ -414,10 +427,11 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                     required: "Student selection is required",
                   })}
                   className="input-field"
+                  disabled={!!studentId || !!editData}
                 >
                   <option value="">Select Student</option>
-                  {enquiriesForDropdown.map((enquiry, index) => (
-                    <option key={index} value={enquiry.id}>
+                  {enquiriesForDropdown.map((enquiry) => (
+                    <option key={enquiry.id} value={enquiry.id}>
                       {enquiry.fullName}
                     </option>
                   ))}
@@ -439,8 +453,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select Country</option>
-                  {COUNTRIES.map((country, index) => (
-                    <option key={index} value={country.code}>
+                  {COUNTRIES.map((country) => (
+                    <option key={country.code} value={country.code}>
                       {country.name}
                     </option>
                   ))}
@@ -462,8 +476,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select University</option>
-                  {filteredUniversities.map((university, index) => (
-                    <option key={index} value={university.id}>
+                  {filteredUniversities.map((university) => (
+                    <option key={university.id} value={university.id}>
                       {university.univ_name}
                     </option>
                   ))}
@@ -485,8 +499,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select Level</option>
-                  {COURSE_LEVELS.map((level, index) => (
-                    <option key={index} value={level}>
+                  {COURSE_LEVELS.map((level) => (
+                    <option key={level} value={level}>
                       {level}
                     </option>
                   ))}
@@ -506,8 +520,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select Course</option>
-                  {filteredCourses.map((course, index) => (
-                    <option key={index} value={course.id}>
+                  {filteredCourses.map((course) => (
+                    <option key={course.id} value={course.id}>
                       {course.course_name}
                     </option>
                   ))}
@@ -522,8 +536,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   className="input-field"
                 >
                   <option value="">Select Intake</option>
-                  {INTAKES.map((intake, index) => (
-                    <option key={index} value={intake.name}>
+                  {INTAKES.map((intake) => (
+                    <option key={intake.name} value={intake.name}>
                       {intake.name}
                     </option>
                   ))}
@@ -558,7 +572,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   placeholder="e.g., 2 years, 18 months"
                 />
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Course Link
                 </label>
@@ -584,7 +598,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   type="text"
                   {...register("application_fee")}
                   className="input-field"
-                  placeholder="e.g., $100, €75"
+                  placeholder="e.g., 100"
                 />
               </div>
               <div>
@@ -595,7 +609,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                   type="text"
                   {...register("tution_fee")}
                   className="input-field"
-                  placeholder="e.g., $25,000/year"
+                  placeholder="e.g., 25000"
                 />
               </div>
               <div>
@@ -604,8 +618,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                 </label>
                 <select {...register("fee_currency")} className="input-field">
                   <option value="">Select Currency</option>
-                  {CURRENCIES.map((currency, index) => (
-                    <option key={index} value={currency.code}>
+                  {CURRENCIES.map((currency) => (
+                    <option key={currency.code} value={currency.code}>
                       {currency.code} - {currency.name}
                     </option>
                   ))}
@@ -624,8 +638,8 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
                 </label>
                 <select {...register("ass_status")} className="input-field">
                   <option value="">Select Status</option>
-                  {ASSESSMENT_STATUS.map((status, index) => (
-                    <option key={index} value={status}>
+                  {ASSESSMENT_STATUS.map((status) => (
+                    <option key={status} value={status}>
                       {status}
                     </option>
                   ))}
@@ -645,7 +659,7 @@ const AssessmentForm = ({ onClose, onSuccess, editData = null }) => {
             </div>
           </div>
         </div>
-        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-auto">
           <button
             type="button"
             onClick={onClose}

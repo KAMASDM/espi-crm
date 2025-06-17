@@ -33,7 +33,12 @@ const FILE_FIELD_NAMES = [
   "other_documents",
 ];
 
-const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
+const ApplicationForm = ({
+  onClose,
+  onSuccess,
+  editData = null,
+  studentId = null,
+}) => {
   const {
     register,
     handleSubmit,
@@ -112,7 +117,23 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
         }
       }
     } else {
-      defaultFormValues.assessmentId = "";
+      if (studentId && assessments && assessments.length > 0) {
+        const studentAssessment = assessments.find((assessment) => {
+          const studentEnquiry = enquiriesData.find(
+            (enq) => enq.id === assessment.enquiry
+          );
+          return studentEnquiry && studentEnquiry.id === studentId;
+        });
+
+        if (studentAssessment) {
+          defaultFormValues.assessmentId = studentAssessment.id;
+        } else {
+          defaultFormValues.assessmentId = "";
+        }
+      } else {
+        defaultFormValues.assessmentId = "";
+      }
+
       defaultFormValues.application_status =
         APPLICATION_STATUS.length > 0 ? APPLICATION_STATUS[0] : "";
       defaultFormValues.notes = "";
@@ -128,7 +149,7 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
     setFilesToUpload(initialFilesToUpload);
     setFileDisplayNames(initialFileDisplayNames);
     setOriginalFileUrls(initialOriginalFileUrls);
-  }, [editData, setValue]);
+  }, [editData, setValue, studentId, assessments, enquiriesData]);
 
   const handleFileUpload = (fieldName, file) => {
     if (file) {
@@ -453,6 +474,19 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
     return <Loading size="default" />;
   }
 
+  const filteredAssessments = studentId
+    ? assessments.filter((assessment) => {
+        const studentEnquiry = enquiriesData.find(
+          (enq) => enq.id === assessment.enquiry
+        );
+        return (
+          studentEnquiry &&
+          studentEnquiry.id === studentId &&
+          assessment.ass_status === "Completed"
+        );
+      })
+    : assessments.filter((assessment) => assessment.ass_status === "Completed");
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -476,26 +510,24 @@ const ApplicationForm = ({ onClose, onSuccess, editData = null }) => {
               }`}
             >
               <option value="">Select Assessment</option>
-              {assessments
-                .filter((assessment) => assessment.ass_status === "Completed")
-                .map((assessment, index) => {
-                  const studentEnquiry = enquiriesData.find(
-                    (enq) => enq.id === assessment.enquiry
-                  );
+              {filteredAssessments.map((assessment, index) => {
+                const studentEnquiry = enquiriesData.find(
+                  (enq) => enq.id === assessment.enquiry
+                );
 
-                  let studentNameToDisplay = "";
-                  if (studentEnquiry) {
-                    const firstName = studentEnquiry.student_First_Name || "";
-                    const lastName = studentEnquiry.student_Last_Name || "";
-                    studentNameToDisplay = `${firstName} ${lastName}`.trim();
-                  }
+                let studentNameToDisplay = "";
+                if (studentEnquiry) {
+                  const firstName = studentEnquiry.student_First_Name || "";
+                  const lastName = studentEnquiry.student_Last_Name || "";
+                  studentNameToDisplay = `${firstName} ${lastName}`.trim();
+                }
 
-                  return (
-                    <option key={assessment.id} value={assessment.id}>
-                      {`${index + 1}. ${studentNameToDisplay || "N/A"}`}
-                    </option>
-                  );
-                })}
+                return (
+                  <option key={assessment.id} value={assessment.id}>
+                    {`${index + 1}. ${studentNameToDisplay || "N/A"}`}
+                  </option>
+                );
+              })}
             </select>
 
             {errors.assessmentId && (
