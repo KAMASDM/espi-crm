@@ -55,13 +55,15 @@ const Students = () => {
     if (!userProfile || !students) return [];
     if (userProfile.role === USER_ROLES.SUPERADMIN) {
       return students;
-    } else if (userProfile.role === USER_ROLES.BRANCH_ADMIN) {
+    } else if (
+      userProfile.role === USER_ROLES.BRANCH_ADMIN ||
+      userProfile.role === USER_ROLES.COUNSELLOR
+    ) {
       return students.filter(
         (student) => student.branchId === userProfile.branchId
       );
     } else if (
       userProfile.role === USER_ROLES.AGENT ||
-      userProfile.role === USER_ROLES.COUNSELLOR ||
       userProfile.role === USER_ROLES.RECEPTION
     ) {
       return students.filter(

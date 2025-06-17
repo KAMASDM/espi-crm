@@ -48,16 +48,10 @@ export const ENQUIRY_SOURCES = [
 
 // Enquiry Status
 export const ENQUIRY_STATUS = [
-  "New",
+  "Pending",
   "In Progress",
-  "Follow-up Required",
-  "Assessment Completed",
-  "Application Submitted",
-  "Admitted",
-  "Visa Applied",
-  "Visa Approved",
-  "Departed",
-  "Closed",
+  "Completed",
+  "On Hold",
   "Cancelled",
 ];
 
@@ -156,7 +150,7 @@ export const INTAKES = [
   { name: "Spring 2033", month: "January", year: "2033" },
   { name: "Summer 2033", month: "May", year: "2033" },
   { name: "Fall 2033", month: "September", year: "2033" },
-  
+
   { name: "Spring 2034", month: "January", year: "2034" },
   { name: "Summer 2034", month: "May", year: "2034" },
   { name: "Fall 2034", month: "September", year: "2034" },
