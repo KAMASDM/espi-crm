@@ -25,6 +25,7 @@ import Loading from "./components/Common/Loading";
 import DetailedEnquiry from "./pages/DetailEnquiry";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import StudentDetails from "./components/Students/StudentDetails";
+import ApplicationStatus from "./pages/ApplicationStatus";
 
 const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
@@ -212,6 +213,21 @@ const AppRoutes = () => {
               ]}
             >
               <Services />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/applicationStatus"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                USER_ROLES.SUPERADMIN,
+                USER_ROLES.BRANCH_ADMIN,
+                USER_ROLES.COUNSELLOR,
+                USER_ROLES.PROCESSOR,
+              ]}
+            >
+              <ApplicationStatus />
             </ProtectedRoute>
           }
         />

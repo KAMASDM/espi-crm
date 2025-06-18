@@ -11,6 +11,7 @@ import {
   branchService,
   detailEnquiryService,
   serviceService,
+  applicationStatusService,
 } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
@@ -192,6 +193,14 @@ export const useServices = () => {
     "asc",
   ]);
   return { data, loading, error, ...serviceService };
+};
+
+export const useApplicationStatus = () => {
+  const { data, loading, error } = useSubscription("applicationStatus", [
+    "applicationStatus",
+    "asc",
+  ]);
+  return { data, loading, error, ...applicationStatusService };
 };
 
 export const useAssessments = () => {

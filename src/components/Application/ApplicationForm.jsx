@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
+import emailjs from "@emailjs/browser";
 import { Upload, FileText, X, Save } from "lucide-react";
 import Loading from "../Common/Loading";
 import app, { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { collection, getDocs } from "firebase/firestore";
-import { useAssessments } from "../../hooks/useFirestore";
-import { APPLICATION_STATUS } from "../../utils/constants";
-import { applicationService } from "../../services/firestore";
+import { useApplicationStatus, useAssessments } from "../../hooks/useFirestore";
+import { APPLICATION_STATUS, USER_ROLES } from "../../utils/constants";
+import {
+  applicationService,
+  notificationService,
+  userService,
+} from "../../services/firestore";
 import {
   ref,
   getStorage,
@@ -16,6 +21,10 @@ import {
   getDownloadURL,
   uploadBytesResumable,
 } from "firebase/storage";
+
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 const FILE_FIELD_NAMES = [
   "passport",
@@ -41,18 +50,38 @@ const ApplicationForm = ({
 }) => {
   const {
     register,
+    watch,
     handleSubmit,
     formState: { errors },
     setValue,
   } = useForm();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const storage = getStorage(app);
   const [loading, setLoading] = useState(false);
   const [enquiriesData, setEnquiriesData] = useState([]);
   const { data: assessments, isLoading: assessmentsLoading } = useAssessments();
+  const [users, setUsers] = useState([]);
+  const { data: applicationStatuses } = useApplicationStatus();
+  const selectedAssessmentId = watch("assessmentId");
+  const selectedAssessment = assessments?.find(
+    (ass) => ass.id === selectedAssessmentId
+  );
   const [filesToUpload, setFilesToUpload] = useState({});
   const [fileDisplayNames, setFileDisplayNames] = useState({});
   const [originalFileUrls, setOriginalFileUrls] = useState({});
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const fetchedUsers = await userService.getAll();
+        setUsers(fetchedUsers || []);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        toast.error("Could not load user data for notifications.");
+      }
+    };
+    fetchUsers();
+  }, []);
 
   useEffect(() => {
     const fetchEnquiries = async () => {
@@ -183,8 +212,120 @@ const ApplicationForm = ({
     setValue(fieldName, "", { shouldValidate: true, shouldDirty: true });
     toast.info(`File for ${fieldName.replace(/_/g, " ")} removed.`);
   };
+  const sendEmailNotification = async (recipient, templateParams) => {
+    if (!recipient.email) {
+      console.warn(
+        `Skipping email for ${
+          recipient.displayName || "user"
+        } as they have no email address.`
+      );
+      return;
+    }
+    if (EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY" || !EMAILJS_PUBLIC_KEY) {
+      const errorMsg = "EmailJS Public Key is not configured.";
+      toast.error(errorMsg, { duration: 4000 });
+      return;
+    }
+    try {
+      const emailParams = {
+        ...templateParams,
+        recipient_email: recipient.email,
+        recipientName: recipient.displayName || "Admin",
+      };
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        emailParams,
+        EMAILJS_PUBLIC_KEY
+      );
+    } catch (error) {
+      toast.error(
+        `Failed to send email to ${recipient.displayName}. Details: ${
+          error.text || error.message
+        }`
+      );
+    }
+  };
+
+  const sendNotifications = async (
+    applicationId,
+    studentName,
+    isUpdate = false
+  ) => {
+    const notificationRecipientIds = new Set();
+    const emailRecipients = new Map();
+
+    const superadmins = users.filter(
+      (u) => u.role === USER_ROLES.SUPERADMIN && u.isActive && u.id !== user.uid
+    );
+    superadmins.forEach((sa) => {
+      notificationRecipientIds.add(sa.id);
+      if (!emailRecipients.has(sa.id)) emailRecipients.set(sa.id, sa);
+    });
+
+    const studentBranchId = selectedAssessment?.branchId;
+    if (studentBranchId) {
+      const branchAdmin = users.find(
+        (u) =>
+          u.role === USER_ROLES.BRANCH_ADMIN &&
+          u.branchId === studentBranchId &&
+          u.isActive &&
+          u.id !== user.uid
+      );
+      if (branchAdmin) {
+        notificationRecipientIds.add(branchAdmin.id);
+        if (!emailRecipients.has(branchAdmin.id)) {
+          emailRecipients.set(branchAdmin.id, branchAdmin);
+        }
+      }
+    }
+
+    const finalRecipientIds = Array.from(notificationRecipientIds);
+    const finalEmailRecipients = Array.from(emailRecipients.values());
+
+    const notificationTitle = isUpdate
+      ? "Application Updated"
+      : "New Application Created";
+    const notificationBody = isUpdate
+      ? `Application for ${studentName} has been updated by ${userProfile.displayName}.`
+      : `A new application for ${studentName} has been created by ${userProfile.displayName}.`;
+    const notificationLink = `/applications/${applicationId}/details`;
+
+    if (finalRecipientIds.length > 0) {
+      await notificationService.send(
+        notificationTitle,
+        notificationBody,
+        finalRecipientIds,
+        "application",
+        notificationLink
+      );
+    }
+
+    if (finalEmailRecipients.length > 0) {
+      const templateParams = {
+        actionText: notificationTitle,
+        bodyText: notificationBody,
+        studentName,
+        enquiryId: applicationId,
+        link: `${window.location.origin}${notificationLink}`,
+      };
+      await Promise.all(
+        finalEmailRecipients.map((recipient) =>
+          sendEmailNotification(recipient, templateParams)
+        )
+      );
+    }
+  };
 
   const onSubmit = async (dataFromForm) => {
+    if (!user || !user.uid) {
+      toast.error("Authentication Error. Please log in again.");
+      return;
+    }
+    if (!selectedAssessmentId && !editData) {
+      toast.error("Cannot proceed without student details.");
+      return;
+    }
     setLoading(true);
     const toastId = toast.loading(
       editData ? "Updating application..." : "Creating application..."
@@ -343,6 +484,9 @@ const ApplicationForm = ({
       setFileDisplayNames(updatedFileDisplayNames);
       setOriginalFileUrls(updatedOriginalFileUrls);
 
+      let applicationId;
+      const studentName = finalApplicationData.studentDisplayName || "N/A";
+
       if (editData) {
         finalApplicationData.updatedBy = user.uid;
         if (editData.createdBy) {
@@ -374,12 +518,17 @@ const ApplicationForm = ({
             }
           }
         }
-        await applicationService.update(editData.id, finalApplicationData);
+        applicationId = editData.id;
+        await applicationService.update(applicationId, finalApplicationData);
         toast.success("Application updated successfully!", { id: toastId });
+
+        await sendNotifications(applicationId, studentName, true);
       } else {
         finalApplicationData.createdBy = user.uid;
-        await applicationService.create(finalApplicationData);
+        applicationId = await applicationService.create(finalApplicationData);
         toast.success("Application created successfully!", { id: toastId });
+
+        await sendNotifications(applicationId, studentName);
       }
 
       onSuccess();
@@ -393,6 +542,32 @@ const ApplicationForm = ({
       setLoading(false);
     }
   };
+
+  const getFilteredStatuses = () => {
+    if (!selectedAssessment || !applicationStatuses) return [];
+
+    const assessmentCountry = selectedAssessment.student_country;
+    if (!assessmentCountry) return [];
+
+    return applicationStatuses
+      .filter((status) => status.country === assessmentCountry)
+      .map((status) => status.applicationStatus);
+  };
+
+  const filteredStatuses = getFilteredStatuses();
+
+  const filteredAssessments = studentId
+    ? assessments.filter((assessment) => {
+        const studentEnquiry = enquiriesData.find(
+          (enq) => enq.id === assessment.enquiry
+        );
+        return (
+          studentEnquiry &&
+          studentEnquiry.id === studentId &&
+          assessment.ass_status === "Completed"
+        );
+      })
+    : assessments.filter((assessment) => assessment.ass_status === "Completed");
 
   const FileUploadFieldComponent = ({ name, label, accept = ".pdf" }) => {
     const currentFileDisplayName = fileDisplayNames[name];
@@ -474,19 +649,6 @@ const ApplicationForm = ({
     return <Loading size="default" />;
   }
 
-  const filteredAssessments = studentId
-    ? assessments.filter((assessment) => {
-        const studentEnquiry = enquiriesData.find(
-          (enq) => enq.id === assessment.enquiry
-        );
-        return (
-          studentEnquiry &&
-          studentEnquiry.id === studentId &&
-          assessment.ass_status === "Completed"
-        );
-      })
-    : assessments.filter((assessment) => assessment.ass_status === "Completed");
-
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -524,7 +686,10 @@ const ApplicationForm = ({
 
                 return (
                   <option key={assessment.id} value={assessment.id}>
-                    {`${index + 1}. ${studentNameToDisplay || "N/A"}`}
+                    {`${index + 1}. ${
+                      studentNameToDisplay + "-" + assessment.student_country ||
+                      "N/A"
+                    }`}
                   </option>
                 );
               })}
@@ -541,8 +706,19 @@ const ApplicationForm = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Application Status
             </label>
-            <select {...register("application_status")} className="input-field">
-              {APPLICATION_STATUS.map((status) => (
+            <select
+              {...register("application_status")}
+              className={`input-field ${
+                !selectedAssessmentId ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
+              disabled={!selectedAssessmentId}
+            >
+              <option value="">
+                {selectedAssessmentId
+                  ? "Select Status"
+                  : "Select Assessment First"}
+              </option>
+              {filteredStatuses.map((status) => (
                 <option key={status} value={status}>
                   {status}
                 </option>

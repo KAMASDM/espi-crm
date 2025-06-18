@@ -2,15 +2,21 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
+import emailjs from "@emailjs/browser";
 import Loading from "../Common/Loading";
 import { useAuth } from "../../context/AuthContext";
-import { assessmentService } from "../../services/firestore";
+import {
+  assessmentService,
+  notificationService,
+  userService,
+} from "../../services/firestore";
 import {
   INTAKES,
   COUNTRIES,
   CURRENCIES,
   COURSE_LEVELS,
   ASSESSMENT_STATUS,
+  USER_ROLES,
 } from "../../utils/constants";
 import {
   useCourses,
@@ -18,6 +24,10 @@ import {
   useEnquiries,
   useUniversities,
 } from "../../hooks/useFirestore";
+
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 const AssessmentForm = ({
   onClose,
@@ -33,7 +43,7 @@ const AssessmentForm = ({
     formState: { errors },
     reset,
   } = useForm({});
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { data: detailEnquiries } = useDetailEnquiries();
   const { data: courses, loading: coursesLoading } = useCourses();
   const { data: enquiries, loading: enquiriesLoading } = useEnquiries();
@@ -44,12 +54,25 @@ const AssessmentForm = ({
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [selectedEnquiryDetails, setSelectedEnquiryDetails] = useState(null);
+  const [users, setUsers] = useState([]); // Added: state for all users
 
   const selectedEnquiryId = watch("enquiry");
   const selectedCountry = watch("student_country");
   const selectedUniversityId = watch("university");
   const selectedLevel = watch("level_applying_for");
   const selectedCourseId = watch("course_interested");
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const fetchedUsers = await userService.getAll();
+        setUsers(fetchedUsers || []);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        toast.error("Could not load user data for notifications.");
+      }
+    };
+    fetchUsers();
+  }, []);
 
   useEffect(() => {
     if (editData) {
@@ -179,10 +202,48 @@ const AssessmentForm = ({
       setValue("fee_currency", "");
     }
   }, [selectedCourseId, courses, setValue, editData, watch]);
+  const sendEmailNotification = async (recipient, templateParams) => {
+    if (!recipient.email) {
+      console.warn(
+        `Skipping email for ${
+          recipient.displayName || "user"
+        } as they have no email address.`
+      );
+      return;
+    }
+    if (EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY" || !EMAILJS_PUBLIC_KEY) {
+      const errorMsg = "EmailJS Public Key is not configured.";
+      toast.error(errorMsg, { duration: 4000 });
+      return;
+    }
+    try {
+      const emailParams = {
+        ...templateParams,
+        recipient_email: recipient.email,
+        recipientName: recipient.displayName || "Admin",
+      };
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        emailParams,
+        EMAILJS_PUBLIC_KEY
+      );
+    } catch (error) {
+      toast.error(
+        `Failed to send email to ${recipient.displayName}. Details: ${
+          error.text || error.message
+        }`
+      );
+    }
+  };
 
   const onSubmit = async (dataFromForm) => {
     if (!user || !user.uid) {
       toast.error("Authentication Error. Please log in again.");
+      return;
+    }
+    if (!selectedEnquiryDetails) {
+      toast.error("Cannot proceed without student details.");
       return;
     }
     setLoading(true);
@@ -190,21 +251,91 @@ const AssessmentForm = ({
       const assessmentPayload = {
         ...dataFromForm,
         assigned_users: user.uid,
-        branchId: dataFromForm.branchId || null,
+        branchId: selectedEnquiryDetails?.branchId || null,
+        updatedAt: new Date(),
       };
 
+      let assessmentId;
       if (editData && editData.id) {
-        await assessmentService.update(editData.id, assessmentPayload);
+        assessmentId = editData.id;
+        await assessmentService.update(assessmentId, assessmentPayload);
         toast.success("Assessment updated successfully!");
       } else {
-        await assessmentService.create(assessmentPayload);
+        assessmentId = await assessmentService.create(assessmentPayload);
         toast.success("Assessment created successfully!");
+      }
+      const studentFullName = `${
+        selectedEnquiryDetails.student_First_Name || ""
+      } ${selectedEnquiryDetails.student_Last_Name || ""}`.trim();
+
+      const notificationTitle = editData
+        ? "Assessment Updated"
+        : "New Assessment Created";
+      const notificationBody = editData
+        ? `Assessment for ${studentFullName} has been updated by ${userProfile.displayName}.`
+        : `A new assessment for ${studentFullName} has been created by ${userProfile.displayName}.`;
+      const notificationLink = `/assessments/${assessmentId}/details`;
+
+      const notificationRecipientIds = new Set();
+      const emailRecipients = new Map();
+
+      const superadmins = users.filter(
+        (u) =>
+          u.role === USER_ROLES.SUPERADMIN && u.isActive && u.id !== user.uid
+      );
+      superadmins.forEach((sa) => {
+        notificationRecipientIds.add(sa.id);
+        if (!emailRecipients.has(sa.id)) emailRecipients.set(sa.id, sa);
+      });
+
+      const studentBranchId = selectedEnquiryDetails?.branchId;
+      if (studentBranchId) {
+        const branchAdmin = users.find(
+          (u) =>
+            u.role === USER_ROLES.BRANCH_ADMIN &&
+            u.branchId === studentBranchId &&
+            u.isActive &&
+            u.id !== user.uid
+        );
+        if (branchAdmin) {
+          notificationRecipientIds.add(branchAdmin.id);
+          if (!emailRecipients.has(branchAdmin.id))
+            emailRecipients.set(branchAdmin.id, branchAdmin);
+        }
+      }
+
+      const finalRecipientIds = Array.from(notificationRecipientIds);
+      if (finalRecipientIds.length > 0) {
+        await notificationService.send(
+          notificationTitle,
+          notificationBody,
+          finalRecipientIds,
+          "assessment",
+          notificationLink
+        );
+      }
+
+      const finalEmailRecipients = Array.from(emailRecipients.values());
+      if (finalEmailRecipients.length > 0) {
+        const templateParams = {
+          actionText: notificationTitle,
+          bodyText: notificationBody,
+          studentName: studentFullName,
+          enquiryId: assessmentId,
+          link: `${window.location.origin}${notificationLink}`,
+        };
+        await Promise.all(
+          finalEmailRecipients.map((recipient) =>
+            sendEmailNotification(recipient, templateParams)
+          )
+        );
       }
 
       onSuccess?.();
       onClose();
     } catch (error) {
       console.log("error", error);
+      toast.error(error.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -212,7 +343,6 @@ const AssessmentForm = ({
 
   function getEnquiriesWithDetailEnquiry(enquiries, detailEnquiries) {
     const detailEnquiryIds = new Set();
-
     if (detailEnquiries) {
       detailEnquiries.forEach((detail) => {
         if (detail.Current_Enquiry) {
@@ -220,9 +350,7 @@ const AssessmentForm = ({
         }
       });
     }
-
     const filteredEnquiryOptions = [];
-
     if (enquiries) {
       enquiries.forEach((enquiry) => {
         if (detailEnquiryIds.has(enquiry.id)) {
@@ -234,7 +362,6 @@ const AssessmentForm = ({
           } else if (enquiry.student_Last_Name) {
             fullName = enquiry.student_Last_Name;
           }
-
           filteredEnquiryOptions.push({
             id: enquiry.id,
             fullName: fullName,
@@ -242,7 +369,6 @@ const AssessmentForm = ({
         }
       });
     }
-
     return filteredEnquiryOptions;
   }
 
@@ -257,7 +383,6 @@ const AssessmentForm = ({
 
   const renderDetail = (label, value) => {
     if (!value) return null;
-
     let displayValue = value;
     if (Array.isArray(value)) {
       displayValue = value.join(", ");
@@ -271,7 +396,6 @@ const AssessmentForm = ({
       const date = new Date(value.seconds * 1000 + value.nanoseconds / 1000000);
       displayValue = date.toLocaleDateString();
     }
-
     return (
       <div className="py-2 px-4">
         <p className="text-sm text-gray-800 break-words">
