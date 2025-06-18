@@ -21,6 +21,7 @@ const Assessments = () => {
     data: assessments,
     loading: assessmentsLoading,
     delete: deleteAssessment,
+    update,
   } = useAssessments();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -50,6 +51,18 @@ const Assessments = () => {
   const handleDelete = (assessmentId) => {
     setAssessmentToDeleteId(assessmentId);
     setShowDeleteModal(true);
+  };
+
+  const handleUpdateAssessmentStatus = async (assessmentId, newStatus) => {
+    try {
+      await update(assessmentId, {
+        ass_status: newStatus,
+      });
+      toast.success("Status updated successfully!");
+    } catch (err) {
+      console.error("Error updating status:", err);
+      toast.error("Failed to update status.");
+    }
   };
 
   const confirmDelete = async () => {
@@ -183,6 +196,7 @@ const Assessments = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
+          onUpdateStatus={handleUpdateAssessmentStatus}
         />
       </div>
       <Modal

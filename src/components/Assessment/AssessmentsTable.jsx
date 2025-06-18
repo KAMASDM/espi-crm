@@ -25,12 +25,23 @@ const AssessmentsTable = ({
   onEdit,
   onDelete,
   onView,
+  onUpdateStatus,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
+
+  const handleStatusChange = async (assessmentId, newStatus) => {
+    if (onUpdateStatus) {
+      try {
+        await onUpdateStatus(assessmentId, newStatus);
+      } catch (error) {
+        console.error("Failed to update assessment status:", error);
+      }
+    }
+  };
 
   const getStudentName = (enquiryId) => {
     const enquiry = enquiries.find((enq) => enq.id === enquiryId);
@@ -72,13 +83,27 @@ const AssessmentsTable = ({
       } else if (sortField === "university") {
         aValue = getUniversityName(a.university);
         bValue = getUniversityName(b.university);
+      } else if (sortField === "createdAt") {
+        aValue = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        bValue = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
       }
 
-      if (sortDirection === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
+      if (aValue === undefined || aValue === null) return 1;
+      if (bValue === undefined || bValue === null) return -1;
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortDirection === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
+
+      return sortDirection === "asc"
+        ? aValue > bValue
+          ? 1
+          : -1
+        : aValue < bValue
+        ? 1
+        : -1;
     });
 
   const handleSort = (field) => {
@@ -100,26 +125,6 @@ const AssessmentsTable = ({
     return country ? country.name : countryCode;
   };
 
-  const getStatusBadge = (status) => {
-    const statusColors = {
-      Pending: "bg-yellow-100 text-yellow-800",
-      "In Progress": "bg-blue-100 text-blue-800",
-      Completed: "bg-green-100 text-green-800",
-      "On Hold": "bg-orange-100 text-orange-800",
-      Cancelled: "bg-red-100 text-red-800",
-    };
-
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          statusColors[status] || "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {status}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4">
@@ -130,29 +135,31 @@ const AssessmentsTable = ({
           />
           <input
             type="text"
-            placeholder="Search by student name, university, or specialization..."
+            placeholder="Search by student, university, specialization..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 input-field"
           />
         </div>
-        <div className="relative flex gap-2">
-          <Filter
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={16}
-          />
-          <select
-            value={countryFilter}
-            onChange={(e) => setCountryFilter(e.target.value)}
-            className="pl-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">All Countries</option>
-            {COUNTRIES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap gap-2">
+          <div className="relative flex gap-2">
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />{" "}
+            <select
+              value={countryFilter}
+              onChange={(e) => setCountryFilter(e.target.value)}
+              className="pl-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">All Countries</option>
+              {COUNTRIES.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="relative">
             <Filter
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -352,7 +359,20 @@ const AssessmentsTable = ({
                     </div>
                   </td>
                   <td className="table-cell">
-                    {getStatusBadge(assessment.ass_status)}
+                    <select
+                      value={assessment.ass_status}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleStatusChange(assessment.id, e.target.value);
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white"
+                    >
+                      {ASSESSMENT_STATUS.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center text-sm text-gray-500">

@@ -14,6 +14,7 @@ import {
   MessageCircle,
   GraduationCap,
   Users as UsersIcon,
+  AlignJustify,
 } from "lucide-react";
 import { USER_ROLES } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
@@ -103,6 +104,17 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       name: "Services",
       href: "/services",
       icon: GraduationCap,
+      roles: [
+        USER_ROLES.SUPERADMIN,
+        USER_ROLES.BRANCH_ADMIN,
+        USER_ROLES.COUNSELLOR,
+        USER_ROLES.PROCESSOR,
+      ],
+    },
+    {
+      name: "Application Status",
+      href: "/applicationStatus",
+      icon: AlignJustify,
       roles: [
         USER_ROLES.SUPERADMIN,
         USER_ROLES.BRANCH_ADMIN,
