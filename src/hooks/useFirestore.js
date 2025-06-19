@@ -6,6 +6,7 @@ import {
   courseService,
   assessmentService,
   applicationService,
+  visaApplicationService, 
   paymentService,
   userService,
   branchService,
@@ -275,6 +276,39 @@ export const useApplications = () => {
   );
 
   return { data, loading, error, ...applicationService };
+};
+
+export const useVisaApplications = () => {
+  const buildConstraints = useCallback((userProfile) => {
+    if (!userProfile) return null;
+
+    const constraints = [];
+
+    if (
+      userProfile.role === USER_ROLES.SUPERADMIN ||
+      userProfile.role === USER_ROLES.PROCESSOR
+    ) {
+      // No additional constraints needed
+    } else if (
+      userProfile.branchId &&
+      (userProfile.role === USER_ROLES.BRANCH_ADMIN ||
+        userProfile.role === USER_ROLES.COUNSELLOR)
+    ) {
+      constraints.push(where("branchId", "==", userProfile.branchId));
+    } else {
+      return null;
+    }
+
+    return constraints.filter((c) => c != null);
+  }, []);
+
+  const { data, loading, error } = useSubscription(
+    "visaApplications",
+    ["createdAt", "desc"],
+    buildConstraints
+  );
+
+  return { data, loading, error, ...visaApplicationService };
 };
 
 export const usePayments = () => {

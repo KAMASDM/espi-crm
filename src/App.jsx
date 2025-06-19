@@ -26,6 +26,7 @@ import DetailedEnquiry from "./pages/DetailEnquiry";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import StudentDetails from "./components/Students/StudentDetails";
 import ApplicationStatus from "./pages/ApplicationStatus";
+// import VisaApplications from "./pages/VisaApplications";
 
 const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
@@ -161,6 +162,20 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        {/* <Route
+          path="/visaApplications"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                USER_ROLES.SUPERADMIN,
+                USER_ROLES.BRANCH_ADMIN,
+                USER_ROLES.PROCESSOR,
+              ]}
+            >
+              <VisaApplications />
+            </ProtectedRoute>
+          }
+        /> */}
         <Route
           path="/payments"
           element={

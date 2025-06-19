@@ -28,6 +28,7 @@ import ApplicationForm from "../Application/ApplicationForm";
 import PaymentForm from "../Payment/PaymentForm";
 import { useAuth } from "../../context/AuthContext";
 import { USER_ROLES } from "../../utils/constants";
+import NotesTab from "./StudentDetailComponents/NotesTab";
 
 const permissions = {
   enquiry: {
@@ -124,7 +125,10 @@ const StudentDetails = () => {
   const usersMap = React.useMemo(
     () =>
       allUsers?.reduce((acc, user) => {
-        acc[user.id] = user;
+        acc[user.id] = {
+          name: user.displayName.trim(),
+          ...user,
+        };
         return acc;
       }, {}) || {},
     [allUsers]
@@ -330,6 +334,16 @@ const StudentDetails = () => {
                 Payment ({studentPayments?.length || 0})
               </button>
             )}
+            <button
+              className={`px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${
+                activeTab === "notes"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+              onClick={() => setActiveTab("notes")}
+            >
+              Notes
+            </button>
           </div>
           <div className="flex items-center">
             {activeTab === "enquiry" && hasPermission("enquiry", "edit") && (
@@ -452,6 +466,14 @@ const StudentDetails = () => {
         )}
         {activeTab === "payments" && (
           <PaymentList payments={studentPayments} student={student} />
+        )}
+        {activeTab === "notes" && (
+          <NotesTab
+            student={student}
+            studentAssessments={studentAssessments}
+            studentApplications={studentApplications}
+            usersMap={usersMap}
+          />
         )}
       </div>
 

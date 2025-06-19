@@ -17,7 +17,6 @@ import {
   Tag,
   X,
   FileArchive,
-  Link as LinkIcon,
   Paperclip,
   Download,
   Eye,
@@ -86,6 +85,7 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
       });
     } catch (error) {
       const date = new Date(timestamp);
+      console.log("error", error);
       if (!isNaN(date.getTime())) {
         return date.toLocaleDateString("en-GB", {
           day: "2-digit",
@@ -224,7 +224,10 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
               pages.forEach((page) => pdfDoc.addPage(page));
               mergedAny = true;
             } catch (e) {
-              console.warn(`Skipping non-PDF document: ${doc.label}`);
+              console.warn(
+                `Skipping non-PDF document: ${doc.label} , error:`,
+                e
+              );
             }
           } catch (error) {
             console.error(`Error processing ${doc.label}:`, error);
