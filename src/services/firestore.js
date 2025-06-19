@@ -287,6 +287,35 @@ export const applicationService = {
     firestoreService.subscribe("applications", callback, constraints, onError),
 };
 
+export const visaApplicationService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    const userProfile = getUserProfile();
+    return firestoreService.create("visaApplications", {
+      ...data,
+      createdBy: currentUser?.uid,
+      branchId: data.branchId || userProfile?.branchId || null,
+    });
+  },
+
+  update: (id, data) => firestoreService.update("visaApplications", id, data),
+
+  delete: (id) => firestoreService.delete("visaApplications", id),
+
+  getAll: (constraints = []) =>
+    firestoreService.getAll("visaApplications", constraints),
+
+  getById: (id) => firestoreService.getById("visaApplications", id),
+
+  subscribe: (callback, constraints = [], onError) =>
+    firestoreService.subscribe(
+      "visaApplications",
+      callback,
+      constraints,
+      onError
+    ),
+};
+
 export const paymentService = {
   create: (data) => {
     const currentUser = auth.currentUser;

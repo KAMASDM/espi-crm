@@ -156,7 +156,7 @@ export const INTAKES = [
   { name: "Fall 2034", month: "September", year: "2034" },
 ];
 
-// Documents Required
+// Documents Required (General)
 export const DOCUMENTS_REQUIRED = [
   "Passport",
   "10th Grade Marksheet",
@@ -174,6 +174,59 @@ export const DOCUMENTS_REQUIRED = [
   "Photographs",
   "Other",
 ];
+
+// Visa Documents Required By Country
+export const VISA_DOCUMENT_REQUIREMENTS = {
+  "United States": [
+    "Passport_Copy",
+    "I-20_Form",
+    "SEVIS_Fee_Receipt",
+    "DS-160_Confirmation_Page",
+    "Appointment_Confirmation",
+    "Financial_Statements",
+    "Academic_Transcripts",
+    "Standardized_Test_Scores",
+  ],
+  Canada: [
+    "Passport_Copy",
+    "Letter_of_Acceptance",
+    "Proof_of_Financial_Support",
+    "Passport-sized_Photographs",
+    "Medical_Examination_Proof",
+    "English_Proficiency_Test_Results",
+    "Statement_of_Purpose",
+  ],
+  "United Kingdom": [
+    "Passport_Copy",
+    "Confirmation_of_Acceptance_for_Studies_CAS",
+    "Proof_of_Financial_Support",
+    "Tuberculosis_TB_Test_Results",
+    "Academic_Technology_Approval_Scheme_ATAS_Certificate",
+  ],
+  Australia: [
+    "Passport_Copy",
+    "Confirmation_of_Enrolment_CoE",
+    "Genuine_Temporary_Entrant_GTE_Statement",
+    "Proof_of_Financial_Capacity",
+    "Health_Insurance_OSHC",
+    "English_Proficiency_Test_Results",
+  ],
+  Germany: [
+    "Passport_Copy",
+    "Letter_of_Admission",
+    "Proof_of_Financial_Resources_Blocked_Account",
+    "Travel_Health_Insurance",
+    "University_Degree_Certificate",
+    "Proof_of_Language_Proficiency",
+  ],
+  Other: [
+    "Passport_Copy",
+    "Letter_of_Acceptance",
+    "Financial_Documents",
+    "Visa_Application_Form",
+    "Passport-sized_Photographs",
+  ],
+};
 
 // User Roles
 export const USER_ROLES = {
@@ -460,6 +513,7 @@ export default {
   PAYMENT_MODES,
   INTAKES,
   DOCUMENTS_REQUIRED,
+  VISA_DOCUMENT_REQUIREMENTS,
   USER_ROLES,
   USER_ROLE_LIST,
   INDIAN_STATES,
