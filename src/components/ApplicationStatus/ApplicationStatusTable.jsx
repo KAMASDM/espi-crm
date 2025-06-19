@@ -22,6 +22,11 @@ const ApplicationStatusTable = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState("all");
+
+  const uniqueCountries = [
+    ...new Set(applicationStatuses.map((status) => status.country)),
+  ].sort();
 
   const filteredStatuses = applicationStatuses.filter((status) => {
     const matchesSearch = status.applicationStatus
@@ -35,7 +40,10 @@ const ApplicationStatusTable = ({
         ? status.isActive
         : !status.isActive;
 
-    return matchesSearch && matchesStatus;
+    const matchesCountry =
+      countryFilter === "all" ? true : status.country === countryFilter;
+
+    return matchesSearch && matchesStatus && matchesCountry;
   });
 
   const getStatusBadge = (isActive) => {
@@ -66,20 +74,41 @@ const ApplicationStatusTable = ({
             className="pl-10 input-field"
           />
         </div>
-        <div className="relative">
-          <Filter
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={16}
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+        <div className="flex gap-4">
+          <div className="relative">
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={countryFilter}
+              onChange={(e) => setCountryFilter(e.target.value)}
+              className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="all">All Countries</option>
+              {uniqueCountries.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="relative">
+            <Filter
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
         </div>
       </div>
 
