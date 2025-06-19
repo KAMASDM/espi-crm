@@ -3,6 +3,7 @@ import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { applicationStatusService } from "../../services/firestore";
 import toast from "react-hot-toast";
+import { COUNTRIES } from "../../utils/constants";
 
 const ApplicationStatusForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -64,18 +65,13 @@ const ApplicationStatusForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Country *
             </label>
-            <input
-              type="text"
-              {...register("country", {
-                required: "Country is required",
-              })}
-              className="input-field"
-            />
-            {errors.country && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.country.message}
-              </p>
-            )}
+            <select {...register("country")} className="input-field">
+              {COUNTRIES.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="md:col-span-2">
             <label className="flex items-center">

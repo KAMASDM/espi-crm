@@ -556,19 +556,6 @@ const ApplicationForm = ({
 
   const filteredStatuses = getFilteredStatuses();
 
-  const filteredAssessments = studentId
-    ? assessments.filter((assessment) => {
-        const studentEnquiry = enquiriesData.find(
-          (enq) => enq.id === assessment.enquiry
-        );
-        return (
-          studentEnquiry &&
-          studentEnquiry.id === studentId &&
-          assessment.ass_status === "Completed"
-        );
-      })
-    : assessments.filter((assessment) => assessment.ass_status === "Completed");
-
   const FileUploadFieldComponent = ({ name, label, accept = ".pdf" }) => {
     const currentFileDisplayName = fileDisplayNames[name];
 
@@ -648,6 +635,19 @@ const ApplicationForm = ({
   if (assessmentsLoading && !editData) {
     return <Loading size="default" />;
   }
+
+  const filteredAssessments = studentId
+    ? assessments.filter((assessment) => {
+        const studentEnquiry = enquiriesData.find(
+          (enq) => enq.id === assessment.enquiry
+        );
+        return (
+          studentEnquiry &&
+          studentEnquiry.id === studentId &&
+          assessment.ass_status === "Completed"
+        );
+      })
+    : assessments.filter((assessment) => assessment.ass_status === "Completed");
 
   return (
     <form
