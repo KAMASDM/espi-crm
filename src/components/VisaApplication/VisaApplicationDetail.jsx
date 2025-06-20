@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { saveAs } from "file-saver";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -8,12 +8,8 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  AlertCircle,
   BookOpen,
   Calendar as CalendarIcon,
-  CircleDollarSign,
-  FileCheck,
-  FileX,
   Info,
   Tag,
   X,
@@ -22,71 +18,130 @@ import {
   Download,
   Eye,
   Loader2,
+  Globe,
+  Building,
 } from "lucide-react";
 import Loading from "../Common/Loading";
+import { VISA_DOCUMENT_REQUIREMENTS } from "../../utils/constants";
 
-const documentsConfig = [
-  { key: "sop", label: "Statement of Purpose", icon: FileTextIcon },
-  { key: "cv", label: "CV/Resume", icon: ClipboardList },
-  { key: "passport", label: "Passport Copy", icon: FileTextIcon },
-  { key: "ielts", label: "IELTS Scorecard", icon: Paperclip },
-  { key: "toefl", label: "TOEFL Scorecard", icon: Paperclip },
-  { key: "gre", label: "GRE Scorecard", icon: Paperclip },
-  { key: "gmat", label: "GMAT Scorecard", icon: Paperclip },
-  { key: "pte", label: "PTE Scorecard", icon: Paperclip },
-  {
-    key: "work_experience",
-    label: "Work Experience Letter(s)",
-    icon: ClipboardList,
-  },
-  {
-    key: "diploma_marksheet",
-    label: "Diploma Marksheet(s)",
+const visaDocumentsConfig = {
+  Passport_Copy: { label: "Passport Copy", icon: FileTextIcon },
+  I_20_Form: { label: "I-20 Form", icon: FileTextIcon },
+  SEVIS_Fee_Receipt: { label: "SEVIS Fee Receipt", icon: FileTextIcon },
+  DS_160_Confirmation_Page: {
+    label: "DS-160 Confirmation Page",
     icon: FileTextIcon,
   },
-  {
-    key: "bachelor_marksheet",
-    label: "Bachelor's Marksheet(s)",
+  Appointment_Confirmation: {
+    label: "Appointment Confirmation",
     icon: FileTextIcon,
   },
-  {
-    key: "master_marksheet",
-    label: "Master's Marksheet(s)",
+  Financial_Statements: { label: "Financial Statements", icon: FileTextIcon },
+  Academic_Transcripts: { label: "Academic Transcripts", icon: FileTextIcon },
+  Standardized_Test_Scores: {
+    label: "Standardized Test Scores",
     icon: FileTextIcon,
   },
-  {
-    key: "other_documents",
-    label: "Other Supporting Documents",
-    icon: Paperclip,
+  Letter_of_Acceptance: { label: "Letter of Acceptance", icon: FileTextIcon },
+  Proof_of_Financial_Support: {
+    label: "Proof of Financial Support",
+    icon: FileTextIcon,
   },
-];
+  Passport_sized_Photographs: {
+    label: "Passport-sized Photographs",
+    icon: FileTextIcon,
+  },
+  Medical_Examination_Proof: {
+    label: "Medical Examination Proof",
+    icon: FileTextIcon,
+  },
+  English_Proficiency_Test_Results: {
+    label: "English Proficiency Test Results",
+    icon: FileTextIcon,
+  },
+  Statement_of_Purpose: { label: "Statement of Purpose", icon: FileTextIcon },
+  Confirmation_of_Acceptance_for_Studies_CAS: {
+    label: "CAS (Confirmation of Acceptance)",
+    icon: FileTextIcon,
+  },
+  Tuberculosis_TB_Test_Results: {
+    label: "TB Test Results",
+    icon: FileTextIcon,
+  },
+  Academic_Technology_Approval_Scheme_ATAS_Certificate: {
+    label: "ATAS Certificate",
+    icon: FileTextIcon,
+  },
+  Confirmation_of_Enrolment_CoE: {
+    label: "Confirmation of Enrolment (CoE)",
+    icon: FileTextIcon,
+  },
+  Genuine_Temporary_Entrant_GTE_Statement: {
+    label: "GTE Statement",
+    icon: FileTextIcon,
+  },
+  Proof_of_Financial_Capacity: {
+    label: "Proof of Financial Capacity",
+    icon: FileTextIcon,
+  },
+  Health_Insurance_OSHC: {
+    label: "Health Insurance (OSHC)",
+    icon: FileTextIcon,
+  },
+  Letter_of_Admission: { label: "Letter of Admission", icon: FileTextIcon },
+  Proof_of_Financial_Resources_Blocked_Account: {
+    label: "Proof of Financial Resources",
+    icon: FileTextIcon,
+  },
+  Travel_Health_Insurance: {
+    label: "Travel Health Insurance",
+    icon: FileTextIcon,
+  },
+  University_Degree_Certificate: {
+    label: "University Degree Certificate",
+    icon: FileTextIcon,
+  },
+  Proof_of_Language_Proficiency: {
+    label: "Proof of Language Proficiency",
+    icon: FileTextIcon,
+  },
+  Visa_Application_Form: { label: "Visa Application Form", icon: FileTextIcon },
+  Financial_Documents: { label: "Financial Documents", icon: FileTextIcon },
+};
 
-const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
+const VisaApplicationDetails = ({
+  visaApplication,
+  applications,
+  assessments,
+  isOpen,
+  onClose,
+}) => {
   const [downloadingDoc, setDownloadingDoc] = useState(null);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const [isMergingPdf, setIsMergingPdf] = useState(false);
 
-  const getAssessment = (assessmentId) => {
-    if (!assessmentId || !assessments) return null;
-    return assessments.find((ass) => ass.id === assessmentId);
-  };
+  const linkedApplication = useMemo(() => {
+    if (!visaApplication || !applications) return null;
+    return applications.find((app) => app.id === visaApplication.studentId);
+  }, [visaApplication, applications]);
 
-  const assessment = React.useMemo(
-    () => (application ? getAssessment(application.application) : null),
-    [application, assessments]
-  );
+  const linkedAssessment = useMemo(() => {
+    if (!linkedApplication || !assessments) return null;
+    return assessments.find((ass) => ass.id === linkedApplication.application);
+  }, [linkedApplication, assessments]);
+
+  const requiredDocs = useMemo(() => {
+    if (!visaApplication?.country) return [];
+    const countryDocs =
+      VISA_DOCUMENT_REQUIREMENTS[visaApplication.country] ||
+      VISA_DOCUMENT_REQUIREMENTS.other;
+    return countryDocs.map((doc) => doc.replace(/-/g, "_"));
+  }, [visaApplication]);
 
   const formatDate = (timestamp) => {
     if (!timestamp) return "Unknown";
     try {
-      return new Date(timestamp.toDate()).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    } catch (error) {
-      const date = new Date(timestamp);
-      console.log("error", error);
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       if (!isNaN(date.getTime())) {
         return date.toLocaleDateString("en-GB", {
           day: "2-digit",
@@ -95,12 +150,14 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
         });
       }
       return "Invalid Date";
+    } catch (error) {
+      return "Invalid Date";
     }
   };
 
   const getStatusClasses = (status) => {
     switch (status) {
-      case "Accepted":
+      case "Approved":
         return "bg-green-100 text-green-700 border-green-300";
       case "Rejected":
         return "bg-red-100 text-red-700 border-red-300";
@@ -114,7 +171,7 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
   const getStatusIcon = (status) => {
     const iconProps = { className: "mr-1.5 h-4 w-4 flex-shrink-0" };
     switch (status) {
-      case "Accepted":
+      case "Approved":
         return <CheckCircle2 {...iconProps} />;
       case "Rejected":
         return <XCircle {...iconProps} />;
@@ -142,12 +199,7 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
     </h2>
   );
 
-  const InfoListItem = ({
-    icon: Icon,
-    label,
-    value,
-    valueClasses = "text-slate-800",
-  }) => (
+  const InfoListItem = ({ icon: Icon, label, value }) => (
     <div className="py-2">
       <div className="flex items-start">
         <Icon className="mr-3 mt-1 h-5 w-5 flex-shrink-0 text-slate-500" />
@@ -155,10 +207,8 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
           <p className="text-xs font-medium text-slate-500 sm:text-sm">
             {label}
           </p>
-          <p
-            className={`mt-0.5 break-words text-sm sm:text-base ${valueClasses}`}
-          >
-            {value || "N/A"}
+          <p className="mt-0.5 break-words text-sm sm:text-base text-slate-800">
+            {value}
           </p>
         </div>
       </div>
@@ -166,11 +216,12 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
   );
 
   const handleDownloadDocument = async (docKey, docName) => {
-    if (!application[docKey]) return;
+    const fileUrl = visaApplication.documents?.[docKey];
+    if (!fileUrl) return;
 
     setDownloadingDoc(docKey);
     try {
-      const response = await fetch(application[docKey]);
+      const response = await fetch(fileUrl);
       const blob = await response.blob();
       saveAs(blob, `${docName}.pdf`);
     } catch (error) {
@@ -184,20 +235,23 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
   const handleDownloadAllDocuments = async () => {
     setIsDownloadingAll(true);
     try {
-      for (const doc of documentsConfig) {
-        if (application[doc.key]) {
+      for (const docKey of requiredDocs) {
+        const fileUrl = visaApplication.documents?.[docKey];
+        if (fileUrl) {
           try {
-            const response = await fetch(application[doc.key]);
+            const docConfig = visaDocumentsConfig[docKey] || {
+              label: docKey.replace(/_/g, " "),
+              icon: FileTextIcon,
+            };
+            const response = await fetch(fileUrl);
             const blob = await response.blob();
-            saveAs(blob, `${doc.label}.pdf`);
+            saveAs(blob, `${docConfig.label}.pdf`);
             await new Promise((resolve) => setTimeout(resolve, 500));
           } catch (error) {
-            console.error(`Failed to download ${doc.label}`, error);
+            console.error(`Failed to download ${docKey}`, error);
           }
         }
       }
-    } catch (error) {
-      console.error("Error initiating downloads:", error);
     } finally {
       setIsDownloadingAll(false);
     }
@@ -209,41 +263,38 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
       const pdfDoc = await PDFDocument.create();
       let mergedAny = false;
 
-      for (const doc of documentsConfig) {
-        const fileUrl = application[doc.key];
+      for (const docKey of requiredDocs) {
+        const fileUrl = visaApplication.documents?.[docKey];
         if (fileUrl) {
           try {
             const response = await fetch(fileUrl);
             const fileBytes = await response.arrayBuffer();
-
-            try {
-              const externalPdfDoc = await PDFDocument.load(fileBytes);
-              const pages = await pdfDoc.copyPages(
-                externalPdfDoc,
-                externalPdfDoc.getPageIndices()
-              );
-              pages.forEach((page) => pdfDoc.addPage(page));
-              mergedAny = true;
-            } catch (e) {
-              console.warn(
-                `Skipping non-PDF document: ${doc.label} , error:`,
-                e
-              );
-            }
-          } catch (error) {
-            console.error(`Error processing ${doc.label}:`, error);
+            const externalPdfDoc = await PDFDocument.load(fileBytes);
+            const pages = await pdfDoc.copyPages(
+              externalPdfDoc,
+              externalPdfDoc.getPageIndices()
+            );
+            pages.forEach((page) => pdfDoc.addPage(page));
+            mergedAny = true;
+          } catch (e) {
+            const docConfig = visaDocumentsConfig[docKey] || {
+              label: docKey.replace(/_/g, " "),
+              icon: FileTextIcon,
+            };
+            console.warn(`Skipping non-PDF document: ${docConfig.label}`, e);
           }
         }
       }
 
-      if (!mergedAny) {
-        throw new Error("No valid PDF documents found to merge");
-      }
+      if (!mergedAny) throw new Error("No valid PDF documents found to merge");
 
       const mergedPdfBytes = await pdfDoc.save();
       saveAs(
         new Blob([mergedPdfBytes], { type: "application/pdf" }),
-        `Application_${application.id.slice(-8)}_Documents.pdf`
+        `Visa_Application_${visaApplication.studentName.replace(
+          /\s/g,
+          "_"
+        )}_Documents.pdf`
       );
     } catch (error) {
       console.error("Error merging PDFs:", error);
@@ -253,7 +304,7 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
     }
   };
 
-  if (!application) {
+  if (!visaApplication) {
     return isOpen && <Loading size="default" />;
   }
 
@@ -281,7 +332,7 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
           <div className="flex items-center">
             <FileArchive className="mr-2 h-6 w-6 text-indigo-600" />
             <h3 className="text-xl font-semibold text-slate-800">
-              Application Overview
+              Visa Application Overview
             </h3>
           </div>
           <button
@@ -292,111 +343,67 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
             <X className="h-6 w-6" />
           </button>
         </header>
+
         <div className="flex-1 overflow-y-auto p-4 pt-5 sm:p-6 bg-slate-50">
           <div className="space-y-6">
             <section className="rounded-xl bg-gradient-to-br from-indigo-600 to-purple-700 p-6 text-white shadow-lg">
-              <div className="flex flex-col items-start gap-y-2 sm:flex-row sm:items-center sm:justify-between">
-                <span className="rounded-full bg-white/20 px-3 py-1 text-sm font-semibold tracking-wide">
-                  APP ID:{" "}
-                  {application.id
-                    ? application.id.slice(-8).toUpperCase()
-                    : "N/A"}
-                </span>
-                <span
-                  className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold shadow-sm sm:text-sm ${getStatusClasses(
-                    application.application_status
-                  )}`}
-                >
-                  {getStatusIcon(application.application_status)}
-                  {application.application_status || "N/A"}
-                </span>
-              </div>
               <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
-                {application.studentDisplayName || "N/A"}
+                {visaApplication.studentName || "N/A"}
               </h1>
               <p className="mt-1 flex items-center text-sm text-indigo-200">
-                <CalendarIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                Application Date: {formatDate(application.createdAt)}
+                <Globe className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                Applying for: {visaApplication.country || "N/A"}
               </p>
             </section>
-            <Card>
-              <CardTitle
-                icon={Info}
-                text="Basic Application Info"
-                iconColor="text-sky-600"
-              />
-              <div className="grid grid-cols-1 gap-x-4 gap-y-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-y-0">
-                <InfoListItem
-                  icon={ClipboardList}
-                  label="Linked Assessment ID"
-                  value={
-                    assessment
-                      ? `ASS-${assessment.id.slice(-8).toUpperCase()}`
-                      : "Not Linked"
-                  }
-                />
-                <InfoListItem
-                  icon={CalendarIcon}
-                  label="Application Submission Date"
-                  value={formatDate(application.createdAt)}
-                />
-              </div>
-            </Card>
-            {assessment && (
+
+            {linkedAssessment && (
               <Card>
-                <CardTitle icon={BookOpen} text="Key Assessment Details" />
+                <CardTitle
+                  icon={BookOpen}
+                  text="University & Assessment Info"
+                />
                 <div className="grid grid-cols-1 gap-x-4 gap-y-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-y-0">
-                  {[
-                    {
-                      icon: Tag,
-                      label: "Specialization",
-                      value: assessment.specialisation,
-                    },
-                    {
-                      icon: Clock,
-                      label: "Duration",
-                      value: `${assessment.duration} ${
-                        assessment.duration_unit || "years"
-                      }`,
-                    },
-                    {
-                      icon: FileTextIcon,
-                      label: "Application Fee",
-                      value: `${assessment.fee_currency || ""} ${
-                        assessment.application_fee
-                      }`,
-                    },
-                    {
-                      icon: CircleDollarSign,
-                      label: "Tuition Fee (Est.)",
-                      value: `${assessment.fee_currency || ""} ${
-                        assessment.tution_fee
-                      }`,
-                    },
-                  ].map((item, index) => (
-                    <InfoListItem
-                      key={index}
-                      icon={item.icon}
-                      label={item.label}
-                      value={item.value}
-                    />
-                  ))}
+                  <InfoListItem
+                    icon={Building}
+                    label="University"
+                    value={linkedAssessment.university_name}
+                  />
+                  <InfoListItem
+                    icon={Tag}
+                    label="Specialization"
+                    value={linkedAssessment.specialisation}
+                  />
+                  <InfoListItem
+                    icon={CalendarIcon}
+                    label="Application Date"
+                    value={formatDate(linkedApplication?.createdAt)}
+                  />
+                  <InfoListItem
+                    icon={Info}
+                    label="University App Status"
+                    value={linkedApplication?.application_status}
+                  />
                 </div>
               </Card>
             )}
+
             <Card>
               <CardTitle
                 icon={Paperclip}
-                text="Document Checklist"
+                text="Visa Document Checklist"
                 iconColor="text-purple-600"
               />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {documentsConfig.map((doc) => {
-                  const isUploaded = !!application[doc.key];
-                  const Icon = doc.icon;
+                {requiredDocs.map((docKey) => {
+                  const docConfig = visaDocumentsConfig[docKey] || {
+                    label: docKey.replace(/_/g, " "),
+                    icon: FileTextIcon,
+                  };
+                  const isUploaded = !!visaApplication.documents?.[docKey];
+                  const Icon = docConfig.icon;
                   return (
                     <div
-                      key={doc.key}
+                      key={docKey}
                       className={`flex flex-col justify-between rounded-lg border p-4 shadow-sm transition-all ${
                         isUploaded
                           ? "border-green-300 bg-green-50 hover:shadow-md"
@@ -412,13 +419,13 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
                               }`}
                             />
                             <span className="text-sm font-medium text-slate-700">
-                              {doc.label}
+                              {docConfig.label}
                             </span>
                           </div>
                           {isUploaded ? (
-                            <FileCheck className="h-5 w-5 text-green-600 flex-shrink-0" />
+                            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
                           ) : (
-                            <FileX className="h-5 w-5 text-red-600 flex-shrink-0" />
+                            <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
                           )}
                         </div>
                         <p
@@ -429,29 +436,31 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
                           Status: {isUploaded ? "Uploaded" : "Missing"}
                         </p>
                       </div>
-                      {isUploaded && application[doc.key] && (
+                      {isUploaded && (
                         <div className="mt-3 flex gap-2">
                           <button
                             onClick={() =>
-                              window.open(application[doc.key], "_blank")
+                              window.open(
+                                visaApplication.documents[docKey],
+                                "_blank"
+                              )
                             }
                             className="inline-flex items-center rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-100"
                           >
-                            <Eye className="mr-1.5 h-3.5 w-3.5" />
-                            View
+                            <Eye className="mr-1.5 h-3.5 w-3.5" /> View
                           </button>
                           <button
                             onClick={() =>
-                              handleDownloadDocument(doc.key, doc.label)
+                              handleDownloadDocument(docKey, docConfig.label)
                             }
-                            disabled={downloadingDoc === doc.key}
+                            disabled={downloadingDoc === docKey}
                             className="inline-flex items-center rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-100"
                           >
-                            {downloadingDoc === doc.key ? (
+                            {downloadingDoc === docKey ? (
                               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                             ) : (
                               <Download className="mr-1.5 h-3.5 w-3.5" />
-                            )}
+                            )}{" "}
                             Download
                           </button>
                         </div>
@@ -497,18 +506,19 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
                 </button>
               </div>
             </Card>
-            {application.notes && application.notes.trim() !== "" && (
+
+            {visaApplication.notes && (
               <Card>
                 <CardTitle
-                  icon={AlertCircle}
-                  text="Application Notes"
+                  icon={Info}
+                  text="Visa Application Notes"
                   iconColor="text-amber-600"
                 />
                 <div className="rounded-lg bg-amber-50 p-4 ring-1 ring-amber-200">
                   <div className="flex items-start">
                     <Info className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
                     <p className="whitespace-pre-wrap text-sm text-amber-800">
-                      {application.notes}
+                      {visaApplication.notes}
                     </p>
                   </div>
                 </div>
@@ -521,4 +531,4 @@ const ApplicationDetail = ({ application, assessments, isOpen, onClose }) => {
   );
 };
 
-export default ApplicationDetail;
+export default VisaApplicationDetails;
