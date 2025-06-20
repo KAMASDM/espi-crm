@@ -26,7 +26,7 @@ import DetailedEnquiry from "./pages/DetailEnquiry";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import StudentDetails from "./components/Students/StudentDetails";
 import ApplicationStatus from "./pages/ApplicationStatus";
-// import VisaApplications from "./pages/VisaApplications";
+import VisaApplications from "./pages/VisaApplications";
 
 const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
@@ -162,7 +162,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        {/* <Route
+        <Route
           path="/visaApplications"
           element={
             <ProtectedRoute
@@ -175,7 +175,7 @@ const AppRoutes = () => {
               <VisaApplications />
             </ProtectedRoute>
           }
-        /> */}
+        />
         <Route
           path="/payments"
           element={

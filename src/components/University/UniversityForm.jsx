@@ -182,21 +182,23 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
         try {
           const countryName =
             COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
+          const currentYear = new Date().getFullYear();
           const prompt = `Provide detailed information about the university "${univName}" in "${countryName}".
-          Include its typical application deadline (YYYY-MM-DD format if possible, otherwise month/season),
-          general admission requirements (e.g., minimum GPA, test scores like IELTS/TOEFL if applicable),
-          common course levels offered (e.g., "Bachelors", "Masters", "PhD" - comma separated),
-          typical application fees (numeric, USD if possible),
-          a brief description,
-          official website link,
-          general contact phone number,
-          general contact email,
-          maximum number of backlogs allowed (numeric),
-          and the direct application form link.
-          Format the output as a JSON object with keys:
-          "deadline", "Admission_Requirements", "levels", "Application_fee", "univ_desc",
-          "univ_website", "univ_phone", "univ_email", "Backlogs_allowed", "Application_form_link".
-          If a piece of information is not found or not applicable, use a null value for that key.`;
+            Include its typical application deadline for the current admission cycle (in YYYY-MM-DD format, using ${currentYear} if an exact date is not available),
+            general admission requirements (e.g., minimum GPA, test scores like IELTS/TOEFL if applicable),
+            common course levels offered (e.g., "Bachelors", "Masters", "PhD" - comma separated),
+            typical application fees (numeric, USD if possible),
+            a brief description,
+            official website link,
+            general contact phone number,
+            general contact email,
+            maximum number of backlogs allowed (numeric),
+            and the direct application form link.
+            Format the output as a JSON object with keys:
+            "deadline", "Admission_Requirements", "levels", "Application_fee", "univ_desc",
+            "univ_website", "univ_phone", "univ_email", "Backlogs_allowed", "Application_form_link".
+            If a piece of information is not found or not applicable, use a null value for that key.
+            If you find an older deadline, please adjust it to reflect the ${currentYear} admission cycle.`;
 
           const response = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",

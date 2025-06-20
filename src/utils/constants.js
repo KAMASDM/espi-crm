@@ -177,7 +177,7 @@ export const DOCUMENTS_REQUIRED = [
 
 // Visa Documents Required By Country
 export const VISA_DOCUMENT_REQUIREMENTS = {
-  "United States": [
+  US: [
     "Passport_Copy",
     "I-20_Form",
     "SEVIS_Fee_Receipt",
@@ -187,7 +187,7 @@ export const VISA_DOCUMENT_REQUIREMENTS = {
     "Academic_Transcripts",
     "Standardized_Test_Scores",
   ],
-  Canada: [
+  CA: [
     "Passport_Copy",
     "Letter_of_Acceptance",
     "Proof_of_Financial_Support",
@@ -196,14 +196,14 @@ export const VISA_DOCUMENT_REQUIREMENTS = {
     "English_Proficiency_Test_Results",
     "Statement_of_Purpose",
   ],
-  "United Kingdom": [
+  GB: [
     "Passport_Copy",
     "Confirmation_of_Acceptance_for_Studies_CAS",
     "Proof_of_Financial_Support",
     "Tuberculosis_TB_Test_Results",
     "Academic_Technology_Approval_Scheme_ATAS_Certificate",
   ],
-  Australia: [
+  AU: [
     "Passport_Copy",
     "Confirmation_of_Enrolment_CoE",
     "Genuine_Temporary_Entrant_GTE_Statement",
@@ -211,7 +211,7 @@ export const VISA_DOCUMENT_REQUIREMENTS = {
     "Health_Insurance_OSHC",
     "English_Proficiency_Test_Results",
   ],
-  Germany: [
+  DE: [
     "Passport_Copy",
     "Letter_of_Admission",
     "Proof_of_Financial_Resources_Blocked_Account",
@@ -219,7 +219,7 @@ export const VISA_DOCUMENT_REQUIREMENTS = {
     "University_Degree_Certificate",
     "Proof_of_Language_Proficiency",
   ],
-  Other: [
+  other: [
     "Passport_Copy",
     "Letter_of_Acceptance",
     "Financial_Documents",
