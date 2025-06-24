@@ -275,6 +275,18 @@ export const applicationService = {
   },
 
   update: (id, data) => firestoreService.update("applications", id, data),
+  updateStatus: async (id, newStatus) => {
+    try {
+      await firestoreService.update("applications", id, {
+        application_status: newStatus,
+        updatedAt: new Date(),
+      });
+      return true;
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      throw error;
+    }
+  },
 
   delete: (id) => firestoreService.delete("applications", id),
 

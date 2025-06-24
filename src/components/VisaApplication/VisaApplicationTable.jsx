@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Eye,
   Edit,
@@ -10,11 +10,12 @@ import {
   Download,
   Loader2,
   User,
+  ChevronDown,
 } from "lucide-react";
 import moment from "moment";
 import { saveAs } from "file-saver";
 import { PDFDocument } from "pdf-lib";
-import { VISA_DOCUMENT_REQUIREMENTS } from "../../utils/constants";
+import { useVisaDocuments } from "../../hooks/useFirestore";
 
 const VisaApplicationTable = ({
   visaApplications,
@@ -28,11 +29,30 @@ const VisaApplicationTable = ({
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
   const [downloadingAppId, setDownloadingAppId] = useState(null);
+  const [openStatusMenu, setOpenStatusMenu] = useState(null);
+  const { data: visaDocuments } = useVisaDocuments();
+  const statusMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        statusMenuRef.current &&
+        !statusMenuRef.current.contains(event.target)
+      ) {
+        setOpenStatusMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const getRequiredDocuments = (country) => {
-    return (
-      VISA_DOCUMENT_REQUIREMENTS[country] || VISA_DOCUMENT_REQUIREMENTS.other
+    const docRequirements = visaDocuments?.find(
+      (doc) => doc.countryCode === country
     );
+    return docRequirements?.requirements || [];
   };
 
   const getDocumentCount = (application) => {
@@ -140,6 +160,8 @@ const VisaApplicationTable = ({
         : -1;
     });
 
+  console.log(filteredApplications);
+
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -147,6 +169,15 @@ const VisaApplicationTable = ({
       setSortField(field);
       setSortDirection("asc");
     }
+  };
+
+  const statusColors = {
+    Submitted: "bg-blue-100 text-blue-800",
+    "Under Review": "bg-yellow-100 text-yellow-800",
+    Approved: "bg-green-100 text-green-800",
+    Rejected: "bg-red-100 text-red-800",
+    "Additional Documents Required": "bg-orange-100 text-orange-800",
+    default: "bg-gray-100 text-gray-800",
   };
 
   return (
@@ -192,7 +223,7 @@ const VisaApplicationTable = ({
         applications
       </div>
 
-      <div className="table-container">
+      <div className="table-container h-[calc(100vh-4rem)] overflow-y-auto ">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -207,6 +238,9 @@ const VisaApplicationTable = ({
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Progress
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
               </th>
               <th
                 onClick={() => handleSort("createdAt")}
@@ -229,14 +263,14 @@ const VisaApplicationTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="6" className="table-cell text-center py-8">
+                <td colSpan="7" className="table-cell text-center py-8">
                   <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
                   <p className="text-gray-500">Loading visa applications...</p>
                 </td>
               </tr>
             ) : filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                   <FileText className="mx-auto mb-2 text-gray-300" size={48} />
                   <p className="font-semibold">No visa applications found</p>
                   {searchTerm || statusFilter ? (
@@ -254,6 +288,8 @@ const VisaApplicationTable = ({
               filteredApplications.map((application) => {
                 const completionPercentage =
                   getCompletionPercentage(application);
+                const requiredDocs = getRequiredDocuments(application.country);
+
                 return (
                   <tr
                     key={application.id}
@@ -281,8 +317,7 @@ const VisaApplicationTable = ({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-1">
                         <span className="text-sm text-gray-900">
-                          {getDocumentCount(application)}/
-                          {getRequiredDocuments(application.country).length}
+                          {getDocumentCount(application)}/{requiredDocs.length}
                         </span>
                         {getDocumentCount(application) > 0 && (
                           <button
@@ -309,13 +344,7 @@ const VisaApplicationTable = ({
                             className={`h-2.5 rounded-full ${
                               completionPercentage === 100
                                 ? "bg-green-500"
-                                : completionPercentage >= 75
-                                ? "bg-blue-500"
-                                : completionPercentage >= 50
-                                ? "bg-yellow-500"
-                                : completionPercentage > 0
-                                ? "bg-orange-500"
-                                : "bg-red-500"
+                                : "bg-blue-500"
                             }`}
                             style={{ width: `${completionPercentage}%` }}
                           ></div>
@@ -323,6 +352,80 @@ const VisaApplicationTable = ({
                         <span className="text-xs text-gray-600 w-8 text-right">
                           {completionPercentage}%
                         </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="relative" ref={statusMenuRef}>
+                        <button
+                          onClick={() =>
+                            setOpenStatusMenu(
+                              openStatusMenu === application.id
+                                ? null
+                                : application.id
+                            )
+                          }
+                          className={`inline-flex items-center justify-center w-full px-3 py-1.5 text-sm font-medium rounded-full transition-colors duration-200 hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                            statusColors[application.status] ||
+                            statusColors.default
+                          }`}
+                          aria-expanded={openStatusMenu === application.id}
+                          aria-haspopup="true"
+                        >
+                          {application.status || "Status"}
+                          <ChevronDown
+                            size={16}
+                            className={`ml-1 transition-transform duration-200 ${
+                              openStatusMenu === application.id
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        </button>
+
+                        {openStatusMenu === application.id && (
+                          <div className="absolute z-20 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none right-0">
+                            <div
+                              className="py-1"
+                              role="menu"
+                              aria-orientation="vertical"
+                              aria-labelledby="options-menu"
+                            >
+                              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
+                                Document Checklist
+                              </div>
+                              {requiredDocs && requiredDocs.length > 0 ? (
+                                <div className="max-h-64 overflow-y-auto">
+                                  {requiredDocs.map((doc) => (
+                                    <div
+                                      key={doc}
+                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                                    >
+                                      <span className="w-6 flex-shrink-0">
+                                        {application.documents?.[doc] ? (
+                                          <span className="text-green-500 font-medium">
+                                            ✓
+                                          </span>
+                                        ) : (
+                                          <span className="text-gray-300">
+                                            ○
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="flex-1 capitalize">
+                                        {doc.replace(/_/g, " ")}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="px-4 py-3 text-sm text-gray-500 italic">
+                                  No document requirements found for{" "}
+                                  {application.country || "this application"}.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
