@@ -186,7 +186,9 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           const prompt = `Provide detailed information about the university "${univName}" in "${countryName}".
             Include its typical application deadline for the current admission cycle (in YYYY-MM-DD format, using ${currentYear} if an exact date is not available),
             general admission requirements (e.g., minimum GPA, test scores like IELTS/TOEFL if applicable),
-            common course levels offered (e.g., "Bachelors", "Masters", "PhD" - comma separated),
+            course levels offered by this university - select from these options only: ${COURSE_LEVELS.join(
+              ", "
+            )} (return as comma-separated string of applicable levels),
             typical application fees (numeric, USD if possible),
             a brief description,
             official website link,
@@ -197,6 +199,9 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
             Format the output as a JSON object with keys:
             "deadline", "Admission_Requirements", "levels", "Application_fee", "univ_desc",
             "univ_website", "univ_phone", "univ_email", "Backlogs_allowed", "Application_form_link".
+            For the "levels" field, only use values from this list: ${COURSE_LEVELS.join(
+              ", "
+            )}. Return them as a comma-separated string.
             If a piece of information is not found or not applicable, use a null value for that key.
             If you find an older deadline, please adjust it to reflect the ${currentYear} admission cycle.`;
 
@@ -238,11 +243,20 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
             }
           }
           setValue("Admission_Requirements", formattedAdmissionReqs);
+
           if (fetchedData.levels) {
-            const parsedLevels = fetchedData?.levels
-              ?.split(",")
-              .map((level) => level.trim())
-              .filter((level) => COURSE_LEVELS.includes(level));
+            let parsedLevels = [];
+
+            if (typeof fetchedData.levels === "string") {
+              parsedLevels = fetchedData.levels
+                .split(",")
+                .map((level) => level.trim())
+                .filter((level) => COURSE_LEVELS.includes(level));
+            } else if (Array.isArray(fetchedData.levels)) {
+              parsedLevels = fetchedData.levels
+                .map((level) => level.trim())
+                .filter((level) => COURSE_LEVELS.includes(level));
+            }
             setValue("levels", parsedLevels);
           } else {
             setValue("levels", []);
@@ -448,20 +462,32 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Course Levels Offered
             </label>
-            <div className="grid grid-cols-2 gap-2 p-3 border border-gray-300 rounded-lg">
-              {COURSE_LEVELS.map((level) => (
-                <label key={level} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value={level}
-                    {...register("levels")}
-                    className="mr-2"
-                    disabled={fetchingInfo}
-                  />
-                  <span className="text-sm">{level}</span>
-                </label>
-              ))}
-            </div>
+            <Controller
+              name="levels"
+              control={control}
+              render={({ field: { value = [], onChange } }) => (
+                <div className="grid grid-cols-2 gap-2 p-3 border border-gray-300 rounded-lg">
+                  {COURSE_LEVELS.map((level) => (
+                    <label key={level} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={value.includes(level)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            onChange([...value, level]);
+                          } else {
+                            onChange(value.filter((item) => item !== level));
+                          }
+                        }}
+                        className="mr-2"
+                        disabled={fetchingInfo}
+                      />
+                      <span className="text-sm">{level}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

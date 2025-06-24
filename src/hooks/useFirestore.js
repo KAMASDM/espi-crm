@@ -6,13 +6,14 @@ import {
   courseService,
   assessmentService,
   applicationService,
-  visaApplicationService, 
+  visaApplicationService,
   paymentService,
   userService,
   branchService,
   detailEnquiryService,
   serviceService,
   applicationStatusService,
+  visaDocumentService,
 } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
@@ -309,6 +310,20 @@ export const useVisaApplications = () => {
   );
 
   return { data, loading, error, ...visaApplicationService };
+};
+
+export const useVisaDocuments = () => {
+  const { data, loading, error } = useSubscription("visaDocumentRequirements", [
+    "countryCode",
+    "asc",
+  ]);
+
+  return {
+    data,
+    loading,
+    error,
+    ...visaDocumentService,
+  };
 };
 
 export const usePayments = () => {

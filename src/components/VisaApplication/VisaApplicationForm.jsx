@@ -5,7 +5,6 @@ import { Upload, FileText, X, Save, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAssessments, useApplications } from "../../hooks/useFirestore";
-import { VISA_DOCUMENT_REQUIREMENTS } from "../../utils/constants";
 import {
   ref,
   getStorage,
@@ -16,7 +15,12 @@ import {
 import app from "../../services/firebase";
 import { visaApplicationService } from "../../services/firestore";
 
-const VisaApplicationForm = ({ onClose, onSuccess, editData = null }) => {
+const VisaApplicationForm = ({
+  onClose,
+  onSuccess,
+  documents = [],
+  editData = null,
+}) => {
   const {
     register,
     watch,
@@ -36,8 +40,14 @@ const VisaApplicationForm = ({ onClose, onSuccess, editData = null }) => {
   const [originalFileUrls, setOriginalFileUrls] = useState({});
   const [requiredDocuments, setRequiredDocuments] = useState([]);
 
-  const selectedStudentId = watch("studentId");
+  const selectedStudentId =
+    watch("studentId") || (editData ? editData.studentId : "");
   const selectedCountry = watch("country");
+
+  const documentRequirementsMap = documents.reduce((acc, doc) => {
+    acc[doc.countryCode] = doc.requirements;
+    return acc;
+  }, {});
 
   const completedStudents =
     applications
@@ -70,7 +80,7 @@ const VisaApplicationForm = ({ onClose, onSuccess, editData = null }) => {
       const initialDisplayNames = {};
       const initialOriginalUrls = {};
 
-      const docsForCountry = VISA_DOCUMENT_REQUIREMENTS[editData.country] || [];
+      const docsForCountry = documentRequirementsMap[editData.country] || [];
       setRequiredDocuments(docsForCountry);
 
       Object.entries(editData.documents || {}).forEach(([docType, url]) => {
@@ -116,7 +126,7 @@ const VisaApplicationForm = ({ onClose, onSuccess, editData = null }) => {
     if (student && student.interestedCountry) {
       setValue("country", student.interestedCountry);
       const newRequiredDocs =
-        VISA_DOCUMENT_REQUIREMENTS[student.interestedCountry] || [];
+        documentRequirementsMap[student.interestedCountry] || [];
       setRequiredDocuments(newRequiredDocs);
 
       setFilesToUpload({});
@@ -373,7 +383,11 @@ const VisaApplicationForm = ({ onClose, onSuccess, editData = null }) => {
               >
                 <option value="">Select Student</option>
                 {completedStudents.map((student) => (
-                  <option key={student.id} value={student.id}>
+                  <option
+                    key={student.id}
+                    value={student.id}
+                    selected={selectedStudent?.id === student.id}
+                  >
                     {`${student.studentDisplayName} - ${
                       student.interestedCountry || "N/A"
                     }`}

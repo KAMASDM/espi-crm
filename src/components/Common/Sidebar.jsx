@@ -17,6 +17,7 @@ import {
   AlignJustify,
   CalendarSync,
   ChartBarBig,
+  Notebook,
 } from "lucide-react";
 import { USER_ROLES } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
@@ -68,6 +69,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       name: "Visa Applications",
       href: "/visaApplications",
       icon: CalendarSync,
+      roles: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
+    },
+    {
+      name: "Visa Documents",
+      href: "/visaDocuments",
+      icon: Notebook,
       roles: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
     },
     {
