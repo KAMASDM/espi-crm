@@ -316,6 +316,40 @@ export const visaApplicationService = {
     ),
 };
 
+export const visaDocumentService = {
+  create: (countryCode, requirements) => {
+    const currentUser = auth.currentUser;
+    return firestoreService.create("visaDocumentRequirements", {
+      countryCode,
+      requirements,
+      createdBy: currentUser?.uid,
+    });
+  },
+  update: async (countryCode, requirements) => {
+    const docRef = doc(db, "visaDocumentRequirements", countryCode);
+    await updateDoc(docRef, {
+      requirements,
+      updatedAt: serverTimestamp(),
+    });
+  },
+  delete: (countryCode) =>
+    firestoreService.delete("visaDocumentRequirements", countryCode),
+
+  getAll: (constraints = []) =>
+    firestoreService.getAll("visaDocumentRequirements", constraints),
+
+  getByCountry: (countryCode) =>
+    firestoreService.getById("visaDocumentRequirements", countryCode),
+
+  subscribe: (callback, constraints = [], onError) =>
+    firestoreService.subscribe(
+      "visaDocumentRequirements",
+      callback,
+      constraints,
+      onError
+    ),
+};
+
 export const paymentService = {
   create: (data) => {
     const currentUser = auth.currentUser;

@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { Plus, AlertTriangle, X } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import VisaApplicationForm from "../components/VisaApplication/VisaApplicationForm";
-import { useVisaApplications, useAssessments } from "../hooks/useFirestore";
+import {
+  useVisaApplications,
+  useAssessments,
+  useVisaDocuments,
+} from "../hooks/useFirestore";
 import VisaApplicationTable from "../components/VisaApplication/VisaApplicationTable";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
@@ -18,6 +22,7 @@ const VisaApplication = () => {
     error,
   } = useVisaApplications();
   const { data: assessments } = useAssessments();
+  const { data: documents } = useVisaDocuments();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -118,6 +123,7 @@ const VisaApplication = () => {
             setShowAddModal(false);
             toast.success("Visa application created successfully!");
           }}
+          documents={documents}
         />
       </Modal>
 
