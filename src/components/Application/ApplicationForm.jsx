@@ -57,11 +57,11 @@ const ApplicationForm = ({
   } = useForm();
   const { user, userProfile } = useAuth();
   const storage = getStorage(app);
+  const { data: applicationStatuses } = useApplicationStatus();
   const [loading, setLoading] = useState(false);
   const [enquiriesData, setEnquiriesData] = useState([]);
   const { data: assessments, isLoading: assessmentsLoading } = useAssessments();
   const [users, setUsers] = useState([]);
-  const { data: applicationStatuses } = useApplicationStatus();
   const selectedAssessmentId = watch("assessmentId");
   const selectedAssessment = assessments?.find(
     (ass) => ass.id === selectedAssessmentId
@@ -551,6 +551,7 @@ const ApplicationForm = ({
 
     return applicationStatuses
       .filter((status) => status.country === assessmentCountry)
+      .sort((a, b) => a.sequence - b.sequence)
       .map((status) => status.applicationStatus);
   };
 

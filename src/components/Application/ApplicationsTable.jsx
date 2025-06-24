@@ -7,10 +7,6 @@ import {
   Calendar,
   Search,
   Filter,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  XCircle,
   Download,
   User,
   Loader2,
@@ -18,7 +14,7 @@ import {
 import moment from "moment";
 import { saveAs } from "file-saver";
 import { PDFDocument } from "pdf-lib";
-import { APPLICATION_STATUS } from "../../utils/constants";
+import { useApplicationStatus, useEnquiries } from "../../hooks/useFirestore";
 
 const DOCUMENT_KEYS_FOR_COUNT = [
   "sop",
@@ -43,27 +39,72 @@ const ApplicationsTable = ({
   onEdit,
   onDelete,
   onView,
+  onUpdateStatus,
 }) => {
+  const { data: enquiries } = useEnquiries();
+  const { data: applicationStatuses } = useApplicationStatus();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
   const [downloadingAppId, setDownloadingAppId] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
   const getAssessment = (assessmentId) => {
     if (!assessments || !assessmentId) return null;
     return assessments.find((assessment) => assessment.id === assessmentId);
   };
+  const getStudentNameWithCountry = (application) => {
+    const assessment = getAssessment(application.application);
+    if (!assessment) return "N/A";
+
+    const enquiry = enquiries.find((enq) => enq.id === assessment.enquiry);
+    if (!enquiry) return "N/A";
+
+    const firstName = enquiry.student_First_Name || "";
+    const lastName = enquiry.student_Last_Name || "";
+    const country = assessment.student_country || "";
+
+    return `${firstName} ${lastName}`.trim() + (country ? ` - ${country}` : "");
+  };
+  const getStatusOptions = (application) => {
+    const assessment = getAssessment(application.application);
+    if (!assessment || !applicationStatuses) return [];
+
+    const country = assessment.student_country;
+    if (!country) return [];
+
+    return applicationStatuses
+      .filter((status) => status.country === country)
+      .sort((a, b) => a.sequence - b.sequence)
+      .map((status) => status.applicationStatus);
+  };
+
+  const handleStatusChange = async (applicationId, newStatus) => {
+    if (onUpdateStatus) {
+      setUpdatingStatusId(applicationId);
+      try {
+        await onUpdateStatus(applicationId, newStatus);
+      } catch (error) {
+        console.error("Failed to update application status:", error);
+      } finally {
+        setUpdatingStatusId(null);
+      }
+    }
+  };
 
   const filteredApplications = applications
     .filter((application) => {
       const assessment = getAssessment(application.application);
-      const searchableText = `${assessment?.specialisation || ""} ${
-        assessment?.university_name || ""
-      }`.toLowerCase();
+      const studentNameWithCountry = getStudentNameWithCountry(application);
+      const searchableText = `${studentNameWithCountry} ${
+        assessment?.specialisation || ""
+      } ${assessment?.university_name || ""}`.toLowerCase();
+
       const matchesSearch =
         searchableText.includes(searchTerm.toLowerCase()) ||
         (application.id && application.id.includes(searchTerm));
+
       const matchesStatus =
         !statusFilter || application.application_status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -91,40 +132,6 @@ const ApplicationsTable = ({
       setSortField(field);
       setSortDirection("asc");
     }
-  };
-
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      Draft: { color: "bg-gray-100 text-gray-800", icon: FileText },
-      Submitted: { color: "bg-blue-100 text-blue-800", icon: CheckCircle2 },
-      "Under Review": { color: "bg-yellow-100 text-yellow-800", icon: Clock },
-      "Additional Documents Required": {
-        color: "bg-orange-100 text-orange-800",
-        icon: AlertCircle,
-      },
-      "Interview Scheduled": {
-        color: "bg-purple-100 text-purple-800",
-        icon: Calendar,
-      },
-      "Decision Pending": {
-        color: "bg-indigo-100 text-indigo-800",
-        icon: Clock,
-      },
-      Accepted: { color: "bg-green-100 text-green-800", icon: CheckCircle2 },
-      Rejected: { color: "bg-red-100 text-red-800", icon: XCircle },
-      Waitlisted: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
-      Deferred: { color: "bg-gray-100 text-gray-800", icon: Clock },
-    };
-    const config = statusConfig[status] || statusConfig["Draft"];
-    const Icon = config.icon;
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
-      >
-        <Icon size={12} className="mr-1" />
-        {status}
-      </span>
-    );
   };
 
   const getDocumentCount = (application) => {
@@ -217,7 +224,7 @@ const ApplicationsTable = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4 ">
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -225,7 +232,7 @@ const ApplicationsTable = ({
           />
           <input
             type="text"
-            placeholder="Search by assessment, ID..."
+            placeholder="Search by student, country, specialization..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 input-field"
@@ -242,11 +249,14 @@ const ApplicationsTable = ({
             className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Status</option>
-            {APPLICATION_STATUS.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
+            {applicationStatuses
+              ?.map((status) => status.applicationStatus)
+              .filter(Boolean)
+              .map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
           </select>
         </div>
       </div>
@@ -259,7 +269,7 @@ const ApplicationsTable = ({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Student Name
+                Student & Country
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Assessment Details
@@ -304,14 +314,14 @@ const ApplicationsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="8" className="table-cell text-center py-8">
+                <td colSpan="7" className="table-cell text-center py-8">
                   <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
                   <p className="text-gray-500">Loading applications...</p>
                 </td>
               </tr>
             ) : filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                   <FileText className="mx-auto mb-2 text-gray-300" size={48} />
                   <p className="font-semibold">No applications found</p>
                   {searchTerm || statusFilter ? (
@@ -330,6 +340,8 @@ const ApplicationsTable = ({
                 const assessment = getAssessment(application.application);
                 const completionPercentage =
                   getCompletionPercentage(application);
+                const statusOptions = getStatusOptions(application);
+
                 return (
                   <tr
                     key={application.id}
@@ -344,7 +356,7 @@ const ApplicationsTable = ({
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {application.studentDisplayName}
+                            {getStudentNameWithCountry(application)}
                           </div>
                         </div>
                       </div>
@@ -379,7 +391,38 @@ const ApplicationsTable = ({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(application.application_status)}
+                      <select
+                        value={application.application_status}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleStatusChange(application.id, e.target.value);
+                        }}
+                        disabled={
+                          updatingStatusId === application.id ||
+                          statusOptions.length === 0
+                        }
+                        className={`w-full px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 ${
+                          updatingStatusId === application.id ||
+                          statusOptions.length === 0
+                            ? "bg-gray-100 cursor-not-allowed"
+                            : "bg-white border-gray-300 focus:ring-primary-500"
+                        }`}
+                      >
+                        {statusOptions.length > 0 ? (
+                          statusOptions.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="">No statuses available</option>
+                        )}
+                      </select>
+                      {updatingStatusId === application.id && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          Updating...
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

@@ -108,6 +108,7 @@ const VisaApplication = () => {
           loading={loading}
           handleVisibility={handleVisibility}
           onView={handleView}
+          documents={documents}
         />
       </div>
 

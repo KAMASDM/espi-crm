@@ -13,6 +13,7 @@ const Applications = () => {
     data: applications,
     loading: applicationsLoading,
     delete: deleteApplication,
+    updateStatus: updateApplicationStatus,
   } = useApplications();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -38,6 +39,18 @@ const Applications = () => {
   const handleDelete = (applicationId) => {
     setApplicationToDeleteId(applicationId);
     setShowDeleteModal(true);
+  };
+  const handleStatusUpdate = async (applicationId, newStatus) => {
+    try {
+      await updateApplicationStatus(applicationId, newStatus);
+      toast.success("Application status updated successfully!");
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      toast.error(
+        error.message ||
+          "Failed to update application status. Please try again."
+      );
+    }
   };
 
   const confirmDelete = async () => {
@@ -173,6 +186,7 @@ const Applications = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
+          onUpdateStatus={handleStatusUpdate}
         />
       </div>
       <Modal

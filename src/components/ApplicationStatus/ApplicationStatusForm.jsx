@@ -46,6 +46,18 @@ const ApplicationStatusForm = ({ onClose, onSuccess, editData = null }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Country *
+            </label>
+            <select {...register("country")} className="input-field">
+              {COUNTRIES.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Status Name *
             </label>
             <input
@@ -63,15 +75,21 @@ const ApplicationStatusForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Country *
+              Sequence *
             </label>
-            <select {...register("country")} className="input-field">
-              {COUNTRIES.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.name}
-                </option>
-              ))}
-            </select>
+            <input
+              type="number"
+              {...register("sequence", {
+                required: "Sequence is required",
+                valueAsNumber: true,
+              })}
+              className="input-field"
+            />
+            {errors.sequence && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.sequence.message}
+              </p>
+            )}
           </div>
           <div className="md:col-span-2">
             <label className="flex items-center">

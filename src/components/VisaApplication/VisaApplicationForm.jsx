@@ -1,10 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Upload, FileText, X, Save, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
-import { useAssessments, useApplications } from "../../hooks/useFirestore";
+import {
+  useAssessments,
+  useApplications,
+  useVisaDocuments,
+} from "../../hooks/useFirestore";
 import {
   ref,
   getStorage,
@@ -15,12 +19,7 @@ import {
 import app from "../../services/firebase";
 import { visaApplicationService } from "../../services/firestore";
 
-const VisaApplicationForm = ({
-  onClose,
-  onSuccess,
-  documents = [],
-  editData = null,
-}) => {
+const VisaApplicationForm = ({ onClose, onSuccess, editData = null }) => {
   const {
     register,
     watch,
@@ -34,6 +33,7 @@ const VisaApplicationForm = ({
   const [loading, setLoading] = useState(false);
   const { data: assessments } = useAssessments();
   const { data: applications } = useApplications();
+  const { data: visaDocuments } = useVisaDocuments();
 
   const [filesToUpload, setFilesToUpload] = useState({});
   const [fileDisplayNames, setFileDisplayNames] = useState({});
@@ -44,10 +44,13 @@ const VisaApplicationForm = ({
     watch("studentId") || (editData ? editData.studentId : "");
   const selectedCountry = watch("country");
 
-  const documentRequirementsMap = documents.reduce((acc, doc) => {
-    acc[doc.countryCode] = doc.requirements;
-    return acc;
-  }, {});
+  const documentRequirementsMap = useMemo(() => {
+    if (!visaDocuments) return {};
+    return visaDocuments.reduce((acc, doc) => {
+      acc[doc.countryCode] = doc.requirements;
+      return acc;
+    }, {});
+  }, [visaDocuments]);
 
   const completedStudents =
     applications
@@ -69,74 +72,91 @@ const VisaApplicationForm = ({
 
   useEffect(() => {
     if (editData) {
-      const defaultValues = {
+      reset({
         studentId: editData.studentId,
         country: editData.country,
         notes: editData.notes,
-      };
-      reset(defaultValues);
+      });
+    } else {
+      // Also good practice to reset the form when it closes or switches to create mode
+      reset();
+    }
+  }, [editData, reset]);
+
+  useEffect(() => {
+    if (
+      editData &&
+      editData.country &&
+      Object.keys(documentRequirementsMap).length > 0
+    ) {
+      const docsForCountry = documentRequirementsMap[editData.country] || [];
+      setRequiredDocuments(docsForCountry);
 
       const initialFiles = {};
       const initialDisplayNames = {};
       const initialOriginalUrls = {};
 
-      const docsForCountry = documentRequirementsMap[editData.country] || [];
-      setRequiredDocuments(docsForCountry);
-
-      Object.entries(editData.documents || {}).forEach(([docType, url]) => {
-        if (url && typeof url === "string") {
-          initialFiles[docType] = url;
-          initialOriginalUrls[docType] = url;
-          try {
-            const urlObj = new URL(url);
-            const pathParts = urlObj.pathname.split("/");
-            let displayName = decodeURIComponent(
-              pathParts[pathParts.length - 1].split("?")[0]
-            );
-            const underscoreIndex = displayName.indexOf("_");
-            if (
-              displayName.substring(0, underscoreIndex).match(/^\d+$/) &&
-              underscoreIndex > -1 &&
-              underscoreIndex < 20
-            ) {
-              displayName = displayName.substring(underscoreIndex + 1);
+      if (editData.documents) {
+        Object.entries(editData.documents).forEach(([docType, url]) => {
+          if (url && typeof url === "string") {
+            initialFiles[docType] = url;
+            initialOriginalUrls[docType] = url;
+            try {
+              const urlObj = new URL(url);
+              const pathParts = urlObj.pathname.split("/");
+              let displayName = decodeURIComponent(
+                pathParts[pathParts.length - 1].split("?")[0]
+              );
+              const underscoreIndex = displayName.indexOf("_");
+              if (underscoreIndex > -1) {
+                const prefix = displayName.substring(0, underscoreIndex);
+                if (!isNaN(prefix)) {
+                  displayName = displayName.substring(underscoreIndex + 1);
+                }
+              }
+              initialDisplayNames[docType] =
+                displayName || docType.replace(/_/g, " ");
+            } catch (e) {
+              console.log("Error parsing filename from URL:", url, e);
+              initialDisplayNames[docType] = docType.replace(/_/g, " ");
             }
-            initialDisplayNames[docType] =
-              displayName || docType.replace(/_/g, " ");
-          } catch (e) {
-            console.log("Error parsing filename from URL:", url, e);
-            initialDisplayNames[docType] = docType.replace(/_/g, " ");
           }
-        }
-      });
+        });
+      }
 
       setFilesToUpload(initialFiles);
       setFileDisplayNames(initialDisplayNames);
       setOriginalFileUrls(initialOriginalUrls);
-    }
-  }, [editData, reset]);
-
-  useEffect(() => {
-    if (!!editData || !selectedStudentId) {
-      return;
-    }
-
-    const student = completedStudents.find((s) => s.id === selectedStudentId);
-
-    if (student && student.interestedCountry) {
-      setValue("country", student.interestedCountry);
-      const newRequiredDocs =
-        documentRequirementsMap[student.interestedCountry] || [];
-      setRequiredDocuments(newRequiredDocs);
-
+    } else {
+      setRequiredDocuments([]);
       setFilesToUpload({});
       setFileDisplayNames({});
       setOriginalFileUrls({});
-    } else {
-      setValue("country", "");
-      setRequiredDocuments([]);
     }
-  }, [selectedStudentId, setValue, editData]);
+  }, [editData, documentRequirementsMap]);
+
+  useEffect(() => {
+    if (!editData && selectedStudentId) {
+      const student = completedStudents.find((s) => s.id === selectedStudentId);
+      if (student && student.interestedCountry) {
+        setValue("country", student.interestedCountry);
+        const docsForCountry =
+          documentRequirementsMap[student.interestedCountry] || [];
+        setRequiredDocuments(docsForCountry);
+
+        setFilesToUpload({});
+        setFileDisplayNames({});
+        setOriginalFileUrls({});
+      }
+    }
+  }, [selectedStudentId, editData, documentRequirementsMap, setValue]);
+
+  useEffect(() => {
+    if (selectedCountry && !editData) {
+      const docsForCountry = documentRequirementsMap[selectedCountry] || [];
+      setRequiredDocuments(docsForCountry);
+    }
+  }, [selectedCountry, documentRequirementsMap, editData]);
 
   const handleFileUpload = (fieldName, file) => {
     if (file) {

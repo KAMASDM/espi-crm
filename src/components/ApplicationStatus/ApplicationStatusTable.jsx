@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import moment from "moment";
 import {
   Edit,
   Trash2,
@@ -119,7 +118,7 @@ const ApplicationStatusTable = ({
               <th className="table-header">Status Name</th>
               <th className="table-header">Country</th>
               <th className="table-header">Status</th>
-              <th className="table-header">Created At</th>
+              <th className="table-header">Sequence</th>
               {handleVisibility && <th className="table-header">Actions</th>}
             </tr>
           </thead>
@@ -175,8 +174,7 @@ const ApplicationStatusTable = ({
                     {getStatusBadge(status.isActive)}
                   </td>
                   <td className="table-cell text-sm font-medium text-gray-500">
-                    {status.createdAt?.toDate &&
-                      moment(status.createdAt.toDate()).format("MMM DD, YYYY")}
+                    {status.sequence}
                   </td>
                   {handleVisibility && (
                     <td className="table-cell">
