@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { Save, X, ChevronDown, Search, Plus } from "lucide-react";
+import {
+  Save,
+  X,
+  ChevronDown,
+  Search,
+  Plus,
+  DownloadCloud,
+} from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { useAuth } from "../../context/AuthContext";
 import { courseService } from "../../services/firestore";
@@ -191,14 +198,6 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
   const [fetchingInfo, setFetchingInfo] = useState(false);
   const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [showAddUniversityModal, setShowAddUniversityModal] = useState(false);
-  const lastFetchedRef = useRef(null);
-  const isEditMode = Boolean(editData);
-
-  useEffect(() => {
-    if (isEditMode) {
-      lastFetchedRef.current = `${editData.course_name}-${editData.university}-${editData.country}`;
-    }
-  }, [isEditMode, editData]);
 
   useEffect(() => {
     if (universities && selectedCountry) {
@@ -223,42 +222,38 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
     }
   }, [selectedCountry, universities, setValue, selectedUniversityId]);
 
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      if (!selectedCountry || !selectedUniversityId || !selectedCourseName) {
-        return;
+  const handleFetchCourseData = async () => {
+    if (!selectedCountry || !selectedUniversityId || !selectedCourseName) {
+      toast.error(
+        "Please enter Course Name and select a Country and University."
+      );
+      return;
+    }
+    setFetchingInfo(true);
+    toast.loading("Fetching course details from AI...", {
+      id: "fetching-course-info",
+    });
+
+    try {
+      const selectedUniversity = universities.find(
+        (uni) => uni.id === selectedUniversityId
+      );
+      const universityName = selectedUniversity
+        ? selectedUniversity.univ_name
+        : "unknown university";
+      const countryName =
+        COUNTRIES.find((c) => c.code === selectedCountry)?.name ||
+        selectedCountry;
+
+      const websiteUrl = getValues("website_url");
+      let prompt = `Provide detailed information about the course "${selectedCourseName}"`;
+      prompt += ` at "${universityName}" in "${countryName}".`;
+
+      if (websiteUrl) {
+        prompt += ` Use this URL for reference if it contains relevant course details: ${websiteUrl}.`;
       }
-      const currentFetchKey = `${selectedCourseName}-${selectedUniversityId}-${selectedCountry}`;
 
-      if (lastFetchedRef.current === currentFetchKey) {
-        return;
-      }
-      setFetchingInfo(true);
-      toast.loading("Fetching course details from AI...", {
-        id: "fetching-course-info",
-      });
-
-      try {
-        lastFetchedRef.current = currentFetchKey;
-        const selectedUniversity = universities.find(
-          (uni) => uni.id === selectedUniversityId
-        );
-        const universityName = selectedUniversity
-          ? selectedUniversity.univ_name
-          : "unknown university";
-        const countryName =
-          COUNTRIES.find((c) => c.code === selectedCountry)?.name ||
-          selectedCountry;
-
-        const websiteUrl = getValues("website_url");
-        let prompt = `Provide detailed information about the course "${selectedCourseName}"`;
-        prompt += ` at "${universityName}" in "${countryName}".`;
-
-        if (websiteUrl) {
-          prompt += ` Use this URL for reference if it contains relevant course details: ${websiteUrl}.`;
-        }
-
-        prompt += `
+      prompt += `
          Include:
          - Available intakes (e.g., "Fall", "Spring", "Summer" - comma separated, without years. For example, 'Fall, Spring'.).
          - Documents required for application (e.g., "Transcripts", "SOP", "LOR", "Resume" - comma separated). Please use the exact terms if applicable: "Statement of Purpose", "Letters of Recommendation", "CV/Resume", "Passport", "10th Grade Marksheet", "12th Grade Marksheet", "Bachelor's Degree", "Master's Degree", "IELTS/TOEFL Score", "GRE Score", "GMAT Score", "Work Experience Letter", "Financial Documents", "Photographs", "Other".
@@ -292,158 +287,138 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
          If a piece of information is not found or not applicable, use a null value for that key.
          `;
 
-        const response = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
-          messages: [{ role: "user", content: prompt }],
-          response_format: { type: "json_object" },
-        });
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+      });
 
-        const fetchedData = JSON.parse(response.choices[0].message.content);
+      const fetchedData = JSON.parse(response.choices[0].message.content);
 
-        if (fetchedData.intake && typeof fetchedData.intake === "string") {
-          const aiIntakeSeasons = fetchedData.intake
-            .split(",")
-            .map((item) => item.trim().toLowerCase());
-          const matchedIntakes = [];
-          INTAKES.forEach((constantIntake) => {
-            const constantIntakeSeason = constantIntake.name
-              .split(" ")[0]
-              .toLowerCase();
-            if (aiIntakeSeasons.includes(constantIntakeSeason)) {
-              matchedIntakes.push(constantIntake.name);
-            }
-          });
-          setValue("intake", matchedIntakes);
-        } else {
-          setValue("intake", []);
-        }
-        if (
-          fetchedData.documents_required &&
-          typeof fetchedData.documents_required === "string"
-        ) {
-          const parsedDocs = fetchedData.documents_required
-            .split(",")
-            .map((item) => item.trim())
-            .map((item) => {
-              const lowerItem = item.toLowerCase();
-              if (
-                lowerItem.includes("statement of purpose") ||
-                lowerItem === "sop"
-              )
-                return "Statement of Purpose";
-              if (
-                lowerItem.includes("letters of recommendation") ||
-                lowerItem === "lor"
-              )
-                return "Letters of Recommendation";
-              if (lowerItem.includes("cv") || lowerItem.includes("resume"))
-                return "CV/Resume";
-              if (lowerItem.includes("passport")) return "Passport";
-              if (lowerItem.includes("10th grade marksheet"))
-                return "10th Grade Marksheet";
-              if (lowerItem.includes("12th grade marksheet"))
-                return "12th Grade Marksheet";
-              if (lowerItem.includes("bachelor's degree"))
-                return "Bachelor's Degree";
-              if (lowerItem.includes("master's degree"))
-                return "Master's Degree";
-              if (lowerItem.includes("ielts") || lowerItem.includes("toefl"))
-                return "IELTS/TOEFL Score";
-              if (lowerItem.includes("gre")) return "GRE Score";
-              if (lowerItem.includes("gmat")) return "GMAT Score";
-              if (lowerItem.includes("work experience"))
-                return "Work Experience Letter";
-              if (lowerItem.includes("financial documents"))
-                return "Financial Documents";
-              if (lowerItem.includes("photographs")) return "Photographs";
-              return item;
-            })
-            .filter((item) => DOCUMENTS_REQUIRED.includes(item));
-          setValue("documents_required", parsedDocs);
-        } else {
-          setValue("documents_required", []);
-        }
-        setValue(
-          "Application_deadline",
-          fetchedData.Application_deadline || ""
-        );
-        setValue(
-          "Backlogs_allowed",
-          fetchedData.Backlogs_allowed !== null &&
-            !isNaN(parseInt(fetchedData.Backlogs_allowed, 10))
-            ? parseInt(fetchedData.Backlogs_allowed, 10)
-            : null
-        );
-        setValue(
-          "Application_fee",
-          fetchedData.Application_fee !== null &&
-            !isNaN(parseFloat(fetchedData.Application_fee))
-            ? parseFloat(fetchedData.Application_fee)
-            : null
-        );
-        setValue(
-          "Application_fee_currency",
-          fetchedData.Application_fee_currency || ""
-        );
-        setValue(
-          "Yearly_Tuition_fee",
-          fetchedData.Yearly_Tuition_fee !== null &&
-            !isNaN(parseFloat(fetchedData.Yearly_Tuition_fee))
-            ? parseFloat(fetchedData.Yearly_Tuition_fee)
-            : null
-        );
-        setValue(
-          "tenth_std_percentage_requirement",
-          fetchedData.tenth_std_percentage_requirement || ""
-        );
-        setValue(
-          "twelfth_std_percentage_requirement",
-          fetchedData.twelfth_std_percentage_requirement || ""
-        );
-        setValue(
-          "bachelor_requirement",
-          fetchedData.bachelor_requirement || ""
-        );
-        setValue("masters_requirement", fetchedData.masters_requirement || "");
-        setValue("ielts_Exam", fetchedData.ielts_Exam || "");
-        setValue("Toefl_Exam", fetchedData.Toefl_Exam || "");
-        setValue("PTE_Exam", fetchedData.PTE_Exam || "");
-        setValue("Duolingo_Exam", fetchedData.Duolingo_Exam || "");
-        setValue("Gre_Exam", fetchedData.Gre_Exam || "");
-        setValue("Gmat_Exam", fetchedData.Gmat_Exam || "");
-        setValue("other_exam", fetchedData.other_exam || "");
-        setValue("specialisation_tag", fetchedData.specialisation_tag || "");
-        setValue("Remark", fetchedData.Remark || "");
-        setValue(
-          "website_url",
-          fetchedData.website_url || getValues("website_url")
-        );
-
-        toast.success("Course details fetched successfully!", {
-          id: "fetching-course-info",
+      if (fetchedData.intake && typeof fetchedData.intake === "string") {
+        const aiIntakeSeasons = fetchedData.intake
+          .split(",")
+          .map((item) => item.trim().toLowerCase());
+        const matchedIntakes = [];
+        INTAKES.forEach((constantIntake) => {
+          const constantIntakeSeason = constantIntake.name
+            .split(" ")[0]
+            .toLowerCase();
+          if (aiIntakeSeasons.includes(constantIntakeSeason)) {
+            matchedIntakes.push(constantIntake.name);
+          }
         });
-      } catch (error) {
-        console.error("Error fetching course details from OpenAI:", error);
-        toast.error("Failed to fetch course details. Please enter manually.", {
-          id: "fetching-course-info",
-        });
-        lastFetchedRef.current = null;
-      } finally {
-        setFetchingInfo(false);
+        setValue("intake", matchedIntakes);
+      } else {
+        setValue("intake", []);
       }
-    }, 1000);
+      if (
+        fetchedData.documents_required &&
+        typeof fetchedData.documents_required === "string"
+      ) {
+        const parsedDocs = fetchedData.documents_required
+          .split(",")
+          .map((item) => item.trim())
+          .map((item) => {
+            const lowerItem = item.toLowerCase();
+            if (
+              lowerItem.includes("statement of purpose") ||
+              lowerItem === "sop"
+            )
+              return "Statement of Purpose";
+            if (
+              lowerItem.includes("letters of recommendation") ||
+              lowerItem === "lor"
+            )
+              return "Letters of Recommendation";
+            if (lowerItem.includes("cv") || lowerItem.includes("resume"))
+              return "CV/Resume";
+            if (lowerItem.includes("passport")) return "Passport";
+            if (lowerItem.includes("10th grade marksheet"))
+              return "10th Grade Marksheet";
+            if (lowerItem.includes("12th grade marksheet"))
+              return "12th Grade Marksheet";
+            if (lowerItem.includes("bachelor's degree"))
+              return "Bachelor's Degree";
+            if (lowerItem.includes("master's degree")) return "Master's Degree";
+            if (lowerItem.includes("ielts") || lowerItem.includes("toefl"))
+              return "IELTS/TOEFL Score";
+            if (lowerItem.includes("gre")) return "GRE Score";
+            if (lowerItem.includes("gmat")) return "GMAT Score";
+            if (lowerItem.includes("work experience"))
+              return "Work Experience Letter";
+            if (lowerItem.includes("financial documents"))
+              return "Financial Documents";
+            if (lowerItem.includes("photographs")) return "Photographs";
+            return item;
+          })
+          .filter((item) => DOCUMENTS_REQUIRED.includes(item));
+        setValue("documents_required", parsedDocs);
+      } else {
+        setValue("documents_required", []);
+      }
+      setValue("Application_deadline", fetchedData.Application_deadline || "");
+      setValue(
+        "Backlogs_allowed",
+        fetchedData.Backlogs_allowed !== null &&
+          !isNaN(parseInt(fetchedData.Backlogs_allowed, 10))
+          ? parseInt(fetchedData.Backlogs_allowed, 10)
+          : null
+      );
+      setValue(
+        "Application_fee",
+        fetchedData.Application_fee !== null &&
+          !isNaN(parseFloat(fetchedData.Application_fee))
+          ? parseFloat(fetchedData.Application_fee)
+          : null
+      );
+      setValue(
+        "Application_fee_currency",
+        fetchedData.Application_fee_currency || ""
+      );
+      setValue(
+        "Yearly_Tuition_fee",
+        fetchedData.Yearly_Tuition_fee !== null &&
+          !isNaN(parseFloat(fetchedData.Yearly_Tuition_fee))
+          ? parseFloat(fetchedData.Yearly_Tuition_fee)
+          : null
+      );
+      setValue(
+        "tenth_std_percentage_requirement",
+        fetchedData.tenth_std_percentage_requirement || ""
+      );
+      setValue(
+        "twelfth_std_percentage_requirement",
+        fetchedData.twelfth_std_percentage_requirement || ""
+      );
+      setValue("bachelor_requirement", fetchedData.bachelor_requirement || "");
+      setValue("masters_requirement", fetchedData.masters_requirement || "");
+      setValue("ielts_Exam", fetchedData.ielts_Exam || "");
+      setValue("Toefl_Exam", fetchedData.Toefl_Exam || "");
+      setValue("PTE_Exam", fetchedData.PTE_Exam || "");
+      setValue("Duolingo_Exam", fetchedData.Duolingo_Exam || "");
+      setValue("Gre_Exam", fetchedData.Gre_Exam || "");
+      setValue("Gmat_Exam", fetchedData.Gmat_Exam || "");
+      setValue("other_exam", fetchedData.other_exam || "");
+      setValue("specialisation_tag", fetchedData.specialisation_tag || "");
+      setValue("Remark", fetchedData.Remark || "");
+      setValue(
+        "website_url",
+        fetchedData.website_url || getValues("website_url")
+      );
 
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [
-    selectedCourseName,
-    selectedUniversityId,
-    selectedCountry,
-    setValue,
-    universities,
-    getValues,
-  ]);
+      toast.success("Course details fetched successfully!", {
+        id: "fetching-course-info",
+      });
+    } catch (error) {
+      console.error("Error fetching course details from OpenAI:", error);
+      toast.error("Failed to fetch course details. Please enter manually.", {
+        id: "fetching-course-info",
+      });
+    } finally {
+      setFetchingInfo(false);
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -477,9 +452,25 @@ const CourseForm = ({ onClose, onSuccess, editData = null }) => {
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">
-            Basic Information
-          </h4>
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-lg font-semibold text-gray-900">
+              Basic Information
+            </h4>
+            <button
+              type="button"
+              onClick={handleFetchCourseData}
+              disabled={
+                !selectedCourseName ||
+                !selectedCountry ||
+                !selectedUniversityId ||
+                fetchingInfo
+              }
+              className="btn-secondary flex items-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <DownloadCloud size={16} className="mr-2" />
+              {fetchingInfo ? "Fetching..." : "Fetch Course Data"}
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">

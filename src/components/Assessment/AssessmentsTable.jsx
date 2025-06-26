@@ -27,6 +27,11 @@ const AssessmentsTable = ({
   onView,
   onUpdateStatus,
 }) => {
+  console.log("AssessmentsTable rendered with", {
+    assessments,
+    enquiries,
+    universities,
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
@@ -105,6 +110,8 @@ const AssessmentsTable = ({
         ? 1
         : -1;
     });
+
+  console.log("Filtered Assessments:", filteredAssessments);
 
   const handleSort = (field) => {
     if (sortField === field) {

@@ -279,8 +279,11 @@ const UniversitiesTable = ({
                             <Building2 className="text-primary-600" size={20} />
                           </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                        <div
+                          className="ml-4 cursor-pointer"
+                          onClick={() => onView(university)}
+                        >
+                          <div className="text-sm font-medium text-blue-600 hover:text-blue-600 hover:underline">
                             {university.univ_name}
                           </div>
                         </div>

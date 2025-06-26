@@ -189,8 +189,7 @@ const Universities = () => {
           levels:
             row.CourseLevels?.split(/[,|]/)
               .map((l) => l.trim())
-              .filter((l) => COURSE_LEVELS.map((cl) => cl.value).includes(l)) ||
-            [],
+              .filter((l) => COURSE_LEVELS.includes(l)) || [],
           Backlogs_allowed: row.BacklogsAllowed
             ? parseInt(row.BacklogsAllowed, 10)
             : null,
@@ -506,6 +505,10 @@ const Universities = () => {
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
         university={selectedUniversity}
+        onEdit={() => {
+          setShowViewModal(false);
+          handleEdit(selectedUniversity);
+        }}
       />
       <Modal
         isOpen={showDeleteModal}

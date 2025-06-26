@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Download, Upload, AlertTriangle, X } from "lucide-react";
+import { Plus, Download, AlertTriangle, X } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import ApplicationForm from "../components/Application/ApplicationForm";
 import { useApplications, useAssessments } from "../hooks/useFirestore";
@@ -98,13 +98,6 @@ const Applications = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            className="btn-secondary flex items-center"
-            disabled={isLoading}
-          >
-            <Upload size={20} className="mr-2" />
-            Import
-          </button>
           <button
             className="btn-secondary flex items-center"
             disabled={isLoading || !safeApplications.length}

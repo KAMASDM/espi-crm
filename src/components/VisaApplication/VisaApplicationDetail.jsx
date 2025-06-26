@@ -168,20 +168,6 @@ const VisaApplicationDetails = ({
     }
   };
 
-  const getStatusIcon = (status) => {
-    const iconProps = { className: "mr-1.5 h-4 w-4 flex-shrink-0" };
-    switch (status) {
-      case "Approved":
-        return <CheckCircle2 {...iconProps} />;
-      case "Rejected":
-        return <XCircle {...iconProps} />;
-      case "Under Review":
-        return <Clock {...iconProps} />;
-      default:
-        return <Info {...iconProps} />;
-    }
-  };
-
   const Card = ({ children, className = "" }) => (
     <section
       className={`rounded-xl bg-white p-5 shadow-lg sm:p-6 ${className}`}

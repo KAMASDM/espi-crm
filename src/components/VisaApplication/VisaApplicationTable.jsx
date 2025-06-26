@@ -70,6 +70,23 @@ const VisaApplicationTable = ({
     const completedFields = getDocumentCount(application);
     return Math.round((completedFields / totalFields) * 100);
   };
+  const getLastUploadedDocumentName = (application) => {
+    const requiredDocs = getRequiredDocuments(application.country);
+    if (!requiredDocs.length || !application.documents) {
+      return null;
+    }
+
+    const uploadedDocKeys = requiredDocs.filter(
+      (docKey) => application.documents[docKey]
+    );
+
+    if (uploadedDocKeys.length > 0) {
+      const lastDocKey = uploadedDocKeys[uploadedDocKeys.length - 1];
+      return lastDocKey.replace(/_/g, " ");
+    }
+
+    return null;
+  };
 
   const handleDownloadAllDocuments = async (application) => {
     setDownloadingAppId(application.id);
@@ -159,8 +176,6 @@ const VisaApplicationTable = ({
         ? 1
         : -1;
     });
-
-  console.log(filteredApplications);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -289,6 +304,7 @@ const VisaApplicationTable = ({
                 const completionPercentage =
                   getCompletionPercentage(application);
                 const requiredDocs = getRequiredDocuments(application.country);
+                const lastDocName = getLastUploadedDocumentName(application);
 
                 return (
                   <tr
@@ -302,8 +318,11 @@ const VisaApplicationTable = ({
                             <User className="text-blue-600" size={20} />
                           </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                        <div
+                          className="ml-4 cursor-pointer"
+                          onClick={() => onView(application)}
+                        >
+                          <div className="text-sm font-medium text-blue-600 hover:text-blue-600 hover:underline">
                             {application.studentName}
                           </div>
                         </div>
@@ -371,7 +390,7 @@ const VisaApplicationTable = ({
                           aria-expanded={openStatusMenu === application.id}
                           aria-haspopup="true"
                         >
-                          {application.status || "Status"}
+                          {lastDocName}
                           <ChevronDown
                             size={16}
                             className={`ml-1 transition-transform duration-200 ${
@@ -398,7 +417,8 @@ const VisaApplicationTable = ({
                                   {requiredDocs.map((doc) => (
                                     <div
                                       key={doc}
-                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                                      onClick={() => onEdit(application)}
+                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 cursor-pointer"
                                     >
                                       <span className="w-6 flex-shrink-0">
                                         {application.documents?.[doc] ? (
@@ -436,11 +456,9 @@ const VisaApplicationTable = ({
                         />
                         {application.createdAt?.toDate
                           ? moment(application.createdAt.toDate()).format(
-                              "MMM DD, YYYY"
+                              "MMM DD,YYYY"
                             )
-                          : moment(application.createdAt).format(
-                              "MMM DD, YYYY"
-                            )}
+                          : moment(application.createdAt).format("MMM DD,YYYY")}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
