@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Download, Upload, AlertTriangle, X } from "lucide-react";
+import { Plus, Download, AlertTriangle, X } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import PaymentForm from "../components/Payment/PaymentForm";
 import PaymentsTable from "../components/Payment/PaymentsTable";
@@ -66,10 +66,6 @@ const Payments = () => {
     toast.info("Export functionality will be implemented soon!");
   };
 
-  const handleImport = () => {
-    toast.info("Import functionality will be implemented soon!");
-  };
-
   const totalRevenue = payments
     .filter((payment) => payment.payment_status === "Paid")
     .reduce((sum, payment) => sum + parseFloat(payment.payment_amount || 0), 0);
@@ -96,14 +92,6 @@ const Payments = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleImport}
-            className="btn-secondary flex items-center"
-            disabled={isLoading}
-          >
-            <Upload size={18} className="mr-1.5" />
-            Import
-          </button>
           <button
             onClick={handleExport}
             className="btn-secondary flex items-center"

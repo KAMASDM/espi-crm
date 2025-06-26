@@ -16,6 +16,7 @@ import {
   Archive,
   ThumbsUp,
   ThumbsDown,
+  Edit,
 } from "lucide-react";
 
 const countryToCurrency = {
@@ -30,7 +31,7 @@ const countryToCurrency = {
   IN: "INR",
 };
 
-const UniversityDetail = ({ university, isOpen, onClose }) => {
+const UniversityDetail = ({ university, isOpen, onClose, onEdit }) => {
   const getCurrencySymbolForCountry = (countryCode) => {
     const targetCurrencyCode = countryToCurrency[countryCode];
     if (targetCurrencyCode) {
@@ -105,13 +106,22 @@ const UniversityDetail = ({ university, isOpen, onClose }) => {
               University Details
             </h3>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            aria-label="Close drawer"
-          >
-            <X className="h-6 w-6" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onEdit}
+              className="rounded-md p-1 text-yellow-600 transition-colors hover:bg-yellow-100 hover:text-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+              aria-label="Edit university"
+            >
+              <Edit className="h-6 w-6" />
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              aria-label="Close drawer"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
         </header>
         <div className="flex-1 overflow-y-auto p-4 pt-6 sm:p-6 bg-slate-50">
           {university ? (

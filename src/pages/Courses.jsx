@@ -288,13 +288,11 @@ const Courses = () => {
           intake:
             row.Intakes?.split(/[,|]/)
               .map((s) => s.trim())
-              .filter((s) => INTAKES.map((it) => it.value).includes(s)) || [],
+              .filter((s) => INTAKES.some((intake) => intake.name === s)) || [],
           documents_required:
             row.DocumentsRequired?.split(/[,|]/)
               .map((s) => s.trim())
-              .filter((s) =>
-                DOCUMENTS_REQUIRED.map((dr) => dr.value).includes(s)
-              ) || [],
+              .filter((s) => DOCUMENTS_REQUIRED.includes(s)) || [],
           Application_deadline: row.ApplicationDeadline
             ? new Date(row.ApplicationDeadline).toISOString().split("T")[0]
             : null,
@@ -335,11 +333,7 @@ const Courses = () => {
           importErrors.push(`Row ${i + 2}: Missing 'CourseName'.`);
           missingOrInvalidField = true;
         }
-        if (
-          !COURSE_LEVELS.map((cl) => cl.value).includes(
-            courseData.course_levels
-          )
-        ) {
+        if (!COURSE_LEVELS.includes(courseData.course_levels)) {
           importErrors.push(
             `Row ${i + 2} (${courseData.course_name}): Invalid 'CourseLevel' "${
               courseData.course_levels
@@ -634,6 +628,10 @@ const Courses = () => {
         onClose={() => setShowViewModal(false)}
         course={selectedCourse}
         universities={universities}
+        onEdit={() => {
+          setShowViewModal(false);
+          handleEdit(selectedCourse);
+        }}
       />
       <Modal
         isOpen={showDeleteModal}

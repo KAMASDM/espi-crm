@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { Save, X, ChevronDown, Search } from "lucide-react";
+import { Save, X, ChevronDown, Search, DownloadCloud } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { useAuth } from "../../context/AuthContext";
 import { universityService } from "../../services/firestore";
@@ -172,141 +172,135 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
   const univName = watch("univ_name");
   const countryCode = watch("country");
 
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      if (univName && countryCode) {
-        setFetchingInfo(true);
-        toast.loading("Fetching university details...", {
-          id: "fetching-uni-info",
-        });
-        try {
-          const countryName =
-            COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
-          const currentYear = new Date().getFullYear();
-          const prompt = `Provide detailed information about the university "${univName}" in "${countryName}".
-            Include its typical application deadline for the current admission cycle (in YYYY-MM-DD format, using ${currentYear} if an exact date is not available),
-            general admission requirements (e.g., minimum GPA, test scores like IELTS/TOEFL if applicable),
-            course levels offered by this university - select from these options only: ${COURSE_LEVELS.join(
-              ", "
-            )} (return as comma-separated string of applicable levels),
-            typical application fees (numeric, USD if possible),
-            a brief description,
-            official website link,
-            general contact phone number,
-            general contact email,
-            maximum number of backlogs allowed (numeric),
-            and the direct application form link.
-            Format the output as a JSON object with keys:
-            "deadline", "Admission_Requirements", "levels", "Application_fee", "univ_desc",
-            "univ_website", "univ_phone", "univ_email", "Backlogs_allowed", "Application_form_link".
-            For the "levels" field, only use values from this list: ${COURSE_LEVELS.join(
-              ", "
-            )}. Return them as a comma-separated string.
-            If a piece of information is not found or not applicable, use a null value for that key.
-            If you find an older deadline, please adjust it to reflect the ${currentYear} admission cycle.`;
+  const handleFetchUniversityData = async () => {
+    if (!univName || !countryCode) {
+      toast.error("Please enter University Name and select a Country first.");
+      return;
+    }
 
-          const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" },
-          });
+    setFetchingInfo(true);
+    toast.loading("Fetching university details...", {
+      id: "fetching-uni-info",
+    });
 
-          const fetchedData = JSON.parse(response.choices[0].message.content);
+    try {
+      const countryName =
+        COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
+      const currentYear = new Date().getFullYear();
+      const prompt = `Provide detailed information about the university "${univName}" in "${countryName}".
+        Include its typical application deadline for the current admission cycle (in yyyy-MM-dd format, using ${currentYear} if an exact date is not available),
+        general admission requirements (e.g., minimum GPA, test scores like IELTS/TOEFL if applicable),
+        course levels offered by this university - select from these options only: ${COURSE_LEVELS.join(
+          ", "
+        )} (return as comma-separated string of applicable levels),
+        typical application fees (numeric, USD if possible),
+        a brief description,
+        official website link,
+        general contact phone number,
+        general contact email,
+        maximum number of backlogs allowed (numeric),
+        and the direct application form link.
+        Format the output as a JSON object with keys:
+        "deadline", "Admission_Requirements", "levels", "Application_fee", "univ_desc",
+        "univ_website", "univ_phone", "univ_email", "Backlogs_allowed", "Application_form_link".
+        For the "levels" field, only use values from this list: ${COURSE_LEVELS.join(
+          ", "
+        )}. Return them as a comma-separated string.
+        If a piece of information is not found or not applicable, use a null value for that key.
+        If you find an older deadline, please adjust it to reflect the ${currentYear} admission cycle.`;
 
-          setValue("deadline", fetchedData.deadline || "");
-          setValue(
-            "Admission_Requirements",
-            fetchedData.Admission_Requirements || ""
-          );
-          let formattedAdmissionReqs = "";
-          if (fetchedData.Admission_Requirements) {
-            if (
-              typeof fetchedData.Admission_Requirements === "object" &&
-              fetchedData.Admission_Requirements !== null
-            ) {
-              const reqs = fetchedData.Admission_Requirements;
-              if (reqs.IELTS_score) {
-                formattedAdmissionReqs += `IELTS Score: ${reqs.IELTS_score}\n`;
-              }
-              if (reqs.TOEFL_score) {
-                formattedAdmissionReqs += `TOEFL Score: ${reqs.TOEFL_score}\n`;
-              }
-              if (reqs.minimum_GPA) {
-                formattedAdmissionReqs += `Minimum GPA: ${reqs.minimum_GPA}\n`;
-              }
-            } else if (typeof fetchedData.Admission_Requirements === "string") {
-              formattedAdmissionReqs = fetchedData.Admission_Requirements;
-            } else {
-              formattedAdmissionReqs = JSON.stringify(
-                fetchedData.Admission_Requirements
-              );
-            }
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+      });
+
+      const fetchedData = JSON.parse(response.choices[0].message.content);
+
+      setValue("deadline", fetchedData.deadline || "");
+      setValue(
+        "Admission_Requirements",
+        fetchedData.Admission_Requirements || ""
+      );
+      let formattedAdmissionReqs = "";
+      if (fetchedData.Admission_Requirements) {
+        if (
+          typeof fetchedData.Admission_Requirements === "object" &&
+          fetchedData.Admission_Requirements !== null
+        ) {
+          const reqs = fetchedData.Admission_Requirements;
+          if (reqs.IELTS_score) {
+            formattedAdmissionReqs += `IELTS Score: ${reqs.IELTS_score}\n`;
           }
-          setValue("Admission_Requirements", formattedAdmissionReqs);
-
-          if (fetchedData.levels) {
-            let parsedLevels = [];
-
-            if (typeof fetchedData.levels === "string") {
-              parsedLevels = fetchedData.levels
-                .split(",")
-                .map((level) => level.trim())
-                .filter((level) => COURSE_LEVELS.includes(level));
-            } else if (Array.isArray(fetchedData.levels)) {
-              parsedLevels = fetchedData.levels
-                .map((level) => level.trim())
-                .filter((level) => COURSE_LEVELS.includes(level));
-            }
-            setValue("levels", parsedLevels);
-          } else {
-            setValue("levels", []);
+          if (reqs.TOEFL_score) {
+            formattedAdmissionReqs += `TOEFL Score: ${reqs.TOEFL_score}\n`;
           }
-          setValue(
-            "Application_fee",
-            fetchedData.Application_fee !== null &&
-              !isNaN(parseFloat(fetchedData.Application_fee))
-              ? parseFloat(fetchedData.Application_fee)
-              : null
+          if (reqs.minimum_GPA) {
+            formattedAdmissionReqs += `Minimum GPA: ${reqs.minimum_GPA}\n`;
+          }
+        } else if (typeof fetchedData.Admission_Requirements === "string") {
+          formattedAdmissionReqs = fetchedData.Admission_Requirements;
+        } else {
+          formattedAdmissionReqs = JSON.stringify(
+            fetchedData.Admission_Requirements
           );
-          setValue("univ_desc", fetchedData.univ_desc || "");
-          setValue("univ_website", fetchedData.univ_website || "");
-          setValue("univ_phone", fetchedData.univ_phone || "");
-          setValue("univ_email", fetchedData.univ_email || "");
-          setValue(
-            "Backlogs_allowed",
-            fetchedData.Backlogs_allowed !== null &&
-              !isNaN(parseInt(fetchedData.Backlogs_allowed, 10))
-              ? parseInt(fetchedData.Backlogs_allowed, 10)
-              : null
-          );
-          setValue(
-            "Application_form_link",
-            fetchedData.Application_form_link || ""
-          );
-
-          toast.success("University details fetched successfully!", {
-            id: "fetching-uni-info",
-          });
-        } catch (error) {
-          console.error(
-            "Error fetching university details from OpenAI:",
-            error
-          );
-          toast.error(
-            "Failed to fetch university details. Please enter manually.",
-            { id: "fetching-uni-info" }
-          );
-        } finally {
-          setFetchingInfo(false);
         }
       }
-    }, 500);
+      setValue("Admission_Requirements", formattedAdmissionReqs);
 
-    return () => {
-      clearTimeout(handler);
-      toast.dismiss("fetching-uni-info");
-    };
-  }, [univName, countryCode, setValue]);
+      if (fetchedData.levels) {
+        let parsedLevels = [];
+
+        if (typeof fetchedData.levels === "string") {
+          parsedLevels = fetchedData.levels
+            .split(",")
+            .map((level) => level.trim())
+            .filter((level) => COURSE_LEVELS.includes(level));
+        } else if (Array.isArray(fetchedData.levels)) {
+          parsedLevels = fetchedData.levels
+            .map((level) => level.trim())
+            .filter((level) => COURSE_LEVELS.includes(level));
+        }
+        setValue("levels", parsedLevels);
+      } else {
+        setValue("levels", []);
+      }
+      setValue(
+        "Application_fee",
+        fetchedData.Application_fee !== null &&
+          !isNaN(parseFloat(fetchedData.Application_fee))
+          ? parseFloat(fetchedData.Application_fee)
+          : null
+      );
+      setValue("univ_desc", fetchedData.univ_desc || "");
+      setValue("univ_website", fetchedData.univ_website || "");
+      setValue("univ_phone", fetchedData.univ_phone || "");
+      setValue("univ_email", fetchedData.univ_email || "");
+      setValue(
+        "Backlogs_allowed",
+        fetchedData.Backlogs_allowed !== null &&
+          !isNaN(parseInt(fetchedData.Backlogs_allowed, 10))
+          ? parseInt(fetchedData.Backlogs_allowed, 10)
+          : null
+      );
+      setValue(
+        "Application_form_link",
+        fetchedData.Application_form_link || ""
+      );
+
+      toast.success("University details fetched successfully!", {
+        id: "fetching-uni-info",
+      });
+    } catch (error) {
+      console.error("Error fetching university details from OpenAI:", error);
+      toast.error(
+        "Failed to fetch university details. Please enter manually.",
+        { id: "fetching-uni-info" }
+      );
+    } finally {
+      setFetchingInfo(false);
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -338,9 +332,20 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">
-          Basic Information
-        </h4>
+        <div className="flex justify-between items-center mb-4">
+          <h4 className="text-lg font-semibold text-gray-900">
+            Basic Information
+          </h4>
+          <button
+            type="button"
+            onClick={handleFetchUniversityData}
+            disabled={!univName || !countryCode || fetchingInfo}
+            className="btn-secondary flex items-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <DownloadCloud size={16} className="mr-2" />
+            {fetchingInfo ? "Fetching..." : "Fetch University Data"}
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -2,14 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import Papa from "papaparse";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import {
-  Plus,
-  Download,
-  Upload,
-  AlertTriangle,
-  CheckCircle,
-  X,
-} from "lucide-react";
+import { Plus, Download, AlertTriangle, CheckCircle, X } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import { USER_ROLES } from "../utils/constants";
 import { downloadAsCSV } from "../utils/helpers";
@@ -346,15 +339,6 @@ const Students = () => {
                 style={{ display: "none" }}
                 id="csvFileInput"
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="btn-secondary flex items-center"
-                title="Import Students from CSV"
-                disabled={isImporting}
-              >
-                <Upload size={20} className="mr-2" />
-                {isImporting ? "Importing..." : "Import"}
-              </button>
               <button
                 onClick={handleExport}
                 className="btn-secondary flex items-center"

@@ -66,6 +66,7 @@ const ApplicationForm = ({
   const selectedAssessment = assessments?.find(
     (ass) => ass.id === selectedAssessmentId
   );
+  console.log("selectedAssessment", selectedAssessment);
   const [filesToUpload, setFilesToUpload] = useState({});
   const [fileDisplayNames, setFileDisplayNames] = useState({});
   const [originalFileUrls, setOriginalFileUrls] = useState({});
@@ -332,7 +333,11 @@ const ApplicationForm = ({
     );
 
     try {
-      const finalApplicationData = { ...dataFromForm };
+      const finalApplicationData = {
+        ...dataFromForm,
+        studentEnquiry: selectedAssessment.enquiry,
+      };
+      console.log("Final Application Data:", finalApplicationData);
       const uploadPromises = [];
 
       if (dataFromForm.assessmentId) {

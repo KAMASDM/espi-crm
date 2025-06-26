@@ -69,6 +69,7 @@ const VisaApplicationForm = ({ onClose, onSuccess, editData = null }) => {
   const selectedStudent = completedStudents?.find(
     (s) => s.id === selectedStudentId
   );
+  console.log("selectedStudent data:", selectedStudent);
 
   useEffect(() => {
     if (editData) {
@@ -202,6 +203,9 @@ const VisaApplicationForm = ({ onClose, onSuccess, editData = null }) => {
       const finalData = {
         ...data,
         studentName: selectedStudent?.studentDisplayName,
+        studentId: selectedStudentId,
+        country: data.country,
+        studentEnquiryId: selectedStudent?.studentEnquiry,
       };
       const uploadPromises = [];
 
