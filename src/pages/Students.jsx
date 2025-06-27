@@ -7,9 +7,10 @@ import Modal from "../components/Common/Modal";
 import { USER_ROLES } from "../utils/constants";
 import { downloadAsCSV } from "../utils/helpers";
 import { useAuth } from "../context/AuthContext";
-import { useEnquiries, useUsers } from "../hooks/useFirestore";
+import { useEnquiries, useUsers, useFollowUps } from "../hooks/useFirestore";
 import EnquiryForm from "../components/Students/EnquiryForm";
 import StudentsTable from "../components/Students/StudentsTable";
+import FollowUpForm from "../components/FollowUp/FollowUpForm";
 
 const REQUIRED_FIRESTORE_FIELDS = [
   "student_First_Name",
@@ -32,6 +33,7 @@ const Students = () => {
   const navigate = useNavigate();
   const { data: allUsers } = useUsers();
   const { user, userProfile } = useAuth();
+  const { data: followUps, loading: followUpsLoading } = useFollowUps();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -40,9 +42,26 @@ const Students = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [studentToDeleteId, setStudentToDeleteId] = useState(null);
 
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [selectedStudentForFollowUp, setSelectedStudentForFollowUp] =
+    useState(null);
+  const [editingFollowUp, setEditingFollowUp] = useState(null);
+
   const fileInputRef = useRef(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
+
+  const openFollowUpModal = (student, followUp = null) => {
+    setSelectedStudentForFollowUp(student);
+    setEditingFollowUp(followUp);
+    setShowFollowUpModal(true);
+  };
+
+  const handleFollowUpSuccess = () => {
+    setShowFollowUpModal(false);
+    setSelectedStudentForFollowUp(null);
+    setEditingFollowUp(null);
+  };
 
   const filteredStudents = useMemo(() => {
     if (!userProfile || !students) return [];
@@ -478,13 +497,15 @@ const Students = () => {
       <div className="card">
         <StudentsTable
           students={filteredStudents}
-          loading={loading}
+          followUps={followUps}
+          loading={loading || followUpsLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
           onUpdateStatus={handleUpdateStudentStatus}
           onUpdateNote={handleUpdateStudentNote}
           onUpdateAssignment={handleUpdateStudentAssignment}
+          onOpenFollowUp={openFollowUpModal}
           userRole={userProfile?.role}
           userBranch={userProfile?.branchId}
           handleVisibility={handleVisibility}
@@ -520,6 +541,22 @@ const Students = () => {
           }}
         />
       </Modal>
+      {showFollowUpModal && selectedStudentForFollowUp && (
+        <Modal
+          isOpen={showFollowUpModal}
+          onClose={handleFollowUpSuccess}
+          title={editingFollowUp ? "Edit Follow-Up" : "Add Follow-Up"}
+        >
+          <FollowUpForm
+            studentId={selectedStudentForFollowUp.id}
+            studentName={`${selectedStudentForFollowUp.student_First_Name} ${selectedStudentForFollowUp.student_Last_Name}`}
+            step="Enquiry"
+            editData={editingFollowUp}
+            onSuccess={handleFollowUpSuccess}
+            onClose={handleFollowUpSuccess}
+          />
+        </Modal>
+      )}
       <Modal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -553,7 +590,6 @@ const Students = () => {
               Cancel
             </button>
             <button
-              disabled
               type="button"
               onClick={confirmDelete}
               className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"

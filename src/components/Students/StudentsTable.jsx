@@ -19,9 +19,11 @@ import {
   UserCheck,
   Loader2,
   Shield,
+  PlusCircle,
 } from "lucide-react";
 import { ENQUIRY_STATUS } from "../../utils/constants";
 import { branchService, userService } from "../../services/firestore";
+import FollowUpBadge from "../FollowUp/FollowUpBadge";
 
 const InlineNoteEditor = ({
   initialNote = "",
@@ -82,6 +84,8 @@ const StudentsTable = ({
   onUpdateStatus,
   onUpdateNote,
   onUpdateAssignment,
+  onOpenFollowUp,
+  followUps,
   userRole,
   userBranch,
   handleVisibility,
@@ -398,6 +402,7 @@ const StudentsTable = ({
                 </div>
               </th>
               <th className="table-header w-48">Notes</th>
+              <th className="table-header w-48">Follow Up</th>
               {(userRole === "Superadmin" || userRole === "Branch Admin") && (
                 <th className="table-header">Created By</th>
               )}
@@ -420,7 +425,7 @@ const StudentsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="11" className="table-cell text-center py-8">
+                <td colSpan="12" className="table-cell text-center py-8">
                   <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
                   <p className="text-gray-500">Loading students...</p>
                 </td>
@@ -428,7 +433,7 @@ const StudentsTable = ({
             ) : filteredStudents.length === 0 ? (
               <tr>
                 <td
-                  colSpan="11"
+                  colSpan="12"
                   className="table-cell text-center text-gray-500 py-8"
                 >
                   <User className="mx-auto mb-2 text-gray-300" size={48} />
@@ -444,7 +449,7 @@ const StudentsTable = ({
                 ) {
                   try {
                     formattedDate = moment(student.createdAt.toDate()).format(
-                      "MMM DD, YYYY"
+                      "MMM DD,YYYY"
                     );
                   } catch (error) {
                     console.log("Error formatting Firestore date:", error);
@@ -453,7 +458,7 @@ const StudentsTable = ({
                   try {
                     const parsedDate = moment(student.createdAt);
                     if (parsedDate.isValid()) {
-                      formattedDate = parsedDate.format("MMM DD, YYYY");
+                      formattedDate = parsedDate.format("MMM DD,YYYY");
                     } else {
                       formattedDate = "Invalid Date";
                     }
@@ -465,6 +470,10 @@ const StudentsTable = ({
                 const createdByUserDetails = getCreatedByUserDetails(
                   student.createdBy
                 );
+                const studentFollowUps = followUps?.filter(
+                  (f) => f.studentId === student.id
+                );
+                const latestFollowUp = studentFollowUps?.[0];
 
                 return (
                   <tr key={student.id} className="hover:bg-gray-50">
@@ -609,6 +618,25 @@ const StudentsTable = ({
                           onSaveNote={handleSaveNoteWithClose}
                           onCancel={() => setEditingNoteForStudentId(null)}
                         />
+                      )}
+                    </td>
+
+                    <td className="table-cell">
+                      {latestFollowUp ? (
+                        <FollowUpBadge
+                          followUp={latestFollowUp}
+                          onClick={() =>
+                            onOpenFollowUp(student, latestFollowUp)
+                          }
+                        />
+                      ) : (
+                        <button
+                          onClick={() => onOpenFollowUp(student)}
+                          className="text-xs flex items-center text-primary-600 hover:text-primary-800"
+                        >
+                          <PlusCircle size={14} className="mr-1" />
+                          Add Follow Up
+                        </button>
                       )}
                     </td>
 

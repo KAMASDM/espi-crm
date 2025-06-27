@@ -479,6 +479,23 @@ export const applicationStatusService = {
     ),
 };
 
+export const followUpService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    return firestoreService.create("followUps", {
+      ...data,
+      createdBy: currentUser?.uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  },
+  update: (id, data) => firestoreService.update("followUps", id, data),
+  getAll: (constraints = []) =>
+    firestoreService.getAll("followUps", constraints),
+  subscribe: (callback, constraints = [], onError) =>
+    firestoreService.subscribe("followUps", callback, constraints, onError),
+};
+
 export const chatService = {
   async sendMessage(chatId, messageText) {
     const currentUser = auth.currentUser;

@@ -14,6 +14,7 @@ import {
   serviceService,
   applicationStatusService,
   visaDocumentService,
+  followUpService,
 } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
@@ -389,6 +390,14 @@ export const useBranches = () => {
     buildConstraints
   );
   return { data, loading, error, ...branchService };
+};
+
+export const useFollowUps = () => {
+  const { data, loading, error } = useSubscription("followUps", [
+    "nextFollowUpDate",
+    "desc",
+  ]);
+  return { data, loading, error, ...followUpService };
 };
 
 export const useDocument = (collectionName, id) => {
