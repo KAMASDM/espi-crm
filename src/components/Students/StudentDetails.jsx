@@ -12,26 +12,31 @@ import {
   useUniversities,
   useCourses,
   useVisaApplications,
-} from "../../hooks/useFirestore";
-import Modal from "../Common/Modal";
-import Loading from "../Common/Loading";
-import EnquiryForm from "./EnquiryForm";
-import PaymentList from "./DetailComponents/PaymentList";
-import DetailEnquiryForm from "../Forms/DetailEnquiryForm";
-import AssessmentList from "./DetailComponents/AssessmentList";
-import ApplicationList from "./DetailComponents/ApplicationList";
-import PersonalContactCard from "./StudentDetailComponents/PersonalContactCard";
-import AcademicInterestsCard from "./StudentDetailComponents/AcademicInterestsCard";
-import EnquiryStatusCard from "./StudentDetailComponents/EnquiryStatusCard";
-import DetailEnquiryContent from "./StudentDetailComponents/DetailEnquiryContent";
-import AssessmentForm from "../Assessment/AssessmentForm";
-import ApplicationForm from "../Application/ApplicationForm";
-import PaymentForm from "../Payment/PaymentForm";
-import { useAuth } from "../../context/AuthContext";
-import { USER_ROLES } from "../../utils/constants";
-import NotesTab from "./StudentDetailComponents/NotesTab";
-import VisaApplicationTable from "../VisaApplication/VisaApplicationTable";
-import VisaApplicationForm from "../VisaApplication/VisaApplicationForm";
+} from "../../hooks/useFirestore.js";
+import Modal from "../Common/Modal.jsx";
+import Loading from "../Common/Loading.jsx";
+import EnquiryForm from "./EnquiryForm.jsx";
+import DetailEnquiryForm from "../Forms/DetailEnquiryForm.jsx";
+import AssessmentForm from "../Assessment/AssessmentForm.jsx";
+import ApplicationForm from "../Application/ApplicationForm.jsx";
+import PaymentForm from "../Payment/PaymentForm.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { USER_ROLES } from "../../utils/constants.js";
+import NotesTab from "./StudentDetailComponents/NotesTab.jsx";
+import VisaApplicationTable from "../VisaApplication/VisaApplicationTable.jsx";
+import VisaApplicationForm from "../VisaApplication/VisaApplicationForm.jsx";
+import PersonalContactCard from "./StudentDetailComponents/PersonalContactCard.jsx";
+import AcademicInterestsCard from "./StudentDetailComponents/AcademicInterestsCard.jsx";
+import EnquiryStatusCard from "./StudentDetailComponents/EnquiryStatusCard.jsx";
+import DetailEnquiryContent from "./StudentDetailComponents/DetailEnquiryContent.jsx";
+import AssessmentsTable from "../Assessment/AssessmentsTable.jsx";
+import ApplicationsTable from "../Application/ApplicationsTable.jsx";
+import PaymentsTable from "../Payment/PaymentsTable.jsx";
+import toast from "react-hot-toast";
+import AssessmentDetail from "../Assessment/AssessmentDetail.jsx";
+import ApplicationDetail from "../Application/ApplicationDetail.jsx";
+import PaymentDetail from "../Payment/PaymentDetail.jsx";
+import VisaApplicationDetail from "../VisaApplication/VisaApplicationDetail.jsx";
 
 const permissions = {
   enquiry: {
@@ -60,6 +65,7 @@ const permissions = {
       USER_ROLES.BRANCH_ADMIN,
       USER_ROLES.PROCESSOR,
     ],
+    delete: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
   },
   application: {
     add: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN, USER_ROLES.PROCESSOR],
@@ -68,6 +74,7 @@ const permissions = {
       USER_ROLES.BRANCH_ADMIN,
       USER_ROLES.PROCESSOR,
     ],
+    delete: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
   },
   visaApplication: {
     add: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN, USER_ROLES.PROCESSOR],
@@ -76,6 +83,7 @@ const permissions = {
       USER_ROLES.BRANCH_ADMIN,
       USER_ROLES.PROCESSOR,
     ],
+    delete: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
   },
   payment: {
     add: [
@@ -83,6 +91,12 @@ const permissions = {
       USER_ROLES.BRANCH_ADMIN,
       USER_ROLES.ACCOUNTANT,
     ],
+    edit: [
+      USER_ROLES.SUPERADMIN,
+      USER_ROLES.BRANCH_ADMIN,
+      USER_ROLES.ACCOUNTANT,
+    ],
+    delete: [USER_ROLES.SUPERADMIN, USER_ROLES.BRANCH_ADMIN],
   },
 };
 
@@ -94,14 +108,29 @@ const StudentDetails = () => {
   const { data: allUsers, loading: usersLoading } = useUsers();
   const { data: allCourses, loading: coursesLoading } = useCourses();
   const { data: allBranches, loading: branchesLoading } = useBranches();
-  const { data: allPayments, loading: paymentsLoading } = usePayments();
+  const {
+    data: allPayments,
+    loading: paymentsLoading,
+    delete: deletePayment,
+  } = usePayments();
   const { data: allEnquiries, loading: enquiriesLoading } = useEnquiries();
-  const { data: allAssessments, loading: assessmentsLoading } =
-    useAssessments();
-  const { data: allApplications, loading: applicationsLoading } =
-    useApplications();
-  const { data: allVisaApplications, loading: visaApplicationsLoading } =
-    useVisaApplications();
+  const {
+    data: allAssessments,
+    loading: assessmentsLoading,
+    delete: deleteAssessment,
+    update: updateAssessment,
+  } = useAssessments();
+  const {
+    data: allApplications,
+    loading: applicationsLoading,
+    delete: deleteApplication,
+    updateStatus: updateApplicationStatus,
+  } = useApplications();
+  const {
+    data: allVisaApplications,
+    loading: visaApplicationsLoading,
+    delete: deleteVisaApplication,
+  } = useVisaApplications();
   const { data: allUniversities, loading: universitiesLoading } =
     useUniversities();
   const { data: allDetailEnquiries, loading: detailEnquiriesLoading } =
@@ -119,6 +148,9 @@ const StudentDetails = () => {
     useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [selectedForEdit, setSelectedForEdit] = useState(null);
+  const [selectedForView, setSelectedForView] = useState(null);
+  const [viewModalType, setViewModalType] = useState(null);
 
   const universitiesMap = React.useMemo(
     () =>
@@ -127,15 +159,6 @@ const StudentDetails = () => {
         return acc;
       }, {}) || {},
     [allUniversities]
-  );
-
-  const coursesMap = React.useMemo(
-    () =>
-      allCourses?.reduce((acc, course) => {
-        acc[course.id] = course;
-        return acc;
-      }, {}) || {},
-    [allCourses]
   );
 
   const usersMap = React.useMemo(
@@ -199,14 +222,14 @@ const StudentDetails = () => {
     studentAssessments?.some(({ id }) => id === assessmentId)
   );
   const studentVisaApplications = allVisaApplications?.filter(
-    ({ studentEnquiryId }) => studentEnquiryId === student?.id
+    ({ studentId: visaStudentId }) =>
+      studentApplications?.some(({ id }) => id === visaStudentId)
   );
 
   const hasEnquiry = !!student;
   const hasDetailEnquiry = !!selectedDetailEnquiry;
   const hasAssessments = studentAssessments?.length > 0;
   const hasApplications = studentApplications?.length > 0;
-  const hasVisaApplications = studentVisaApplications?.length > 0;
 
   const hasPermission = (section, action) => {
     if (!userProfile || !userProfile.role) return false;
@@ -217,16 +240,56 @@ const StudentDetails = () => {
   const handleSuccess = (modalSetter) => {
     modalSetter(false);
     setEditMode(false);
+    setSelectedForEdit(null);
   };
 
-  const handleEditClick = (modalSetter) => {
+  const handleEditClick = (modalSetter, data) => {
     setEditMode(true);
+    setSelectedForEdit(data);
     modalSetter(true);
   };
 
   const handleAddClick = (modalSetter) => {
     setEditMode(false);
+    setSelectedForEdit(null);
     modalSetter(true);
+  };
+
+  const handleViewClick = (item, type) => {
+    setSelectedForView(item);
+    setViewModalType(type);
+  };
+
+  const handleDeleteItem = async (service, itemId, itemName) => {
+    if (window.confirm(`Are you sure you want to delete this ${itemName}?`)) {
+      try {
+        await service(itemId);
+        toast.success(`${itemName} deleted successfully!`);
+      } catch (err) {
+        toast.error(`Failed to delete ${itemName}.`);
+        console.error(`Error deleting ${itemName}:`, err);
+      }
+    }
+  };
+
+  const handleUpdateAssessmentStatus = async (assessmentId, newStatus) => {
+    try {
+      await updateAssessment(assessmentId, { ass_status: newStatus });
+      toast.success(`Assessment status updated!`);
+    } catch (err) {
+      toast.error(`Failed to update assessment status.`);
+      console.error(`Error updating assessment status:`, err);
+    }
+  };
+
+  const handleUpdateApplicationStatus = async (applicationId, newStatus) => {
+    try {
+      await updateApplicationStatus(applicationId, newStatus);
+      toast.success(`Application status updated!`);
+    } catch (err) {
+      toast.error(`Failed to update application status.`);
+      console.error(`Error updating application status:`, err);
+    }
   };
 
   const isLoading =
@@ -393,7 +456,7 @@ const StudentDetails = () => {
           <div className="flex items-center space-x-2">
             {activeTab === "enquiry" && hasPermission("enquiry", "edit") && (
               <button
-                onClick={() => handleEditClick(setShowEnquiryModal)}
+                onClick={() => handleEditClick(setShowEnquiryModal, student)}
                 className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
                 title="Edit Enquiry"
               >
@@ -405,7 +468,12 @@ const StudentDetails = () => {
               <>
                 {hasDetailEnquiry && hasPermission("detailEnquiry", "edit") && (
                   <button
-                    onClick={() => handleEditClick(setShowDetailEnquiryModal)}
+                    onClick={() =>
+                      handleEditClick(
+                        setShowDetailEnquiryModal,
+                        selectedDetailEnquiry
+                      )
+                    }
                     className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
                     title="Edit Detail Enquiry"
                   >
@@ -424,91 +492,53 @@ const StudentDetails = () => {
               </>
             )}
 
-            {activeTab === "assessments" && hasDetailEnquiry && (
-              <>
-                {hasAssessments && hasPermission("assessment", "edit") && (
-                  <button
-                    onClick={() => handleEditClick(setShowAssessmentModal)}
-                    className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
-                    title="Edit Assessment"
-                  >
-                    <Edit size={16} />
-                  </button>
-                )}
-                {hasPermission("assessment", "add") && (
-                  <button
-                    onClick={() => handleAddClick(setShowAssessmentModal)}
-                    className="btn-secondary btn-xs flex items-center px-2 py-1 text-sm ml-2"
-                    title="Add Assessment"
-                  >
-                    <Plus size={14} className="mr-1" /> Add
-                  </button>
-                )}
-              </>
-            )}
+            {activeTab === "assessments" &&
+              hasDetailEnquiry &&
+              hasPermission("assessment", "add") && (
+                <button
+                  onClick={() => handleAddClick(setShowAssessmentModal)}
+                  className="btn-secondary btn-xs flex items-center px-2 py-1 text-sm ml-2"
+                  title="Add Assessment"
+                >
+                  <Plus size={14} className="mr-1" /> Add
+                </button>
+              )}
 
-            {activeTab === "applications" && hasAssessments && (
-              <>
-                {hasApplications && hasPermission("application", "edit") && (
-                  <button
-                    onClick={() => handleEditClick(setShowApplicationModal)}
-                    className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
-                    title="Edit Application"
-                  >
-                    <Edit size={16} />
-                  </button>
-                )}
-                {hasPermission("application", "add") && (
-                  <button
-                    onClick={() => handleAddClick(setShowApplicationModal)}
-                    className="btn-secondary btn-xs flex items-center px-2 py-1 text-sm ml-2"
-                    title="Add Application"
-                  >
-                    <Plus size={14} className="mr-1" /> Add
-                  </button>
-                )}
-              </>
-            )}
+            {activeTab === "applications" &&
+              hasAssessments &&
+              hasPermission("application", "add") && (
+                <button
+                  onClick={() => handleAddClick(setShowApplicationModal)}
+                  className="btn-secondary btn-xs flex items-center px-2 py-1 text-sm ml-2"
+                  title="Add Application"
+                >
+                  <Plus size={14} className="mr-1" /> Add
+                </button>
+              )}
 
-            {activeTab === "visa-application" && hasApplications && (
-              <>
-                {hasVisaApplications &&
-                  hasPermission("visaApplication", "edit") && (
-                    <button
-                      onClick={() =>
-                        handleEditClick(setShowVisaApplicationModal)
-                      }
-                      className="p-1 text-yellow-600 hover:text-yellow-900 rounded-md hover:bg-yellow-100 transition-colors"
-                      title="Edit Visa Application"
-                    >
-                      <Edit size={16} />
-                    </button>
-                  )}
-                {hasPermission("visaApplication", "add") && (
-                  <button
-                    onClick={() => handleAddClick(setShowVisaApplicationModal)}
-                    className="btn-secondary btn-xs flex items-center px-2 py-1 text-sm ml-2"
-                    title="Add Visa Application"
-                  >
-                    <Plus size={14} className="mr-1" /> Add
-                  </button>
-                )}
-              </>
-            )}
+            {activeTab === "visa-application" &&
+              hasApplications &&
+              hasPermission("visaApplication", "add") && (
+                <button
+                  onClick={() => handleAddClick(setShowVisaApplicationModal)}
+                  className="btn-secondary btn-xs flex items-center px-2 py-1 text-sm ml-2"
+                  title="Add Visa Application"
+                >
+                  <Plus size={14} className="mr-1" /> Add
+                </button>
+              )}
 
-            {activeTab === "payments" && hasApplications && (
-              <>
-                {hasPermission("payment", "add") && (
-                  <button
-                    onClick={() => handleAddClick(setShowPaymentModal)}
-                    className="btn-secondary btn-xs flex items-center px-2 py-1 text-sm"
-                    title="Add Payment"
-                  >
-                    <Plus size={14} className="mr-1" /> Add
-                  </button>
-                )}
-              </>
-            )}
+            {activeTab === "payments" &&
+              hasApplications &&
+              hasPermission("payment", "add") && (
+                <button
+                  onClick={() => handleAddClick(setShowPaymentModal)}
+                  className="btn-secondary btn-xs flex items-center px-2 py-1 text-sm"
+                  title="Add Payment"
+                >
+                  <Plus size={14} className="mr-1" /> Add
+                </button>
+              )}
           </div>
         </div>
       </div>
@@ -533,23 +563,72 @@ const StudentDetails = () => {
           <DetailEnquiryContent selectedDetailEnquiry={selectedDetailEnquiry} />
         )}
         {activeTab === "assessments" && (
-          <AssessmentList
-            coursesMap={coursesMap}
+          <AssessmentsTable
             assessments={studentAssessments}
-            universitiesMap={universitiesMap}
+            enquiries={allEnquiries}
+            universities={allUniversities}
+            courses={allCourses}
+            loading={
+              assessmentsLoading ||
+              enquiriesLoading ||
+              universitiesLoading ||
+              coursesLoading
+            }
+            onEdit={(assessment) =>
+              handleEditClick(setShowAssessmentModal, assessment)
+            }
+            onDelete={(assessmentId) =>
+              handleDeleteItem(deleteAssessment, assessmentId, "Assessment")
+            }
+            onView={(assessment) => handleViewClick(assessment, "assessment")}
+            onUpdateStatus={handleUpdateAssessmentStatus}
           />
         )}
         {activeTab === "applications" && (
-          <ApplicationList
-            assessments={studentAssessments}
+          <ApplicationsTable
             applications={studentApplications}
+            assessments={studentAssessments}
+            loading={applicationsLoading || assessmentsLoading}
+            onEdit={(application) =>
+              handleEditClick(setShowApplicationModal, application)
+            }
+            onDelete={(applicationId) =>
+              handleDeleteItem(deleteApplication, applicationId, "Application")
+            }
+            onView={(application) =>
+              handleViewClick(application, "application")
+            }
+            onUpdateStatus={handleUpdateApplicationStatus}
           />
         )}
         {activeTab === "visa-application" && (
-          <VisaApplicationTable visaApplications={studentVisaApplications} />
+          <VisaApplicationTable
+            visaApplications={studentVisaApplications}
+            onEdit={(visaApp) =>
+              handleEditClick(setShowVisaApplicationModal, visaApp)
+            }
+            onDelete={(visaAppId) =>
+              handleDeleteItem(
+                deleteVisaApplication,
+                visaAppId,
+                "Visa Application"
+              )
+            }
+            onView={(visaApp) => handleViewClick(visaApp, "visaApplication")}
+            loading={visaApplicationsLoading}
+          />
         )}
         {activeTab === "payments" && (
-          <PaymentList payments={studentPayments} student={student} />
+          <PaymentsTable
+            payments={studentPayments}
+            enquiries={allEnquiries}
+            loading={paymentsLoading || enquiriesLoading}
+            onEdit={(payment) => handleEditClick(setShowPaymentModal, payment)}
+            onDelete={(paymentId) =>
+              handleDeleteItem(deletePayment, paymentId, "Payment")
+            }
+            onView={(payment) => handleViewClick(payment, "payment")}
+          />
         )}
         {activeTab === "notes" && (
           <NotesTab
@@ -568,7 +647,7 @@ const StudentDetails = () => {
         size="large"
       >
         <EnquiryForm
-          editData={student}
+          editData={selectedForEdit}
           onClose={() => setShowEnquiryModal(false)}
           onSuccess={() => handleSuccess(setShowEnquiryModal)}
         />
@@ -586,7 +665,7 @@ const StudentDetails = () => {
       >
         <DetailEnquiryForm
           selectedEnquiry={student}
-          editData={editMode ? selectedDetailEnquiry : null}
+          editData={editMode ? selectedForEdit : null}
           onClose={() => setShowDetailEnquiryModal(false)}
           onSuccess={() => handleSuccess(setShowDetailEnquiryModal)}
         />
@@ -599,7 +678,7 @@ const StudentDetails = () => {
         size="full"
       >
         <AssessmentForm
-          editData={editMode ? studentAssessments[0] : null}
+          editData={editMode ? selectedForEdit : null}
           onClose={() => setShowAssessmentModal(false)}
           onSuccess={() => handleSuccess(setShowAssessmentModal)}
           studentId={student?.id}
@@ -613,7 +692,7 @@ const StudentDetails = () => {
         size="full"
       >
         <ApplicationForm
-          editData={editMode ? studentApplications[0] : null}
+          editData={editMode ? selectedForEdit : null}
           onClose={() => setShowApplicationModal(false)}
           onSuccess={() => handleSuccess(setShowApplicationModal)}
           studentId={student?.id}
@@ -627,7 +706,7 @@ const StudentDetails = () => {
         size="large"
       >
         <VisaApplicationForm
-          editData={editMode ? studentVisaApplications[0] : null}
+          editData={editMode ? selectedForEdit : null}
           onClose={() => setShowVisaApplicationModal(false)}
           onSuccess={() => handleSuccess(setShowVisaApplicationModal)}
         />
@@ -636,14 +715,52 @@ const StudentDetails = () => {
       <Modal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        title="Add New Payment"
+        title={editMode ? "Edit Payment" : "Add New Payment"}
         size="large"
       >
         <PaymentForm
+          editData={editMode ? selectedForEdit : null}
+          enquiries={allEnquiries}
           onClose={() => setShowPaymentModal(false)}
           onSuccess={() => handleSuccess(setShowPaymentModal)}
         />
       </Modal>
+
+      {viewModalType === "assessment" && (
+        <AssessmentDetail
+          isOpen={true}
+          onClose={() => setViewModalType(null)}
+          assessment={selectedForView}
+          enquiries={allEnquiries}
+          universities={allUniversities}
+          courses={allCourses}
+        />
+      )}
+      {viewModalType === "application" && (
+        <ApplicationDetail
+          isOpen={true}
+          onClose={() => setViewModalType(null)}
+          application={selectedForView}
+          assessments={allAssessments}
+        />
+      )}
+      {viewModalType === "payment" && (
+        <PaymentDetail
+          isOpen={true}
+          onClose={() => setViewModalType(null)}
+          payment={selectedForView}
+          enquiries={allEnquiries}
+        />
+      )}
+      {viewModalType === "visaApplication" && (
+        <VisaApplicationDetail
+          isOpen={true}
+          onClose={() => setViewModalType(null)}
+          visaApplication={selectedForView}
+          applications={allApplications}
+          assessments={allAssessments}
+        />
+      )}
     </div>
   );
 };

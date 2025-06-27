@@ -59,6 +59,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
   const [originalFileUrl, setOriginalFileUrl] = useState("");
 
   const selectedServices = watch("Payment_For") || [];
+  const isMultiSelect = selectedServices.length > 1;
 
   useEffect(() => {
     if (editData) {
@@ -155,9 +156,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
     );
 
     try {
-      const finalPaymentData = { ...dataFromForm };
       let documentUrlToSave = "";
-
       if (fileToUpload instanceof File) {
         const file = fileToUpload;
         if (editData && originalFileUrl && originalFileUrl !== fileToUpload) {
@@ -173,7 +172,7 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
         }
 
         const parentIdForPath =
-          editData?.id || finalPaymentData.Memo_For || user.uid;
+          editData?.id || dataFromForm.Memo_For || user.uid;
         const uploadPath = `payments/${parentIdForPath}/${PAYMENT_DOCUMENT_FIELD_NAME}/${Date.now()}_${
           file.name
         }`;
@@ -181,62 +180,74 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
         const storageReference = ref(storage, uploadPath);
         const uploadTask = uploadBytesResumable(storageReference, file);
 
-        const fileToastId = "upload-toast-payment-doc";
-        toast.loading(`Uploading ${file.name}...`, { id: fileToastId });
-
-        try {
-          const snapshot = await uploadTask;
-          documentUrlToSave = await getDownloadURL(snapshot.ref);
-          toast.success(`${file.name} uploaded successfully!`, {
-            id: fileToastId,
-          });
-        } catch (uploadError) {
-          console.error(`Error uploading ${file.name}:`, uploadError);
-          toast.error(`Failed to upload ${file.name}.`, { id: fileToastId });
-          throw uploadError;
-        }
+        const snapshot = await uploadTask;
+        documentUrlToSave = await getDownloadURL(snapshot.ref);
       } else if (
         typeof fileToUpload === "string" &&
         fileToUpload.startsWith("https://firebasestorage.googleapis.com")
       ) {
         documentUrlToSave = fileToUpload;
-      } else {
-        documentUrlToSave = "";
-        if (editData && originalFileUrl) {
-          try {
-            const oldFileRef = ref(storage, originalFileUrl);
-            await deleteObject(oldFileRef);
-            console.log(
-              `Old payment document ${originalFileUrl} deleted as it was removed.`
-            );
-          } catch (deleteError) {
-            console.warn(
-              `Could not delete removed old file ${originalFileUrl}:`,
-              deleteError
-            );
-          }
-        }
-      }
-
-      finalPaymentData[PAYMENT_DOCUMENT_FIELD_NAME] = documentUrlToSave;
-
-      if (editData) {
-        finalPaymentData.updatedBy = user.uid;
-        finalPaymentData.createdBy = editData.createdBy || user.uid;
-        finalPaymentData.payment_received_by =
-          editData.payment_received_by || user.uid;
-      } else {
-        finalPaymentData.createdBy = user.uid;
-        finalPaymentData.payment_received_by = user.uid;
-        delete finalPaymentData.updatedBy;
       }
 
       if (editData) {
+        const finalPaymentData = { ...dataFromForm };
+        finalPaymentData[PAYMENT_DOCUMENT_FIELD_NAME] = documentUrlToSave;
         await paymentService.update(editData.id, finalPaymentData);
         toast.success("Payment updated successfully!", { id: toastId });
       } else {
-        await paymentService.create(finalPaymentData);
-        toast.success("Payment recorded successfully!", { id: toastId });
+        const selectedServicesNames = dataFromForm.Payment_For;
+        if (!selectedServicesNames || selectedServicesNames.length === 0) {
+          toast.error("Please select at least one service.", { id: toastId });
+          setLoading(false);
+          return;
+        }
+
+        const creationPromises = [];
+
+        for (const serviceName of selectedServicesNames) {
+          const serviceDetails = services.find(
+            (s) => s.serviceName === serviceName
+          );
+          const servicePrice = serviceDetails
+            ? Number(serviceDetails.servicePrice)
+            : 0;
+
+          const singlePaymentData = {
+            ...dataFromForm,
+            Payment_For: [serviceName],
+            payment_amount: isMultiSelect
+              ? servicePrice
+              : dataFromForm.payment_amount,
+            payment_document: documentUrlToSave,
+            createdBy: user.uid,
+            payment_received_by: user.uid,
+          };
+          delete singlePaymentData.updatedBy;
+          creationPromises.push(paymentService.create(singlePaymentData));
+        }
+
+        const results = await Promise.allSettled(creationPromises);
+        const successfulCreations = results.filter(
+          (r) => r.status === "fulfilled"
+        ).length;
+
+        if (successfulCreations > 0) {
+          toast.success(
+            `${successfulCreations} payment(s) recorded successfully!`,
+            { id: toastId }
+          );
+        } else {
+          toast.error("Failed to record any payments.", { id: toastId });
+        }
+
+        if (successfulCreations < selectedServicesNames.length) {
+          toast.error(
+            `${
+              selectedServicesNames.length - successfulCreations
+            } payment(s) failed to record.`,
+            { duration: 4000 }
+          );
+        }
       }
 
       onSuccess?.();
@@ -386,14 +397,15 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
               htmlFor="payment_amount_payment"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Payment Amount (₹) <span className="text-red-500">*</span>
+              Payment Amount (₹){" "}
+              {!isMultiSelect && <span className="text-red-500">*</span>}
             </label>
             <input
               id="payment_amount_payment"
               type="number"
               step="0.01"
               {...register("payment_amount", {
-                required: "Payment amount is required",
+                required: !isMultiSelect ? "Payment amount is required" : false,
                 valueAsNumber: true,
                 min: { value: 0.01, message: "Amount must be greater than 0" },
               })}
@@ -401,10 +413,16 @@ const PaymentForm = ({ onClose, onSuccess, editData = null }) => {
                 errors.payment_amount ? "border-red-500" : ""
               }`}
               placeholder="0.00"
+              disabled={isMultiSelect}
             />
             {errors.payment_amount && (
               <p className="text-red-600 text-sm mt-1">
                 {errors.payment_amount.message}
+              </p>
+            )}
+            {isMultiSelect && (
+              <p className="text-xs text-gray-500 mt-1">
+                Amount is determined by individual service prices.
               </p>
             )}
           </div>

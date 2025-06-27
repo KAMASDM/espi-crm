@@ -5,7 +5,6 @@ import {
   Home,
   Users,
   BookOpen,
-  FileText,
   Building2,
   BarChart3,
   Briefcase,
@@ -81,6 +80,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         USER_ROLES.SUPERADMIN,
         USER_ROLES.BRANCH_ADMIN,
         USER_ROLES.ACCOUNTANT,
+        USER_ROLES.RECEPTION,
       ],
     },
     {

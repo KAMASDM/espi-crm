@@ -66,7 +66,6 @@ const ApplicationForm = ({
   const selectedAssessment = assessments?.find(
     (ass) => ass.id === selectedAssessmentId
   );
-  console.log("selectedAssessment", selectedAssessment);
   const [filesToUpload, setFilesToUpload] = useState({});
   const [fileDisplayNames, setFileDisplayNames] = useState({});
   const [originalFileUrls, setOriginalFileUrls] = useState({});
@@ -337,7 +336,6 @@ const ApplicationForm = ({
         ...dataFromForm,
         studentEnquiry: selectedAssessment.enquiry,
       };
-      console.log("Final Application Data:", finalApplicationData);
       const uploadPromises = [];
 
       if (dataFromForm.assessmentId) {
@@ -658,7 +656,7 @@ const ApplicationForm = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6 max-h-[calc(100vh-100px)] overflow-y-auto"
+      className="space-y-6 max-h-[calc(100vh-100px)] overflow-y-auto p-1"
     >
       <div>
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
@@ -730,6 +728,28 @@ const ApplicationForm = ({
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Username
+            </label>
+            <input
+              type="text"
+              {...register("username")}
+              className="input-field"
+              placeholder="Enter portal username"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              {...register("password")}
+              className="input-field"
+              placeholder="Enter portal password"
+            />
           </div>
         </div>
       </div>

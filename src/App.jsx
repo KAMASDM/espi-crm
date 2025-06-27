@@ -193,6 +193,7 @@ const AppRoutes = () => {
                 USER_ROLES.SUPERADMIN,
                 USER_ROLES.BRANCH_ADMIN,
                 USER_ROLES.ACCOUNTANT,
+                USER_ROLES.RECEPTION,
               ]}
             >
               <Payments />
