@@ -287,6 +287,16 @@ export const CURRENCIES = [
 
 export const USER_ROLE_LIST = Object.values(USER_ROLES);
 
+// Follow Up Constants
+export const FOLLOW_UP_STATUSES = ["Pending", "Completed"];
+export const FOLLOW_UP_STEPS = [
+  "Enquiry",
+  "Detail Enquiry",
+  "Assessment",
+  "Application",
+  "Visa Application",
+];
+
 // Define Permissions for each Role
 export const ROLE_PERMISSIONS = {
   [USER_ROLES.SUPERADMIN]: {
@@ -520,4 +530,6 @@ export default {
   CURRENCIES,
   ROLE_PERMISSIONS,
   hasPermission,
+  FOLLOW_UP_STATUSES,
+  FOLLOW_UP_STEPS,
 };
