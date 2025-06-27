@@ -22,7 +22,7 @@ import {
   Building,
 } from "lucide-react";
 import Loading from "../Common/Loading";
-import { VISA_DOCUMENT_REQUIREMENTS } from "../../utils/constants";
+import { useVisaDocuments } from "../../hooks/useFirestore";
 
 const visaDocumentsConfig = {
   Passport_Copy: { label: "Passport Copy", icon: FileTextIcon },
@@ -116,6 +116,7 @@ const VisaApplicationDetails = ({
   isOpen,
   onClose,
 }) => {
+  const { data: visaDocuments, loading: docsLoading } = useVisaDocuments();
   const [downloadingDoc, setDownloadingDoc] = useState(null);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const [isMergingPdf, setIsMergingPdf] = useState(false);
@@ -131,12 +132,12 @@ const VisaApplicationDetails = ({
   }, [linkedApplication, assessments]);
 
   const requiredDocs = useMemo(() => {
-    if (!visaApplication?.country) return [];
-    const countryDocs =
-      VISA_DOCUMENT_REQUIREMENTS[visaApplication.country] ||
-      VISA_DOCUMENT_REQUIREMENTS.other;
-    return countryDocs.map((doc) => doc.replace(/-/g, "_"));
-  }, [visaApplication]);
+    if (!visaApplication?.country || !visaDocuments) return [];
+    const docRequirements = visaDocuments.find(
+      (doc) => doc.countryCode === visaApplication.country
+    );
+    return docRequirements?.requirements || [];
+  }, [visaApplication, visaDocuments]);
 
   const formatDate = (timestamp) => {
     if (!timestamp) return "Unknown";
@@ -290,7 +291,7 @@ const VisaApplicationDetails = ({
     }
   };
 
-  if (!visaApplication) {
+  if (!visaApplication || docsLoading) {
     return isOpen && <Loading size="default" />;
   }
 

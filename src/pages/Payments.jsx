@@ -6,8 +6,11 @@ import PaymentForm from "../components/Payment/PaymentForm";
 import PaymentsTable from "../components/Payment/PaymentsTable";
 import PaymentDetail from "../components/Payment/PaymentDetail";
 import { usePayments, useEnquiries } from "../hooks/useFirestore";
+import { USER_ROLES } from "../utils/constants";
+import { useAuth } from "../context/AuthContext";
 
 const Payments = () => {
+  const { userProfile } = useAuth();
   const {
     data: paymentsData,
     loading: paymentsLoading,
@@ -91,24 +94,26 @@ const Payments = () => {
             Track payments, invoices, and financial transactions.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleExport}
-            className="btn-secondary flex items-center"
-            disabled={isLoading || payments.length === 0}
-          >
-            <Download size={18} className="mr-1.5" />
-            Export
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center"
-            disabled={isLoading}
-          >
-            <Plus size={18} className="mr-1.5" />
-            Add Payment
-          </button>
-        </div>
+        {userProfile.role !== USER_ROLES.RECEPTION && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleExport}
+              className="btn-secondary flex items-center"
+              disabled={isLoading || payments.length === 0}
+            >
+              <Download size={18} className="mr-1.5" />
+              Export
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="btn-primary flex items-center"
+              disabled={isLoading}
+            >
+              <Plus size={18} className="mr-1.5" />
+              Add Payment
+            </button>
+          </div>
+        )}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">

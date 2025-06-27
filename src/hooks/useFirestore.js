@@ -331,7 +331,11 @@ export const usePayments = () => {
     if (!userProfile) return null;
 
     const constraints = [];
-    if (userProfile.role === USER_ROLES.SUPERADMIN) {
+    if (
+      userProfile.role === USER_ROLES.SUPERADMIN ||
+      userProfile.role === USER_ROLES.ACCOUNTANT ||
+      userProfile.role === USER_ROLES.RECEPTION
+    ) {
       // Sees all
     } else if (
       userProfile.branchId &&

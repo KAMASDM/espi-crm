@@ -424,55 +424,57 @@ const Students = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            title: "Total Students",
-            value: students?.length,
-            color: "blue",
-            subtext: "All enquiries",
-          },
-          {
-            title: "New Enquiries",
-            value: students?.filter((s) => s.enquiry_status === "New").length,
-            color: "green",
-            subtext: "Require attention",
-          },
-          {
-            title: "In Progress",
-            value: students?.filter((s) => s.enquiry_status === "In Progress")
-              .length,
-            color: "yellow",
-            subtext: "Active cases",
-          },
-          {
-            title: "Admitted",
-            value: students?.filter((s) => s.enquiry_status === "Admitted")
-              .length,
-            color: "purple",
-            subtext: "Success stories",
-          },
-        ].map((card) => (
-          <div
-            key={card.title}
-            className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-          >
-            <div className="flex items-center">
-              <div className={`p-2.5 bg-${card.color}-100 rounded-lg`}>
-                <div className={`text-${card.color}-600 text-2xl font-bold`}>
-                  {loading ? "..." : card.value}
+      {userProfile.role !== USER_ROLES.AGENT && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              title: "Total Students",
+              value: students?.length,
+              color: "blue",
+              subtext: "All enquiries",
+            },
+            {
+              title: "New Enquiries",
+              value: students?.filter((s) => s.enquiry_status === "New").length,
+              color: "green",
+              subtext: "Require attention",
+            },
+            {
+              title: "In Progress",
+              value: students?.filter((s) => s.enquiry_status === "In Progress")
+                .length,
+              color: "yellow",
+              subtext: "Active cases",
+            },
+            {
+              title: "Admitted",
+              value: students?.filter((s) => s.enquiry_status === "Admitted")
+                .length,
+              color: "purple",
+              subtext: "Success stories",
+            },
+          ].map((card) => (
+            <div
+              key={card.title}
+              className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+            >
+              <div className="flex items-center">
+                <div className={`p-2.5 bg-${card.color}-100 rounded-lg`}>
+                  <div className={`text-${card.color}-600 text-2xl font-bold`}>
+                    {loading ? "..." : card.value}
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-700">
+                    {card.title}
+                  </p>
+                  <p className="text-xs text-gray-500">{card.subtext}</p>
                 </div>
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">
-                  {card.title}
-                </p>
-                <p className="text-xs text-gray-500">{card.subtext}</p>
-              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
       <div className="card">
         <StudentsTable
           students={filteredStudents}
