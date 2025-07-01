@@ -25,8 +25,7 @@ const BranchForm = ({ onClose, onSuccess, editData = null }) => {
           users.filter(
             (u) =>
               u.isActive &&
-              (u.role === USER_ROLES.ADMIN ||
-                u.role === USER_ROLES.COUNSELLOR ||
+              ( u.role === USER_ROLES.COUNSELLOR ||
                 !u.role)
           )
         );

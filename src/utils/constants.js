@@ -231,7 +231,6 @@ export const VISA_DOCUMENT_REQUIREMENTS = {
 // User Roles
 export const USER_ROLES = {
   SUPERADMIN: "Superadmin",
-  ADMIN: "Admin",
   BRANCH_ADMIN: "Branch Admin",
   AGENT: "Agent",
   ACCOUNTANT: "Accountant",
