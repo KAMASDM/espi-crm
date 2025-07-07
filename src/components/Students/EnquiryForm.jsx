@@ -698,12 +698,24 @@ const EnquiryForm = ({
                       />
                       <span className="text-sm">{serviceName}</span>
                     </div>
-                    <span className="text-sm text-gray-500">
+                    {/* <span className="text-sm text-gray-500">
                       (₹{servicePrice.toLocaleString()})
-                    </span>
+                    </span> */}
                   </label>
                 ))}
             </div>
+          </div>
+          <div className="md:col-span-2">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                {...register("coaching_interested")}
+                className="form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 mr-2"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Coaching Interested
+              </span>
+            </label>
           </div>
         </div>
       </div>

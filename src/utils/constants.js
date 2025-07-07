@@ -6,10 +6,88 @@ export const COUNTRIES = [
   { code: "AU", name: "Australia" },
   { code: "DE", name: "Germany" },
   { code: "FR", name: "France" },
-  { code: "NL", name: "Netherlands" },
-  { code: "SG", name: "Singapore" },
-  { code: "IN", name: "India" },
+  { code: "NZ", name: "New Zealand" },
+{ code: "IN", name: "India" },
   { code: "other", name: "Other" },
+];
+
+export const EXAM_TYPES = [
+  {
+    label: "IELTS",
+    value: "ielts",
+    fields: [
+      { name: "listening", label: "Listening", min: 0, max: 9, step: 0.5 },
+      { name: "reading", label: "Reading", min: 0, max: 9, step: 0.5 },
+      { name: "writing", label: "Writing", min: 0, max: 9, step: 0.5 },
+      { name: "speaking", label: "Speaking", min: 0, max: 9, step: 0.5 },
+      { name: "overall", label: "Overall", min: 0, max: 9, step: 0.5 },
+    ],
+  },
+  {
+    label: "TOEFL",
+    value: "toefl",
+    fields: [
+      { name: "listening", label: "Listening", min: 0, max: 30 },
+      { name: "reading", label: "Reading", min: 0, max: 30 },
+      { name: "writing", label: "Writing", min: 0, max: 30 },
+      { name: "speaking", label: "Speaking", min: 0, max: 30 },
+      { name: "overall", label: "Overall", min: 0, max: 120 },
+    ],
+  },
+  {
+    label: "PTE",
+    value: "pte",
+    fields: [
+      { name: "listening", label: "Listening", min: 10, max: 90 },
+      { name: "reading", label: "Reading", min: 10, max: 90 },
+      { name: "writing", label: "Writing", min: 10, max: 90 },
+      { name: "speaking", label: "Speaking", min: 10, max: 90 },
+      { name: "overall", label: "Overall", min: 10, max: 90 },
+    ],
+  },
+  {
+    label: "Duolingo (DET)",
+    value: "duolingo",
+    fields: [{ name: "overall", label: "Overall Score", min: 10, max: 160 }],
+  },
+  {
+    label: "GRE",
+    value: "gre",
+    fields: [
+      { name: "verbal", label: "Verbal", min: 130, max: 170 },
+      { name: "quantitative", label: "Quantitative", min: 130, max: 170 },
+      { name: "analytical", label: "Analytical Writing", min: 0, max: 6, step: 0.5 },
+    ],
+  },
+  {
+    label: "GMAT",
+    value: "gmat",
+    fields: [
+      { name: "verbal", label: "Verbal", min: 0, max: 60 },
+      { name: "quantitative", label: "Quantitative", min: 0, max: 60 },
+      { name: "overall", label: "Overall", min: 200, max: 800 },
+    ],
+  },
+  {
+    label: "SAT",
+    value: "sat",
+    fields: [
+      { name: "math", label: "Math", min: 200, max: 800 },
+      { name: "reading_writing", label: "Reading & Writing", min: 200, max: 800 },
+      { name: "overall", label: "Overall", min: 400, max: 1600 },
+    ],
+  },
+  {
+    label: "ACT",
+    value: "act",
+    fields: [
+      { name: "english", label: "English", min: 1, max: 36 },
+      { name: "math", label: "Math", min: 1, max: 36 },
+      { name: "reading", label: "Reading", min: 1, max: 36 },
+      { name: "science", label: "Science", min: 1, max: 36 },
+      { name: "overall", label: "Overall", min: 1, max: 36 },
+    ],
+  },
 ];
 
 // Education Levels
