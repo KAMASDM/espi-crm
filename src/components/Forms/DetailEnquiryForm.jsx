@@ -9,6 +9,7 @@ import {
   COUNTRIES,
   ENQUIRY_STATUS,
   EDUCATION_LEVELS,
+  EXAM_TYPES,
 } from "../../utils/constants";
 import {
   X,
@@ -47,25 +48,19 @@ const STEPS = [
       "tenth_education_details",
       "twelveth_education_details",
       "graduation_education_details",
+      "academics",
     ],
   },
   {
     id: 2,
     name: "Test Scores",
-    fields: [
-      "ielts_exam",
-      "toefl_exam",
-      "pte_exam",
-      "duolingo_exam",
-      "gre_exam",
-      "gmat_exam",
-    ],
+    fields: ["exams"],
   },
   { id: 3, name: "Work Experience", fields: ["workExperiences"] },
   {
     id: 4,
     name: "Personal & Financial",
-    fields: ["father_Occupation", "father_Annual_Income", "refusal_details"],
+    fields: ["father_Occupation", "father_Annual_Income", "refusals"],
   },
   {
     id: 5,
@@ -114,766 +109,614 @@ const DOCUMENT_FIELD_KEYS = [
   "gmat_Result",
 ];
 
-const Step1Academics = ({ register, errors }) => (
-  <div className="space-y-6">
-    <div>
-      <h5 className="text-md font-semibold text-gray-700 mb-3">
-        Current Education
-      </h5>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Education Level
-          </label>
-          <select
-            {...register("current_education_details.level")}
-            className={`input-field ${
-              errors?.current_education_details?.level ? "border-red-500" : ""
-            }`}
-          >
-            <option value="">Select Level</option>
-            {EDUCATION_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
-          {errors?.current_education_details?.level && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.current_education_details.level.message}
-            </p>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Stream/Specialization
-          </label>
-          <input
-            type="text"
-            {...register("current_education_details.stream")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Percentage/CGPA
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            {...register("current_education_details.percentage")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Year of Passing
-          </label>
-          <input
-            type="number"
-            {...register("current_education_details.year")}
-            className="input-field"
-            placeholder="YYYY"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Institute Name
-          </label>
-          <input
-            type="text"
-            {...register("current_education_details.institute")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Medium of Education
-          </label>
-          <select
-            {...register("current_education_details.medium")}
-            className="input-field"
-          >
-            <option value="">Select Medium</option>
-            <option value="English">English</option>
-            <option value="Hindi">Hindi</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Board/University
-          </label>
-          <input
-            type="text"
-            {...register("current_education_details.board")}
-            className="input-field"
-          />
-        </div>
-      </div>
-    </div>
-    <div>
-      <h5 className="text-md font-semibold text-gray-700 mb-3 mt-6">
-        10th Grade Details
-      </h5>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Percentage
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            {...register("tenth_education_details.percentage")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Year of Passing
-          </label>
-          <input
-            type="number"
-            {...register("tenth_education_details.year")}
-            className="input-field"
-            placeholder="YYYY"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            School Name
-          </label>
-          <input
-            type="text"
-            {...register("tenth_education_details.institute")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Board
-          </label>
-          <input
-            type="text"
-            {...register("tenth_education_details.board")}
-            className="input-field"
-          />
-        </div>
-      </div>
-    </div>
-    <div>
-      <h5 className="text-md font-semibold text-gray-700 mb-3 mt-6">
-        12th Grade Details
-      </h5>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Stream
-          </label>
-          <select
-            {...register("twelveth_education_details.stream")}
-            className="input-field"
-          >
-            <option value="">Select Stream</option>
-            <option value="Science">Science</option>
-            <option value="Commerce">Commerce</option>
-            <option value="Arts">Arts</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Percentage
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            {...register("twelveth_education_details.percentage")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Year of Passing
-          </label>
-          <input
-            type="number"
-            {...register("twelveth_education_details.year")}
-            className="input-field"
-            placeholder="YYYY"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            School Name
-          </label>
-          <input
-            type="text"
-            {...register("twelveth_education_details.institute")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Board
-          </label>
-          <input
-            type="text"
-            {...register("twelveth_education_details.board")}
-            className="input-field"
-          />
-        </div>
-      </div>
-    </div>
-    <div>
-      <h5 className="text-md font-semibold text-gray-700 mb-3 mt-6">
-        Graduation Details (if applicable)
-      </h5>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Degree
-          </label>
-          <input
-            type="text"
-            {...register("graduation_education_details.degree")}
-            className="input-field"
-            placeholder="e.g., B.Tech, B.Com"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Specialization
-          </label>
-          <input
-            type="text"
-            {...register("graduation_education_details.stream")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Percentage/CGPA
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            {...register("graduation_education_details.percentage")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Year of Passing
-          </label>
-          <input
-            type="number"
-            {...register("graduation_education_details.year")}
-            className="input-field"
-            placeholder="YYYY"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            College Name
-          </label>
-          <input
-            type="text"
-            {...register("graduation_education_details.institute")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            University
-          </label>
-          <input
-            type="text"
-            {...register("graduation_education_details.university")}
-            className="input-field"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-);
+const Step1Academics = ({ control, register, errors }) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "academics",
+  });
 
-const Step2TestScores = ({ register }) => (
-  <div className="space-y-6">
-    <div className="p-4 border rounded-md bg-gray-50/50">
-      <h5 className="font-medium text-gray-800 mb-3 text-md">IELTS Scores</h5>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Listening
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            min="0"
-            max="9"
-            {...register("ielts_exam.listening")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Reading
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            min="0"
-            max="9"
-            {...register("ielts_exam.reading")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Writing
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            min="0"
-            max="9"
-            {...register("ielts_exam.writing")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Speaking
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            min="0"
-            max="9"
-            {...register("ielts_exam.speaking")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Overall
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            min="0"
-            max="9"
-            {...register("ielts_exam.overall")}
-            className="input-field"
-          />
-        </div>
-      </div>
-    </div>
-    <div className="p-4 border rounded-md bg-gray-50/50">
-      <h5 className="font-medium text-gray-800 mb-3 text-md">TOEFL Scores</h5>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Listening
-          </label>
-          <input
-            type="number"
-            min="0"
-            max="30"
-            {...register("toefl_exam.listening")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Reading
-          </label>
-          <input
-            type="number"
-            min="0"
-            max="30"
-            {...register("toefl_exam.reading")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Writing
-          </label>
-          <input
-            type="number"
-            min="0"
-            max="30"
-            {...register("toefl_exam.writing")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Speaking
-          </label>
-          <input
-            type="number"
-            min="0"
-            max="30"
-            {...register("toefl_exam.speaking")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Overall
-          </label>
-          <input
-            type="number"
-            min="0"
-            max="120"
-            {...register("toefl_exam.overall")}
-            className="input-field"
-          />
-        </div>
-      </div>
-    </div>
-    <div className="p-4 border rounded-md bg-gray-50/50">
-      <h5 className="font-medium text-gray-800 mb-3 text-md">PTE Scores</h5>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Listening
-          </label>
-          <input
-            type="number"
-            min="10"
-            max="90"
-            {...register("pte_exam.listening")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Reading
-          </label>
-          <input
-            type="number"
-            min="10"
-            max="90"
-            {...register("pte_exam.reading")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Writing
-          </label>
-          <input
-            type="number"
-            min="10"
-            max="90"
-            {...register("pte_exam.writing")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Speaking
-          </label>
-          <input
-            type="number"
-            min="10"
-            max="90"
-            {...register("pte_exam.speaking")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Overall
-          </label>
-          <input
-            type="number"
-            min="10"
-            max="90"
-            {...register("pte_exam.overall")}
-            className="input-field"
-          />
-        </div>
-      </div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="p-4 border rounded-md bg-gray-50/50">
-        <h5 className="font-medium text-gray-800 mb-3 text-md">Duolingo</h5>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Overall Score
-          </label>
-          <input
-            type="number"
-            min="10"
-            max="160"
-            {...register("duolingo_exam.overall")}
-            className="input-field"
-          />
-        </div>
-      </div>
-      <div className="p-4 border rounded-md bg-gray-50/50">
-        <h5 className="font-medium text-gray-800 mb-3 text-md">GRE Scores</h5>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Verbal
-            </label>
-            <input
-              type="number"
-              min="130"
-              max="170"
-              {...register("gre_exam.verbal")}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Quantitative
-            </label>
-            <input
-              type="number"
-              min="130"
-              max="170"
-              {...register("gre_exam.quantitative")}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Analytical Writing
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              min="0"
-              max="6"
-              {...register("gre_exam.analytical")}
-              className="input-field"
-            />
-          </div>
-        </div>
-      </div>
-      <div className="p-4 border rounded-md bg-gray-50/50">
-        <h5 className="font-medium text-gray-800 mb-3 text-md">GMAT Scores</h5>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Verbal
-            </label>
-            <input
-              type="number"
-              min="0"
-              max="60"
-              {...register("gmat_exam.verbal")}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Quantitative
-            </label>
-            <input
-              type="number"
-              min="0"
-              max="60"
-              {...register("gmat_exam.quantitative")}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Overall
-            </label>
-            <input
-              type="number"
-              min="200"
-              max="800"
-              {...register("gmat_exam.overall")}
-              className="input-field"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const Step3WorkExperience = ({ register, fields, append, remove }) => (
-  <div>
-    <div className="flex items-center justify-between mb-4">
-      <h4 className="text-lg font-semibold text-gray-900">Work Experience</h4>
-      <button
-        type="button"
-        onClick={() =>
-          append({
-            companyName: "",
-            designation: "",
-            startDate: "",
-            endDate: "",
-          })
-        }
-        className="btn-secondary flex items-center text-sm"
-      >
-        <Plus size={16} className="mr-1" /> Add Experience
-      </button>
-    </div>
-    {fields.map((field, index) => (
-      <div
-        key={field.id}
-        className="border border-gray-200 rounded-lg p-4 mb-4"
-      >
-        <div className="flex items-center justify-between mb-3">
-          <h5 className="font-medium text-gray-900">Experience {index + 1}</h5>
-          <button
-            type="button"
-            onClick={() => remove(index)}
-            className="text-red-600 hover:text-red-800"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
+  return (
+    <div className="space-y-6">
+      <div>
+        <h5 className="text-md font-semibold text-gray-700 mb-3">
+          Current Education
+        </h5>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Company Name
+              Education Level
+            </label>
+            <select
+              {...register("current_education_details.level")}
+              className={`input-field ${
+                errors?.current_education_details?.level ? "border-red-500" : ""
+              }`}
+            >
+              <option value="">Select Level</option>
+              {EDUCATION_LEVELS.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+            {errors?.current_education_details?.level && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.current_education_details.level.message}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+      <div>
+        <h5 className="text-md font-semibold text-gray-700 mb-3 mt-6">
+          10th Grade Details
+        </h5>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Percentage
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              {...register("tenth_education_details.percentage")}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Year of Passing
+            </label>
+            <input
+              type="number"
+              {...register("tenth_education_details.year")}
+              className="input-field"
+              placeholder="YYYY"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              School Name
             </label>
             <input
               type="text"
-              {...register(`workExperiences.${index}.companyName`)}
+              {...register("tenth_education_details.institute")}
               className="input-field"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Designation
+              Board
             </label>
             <input
               type="text"
-              {...register(`workExperiences.${index}.designation`)}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date
-            </label>
-            <input
-              type="date"
-              {...register(`workExperiences.${index}.startDate`)}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Date
-            </label>
-            <input
-              type="date"
-              {...register(`workExperiences.${index}.endDate`)}
+              {...register("tenth_education_details.board")}
               className="input-field"
             />
           </div>
         </div>
       </div>
-    ))}
-    {fields.length === 0 && (
-      <p className="text-sm text-gray-500 italic">
-        No work experience added. Click 'Add Experience' to include details.
-      </p>
-    )}
-  </div>
-);
-
-const Step4FamilyAndRefusal = ({ register }) => (
-  <div className="space-y-6">
-    <div>
-      <h4 className="text-lg font-semibold text-gray-900 mb-4">
-        Family Information
-      </h4>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Father's Occupation
-          </label>
-          <input
-            type="text"
-            {...register("father_Occupation")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Father's Annual Income (₹)
-          </label>
-          <input
-            type="number"
-            {...register("father_Annual_Income", { valueAsNumber: true })}
-            className="input-field"
-          />
+      <div>
+        <h5 className="text-md font-semibold text-gray-700 mb-3 mt-6">
+          12th Grade Details
+        </h5>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Stream
+            </label>
+            <select
+              {...register("twelveth_education_details.stream")}
+              className="input-field"
+            >
+              <option value="">Select Stream</option>
+              <option value="Science">Science</option>
+              <option value="Commerce">Commerce</option>
+              <option value="Arts">Arts</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Percentage
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              {...register("twelveth_education_details.percentage")}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Year of Passing
+            </label>
+            <input
+              type="number"
+              {...register("twelveth_education_details.year")}
+              className="input-field"
+              placeholder="YYYY"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              School Name
+            </label>
+            <input
+              type="text"
+              {...register("twelveth_education_details.institute")}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Board
+            </label>
+            <input
+              type="text"
+              {...register("twelveth_education_details.board")}
+              className="input-field"
+            />
+          </div>
         </div>
       </div>
+      <div>
+        <h5 className="text-md font-semibold text-gray-700 mb-3 mt-6">
+          Graduation Details (if applicable)
+        </h5>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Degree
+            </label>
+            <input
+              type="text"
+              {...register("graduation_education_details.degree")}
+              className="input-field"
+              placeholder="e.g., B.Tech, B.Com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Specialization
+            </label>
+            <input
+              type="text"
+              {...register("graduation_education_details.stream")}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Percentage/CGPA
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              {...register("graduation_education_details.percentage")}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Year of Passing
+            </label>
+            <input
+              type="number"
+              {...register("graduation_education_details.year")}
+              className="input-field"
+              placeholder="YYYY"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              College Name
+            </label>
+            <input
+              type="text"
+              {...register("graduation_education_details.institute")}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              University
+            </label>
+            <input
+              type="text"
+              {...register("graduation_education_details.university")}
+              className="input-field"
+            />
+          </div>
+        </div>
+      </div>
+      {fields.map((field, index) => (
+        <div
+          key={field.id}
+          className="border border-gray-300 rounded-lg p-4 mt-6"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h5 className="text-md font-semibold text-gray-700">
+              Additional Academic Record {index + 1}
+            </h5>
+            <button
+              type="button"
+              onClick={() => remove(index)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Degree
+              </label>
+              <input
+                {...register(`academics.${index}.degree`)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                University
+              </label>
+              <input
+                {...register(`academics.${index}.university`)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Year of Passing
+              </label>
+              <input
+                type="number"
+                {...register(`academics.${index}.year`)}
+                className="input-field"
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => append({ degree: "", university: "", year: "" })}
+        className="btn-secondary flex items-center mt-4"
+      >
+        <Plus size={16} className="mr-2" />
+        Add Another Academic Record
+      </button>
     </div>
-    <div>
-      <h4 className="text-lg font-semibold text-gray-900 mb-4">
-        Refusal History (if any)
-      </h4>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md bg-gray-50/50">
-        <div>
+  );
+};
+
+const Step2TestScores = ({ control, register }) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "exams",
+  });
+  const [selectedExamType, setSelectedExamType] = useState("");
+
+  const handleAddExam = () => {
+    if (selectedExamType) {
+      append({ type: selectedExamType, scores: {} });
+      setSelectedExamType("");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-end gap-2">
+        <div className="flex-grow">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Previous Refusal Country
+            Select Exam to Add
           </label>
           <select
-            {...register("refusal_details.country")}
+            value={selectedExamType}
+            onChange={(e) => setSelectedExamType(e.target.value)}
             className="input-field"
           >
-            <option value="">No Previous Refusal</option>
-            {COUNTRIES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.name}
-              </option>
-            ))}
+            <option value="">-- Choose an Exam --</option>
+            <option value="ielts">IELTS</option>
+            <option value="toefl">TOEFL</option>
+            <option value="pte">PTE</option>
+            <option value="gre">GRE</option>
+            <option value="gmat">GMAT</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Refusal Date
-          </label>
-          <input
-            type="date"
-            {...register("refusal_details.date")}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Visa Category Refused
-          </label>
-          <input
-            type="text"
-            {...register("refusal_details.visa_category")}
-            className="input-field"
-            placeholder="e.g., Student Visa, Tourist Visa"
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Refusal Reason
-          </label>
-          <textarea
-            {...register("refusal_details.reason")}
-            rows={3}
-            className="input-field"
-          />
-        </div>
+        <button
+          type="button"
+          onClick={handleAddExam}
+          disabled={!selectedExamType}
+          className="btn-primary"
+        >
+          <Plus size={20} />
+        </button>
+      </div>
+      <div className="space-y-4">
+        {fields.map((field, index) => {
+          const examConfig = EXAM_TYPES.find((e) => e.value === field.type);
+          if (!examConfig) return null;
+
+          return (
+            <div key={field.id} className="p-4 border rounded-md bg-gray-50/50">
+              <div className="flex justify-between items-center mb-3">
+                <h5 className="font-medium text-gray-800 text-md">
+                  {examConfig.label} Scores
+                </h5>
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {examConfig.fields.map((scoreField) => (
+                  <div key={scoreField.name}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {scoreField.label}
+                    </label>
+                    <input
+                      type="number"
+                      step={scoreField.step || "any"}
+                      min={scoreField.min}
+                      max={scoreField.max}
+                      {...register(`exams.${index}.scores.${scoreField.name}`)}
+                      className="input-field"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+const Step3WorkExperience = ({ control, register, watch }) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "workExperiences",
+  });
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-lg font-semibold text-gray-900">Work Experience</h4>
+        <button
+          type="button"
+          onClick={() =>
+            append({
+              companyName: "",
+              designation: "",
+              startDate: "",
+              endDate: "",
+              ongoing: false,
+            })
+          }
+          className="btn-secondary flex items-center text-sm"
+        >
+          <Plus size={16} className="mr-1" /> Add Experience
+        </button>
+      </div>
+      {fields.map((field, index) => {
+        const isOngoing = watch(`workExperiences.${index}.ongoing`);
+        return (
+          <div
+            key={field.id}
+            className="border border-gray-200 rounded-lg p-4 mb-4"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h5 className="font-medium text-gray-900">
+                Experience {index + 1}
+              </h5>
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="text-red-600 hover:text-red-800"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  {...register(`workExperiences.${index}.companyName`)}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Designation
+                </label>
+                <input
+                  type="text"
+                  {...register(`workExperiences.${index}.designation`)}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  {...register(`workExperiences.${index}.startDate`)}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  {...register(`workExperiences.${index}.endDate`)}
+                  className="input-field"
+                  disabled={isOngoing}
+                />
+                <div className="mt-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      {...register(`workExperiences.${index}.ongoing`)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Ongoing</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {fields.length === 0 && (
+        <p className="text-sm text-gray-500 italic">
+          No work experience added. Click 'Add Experience' to include details.
+        </p>
+      )}
+    </div>
+  );
+};
+
+const Step4FamilyAndRefusal = ({ control, register }) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "refusals",
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          Family Information
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Father's Occupation
+            </label>
+            <input
+              type="text"
+              {...register("father_Occupation")}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Father's Annual Income (₹)
+            </label>
+            <input
+              type="number"
+              {...register("father_Annual_Income", { valueAsNumber: true })}
+              className="input-field"
+            />
+          </div>
+        </div>
+      </div>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-lg font-semibold text-gray-900">
+            Refusal History
+          </h4>
+          <button
+            type="button"
+            onClick={() =>
+              append({
+                country: "",
+                date: "",
+                visa_category: "",
+                reason: "",
+              })
+            }
+            className="btn-secondary flex items-center text-sm"
+          >
+            <Plus size={16} className="mr-1" /> Add Refusal
+          </button>
+        </div>
+
+        {fields.map((field, index) => (
+          <div
+            key={field.id}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md bg-gray-50/50 mb-4"
+          >
+            <div className="flex justify-between items-center md:col-span-2">
+              <h5 className="font-medium text-gray-900">Refusal {index + 1}</h5>
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="text-red-600 hover:text-red-800"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Country
+              </label>
+              <select
+                {...register(`refusals.${index}.country`)}
+                className="input-field"
+              >
+                <option value="">Select Country</option>
+                {COUNTRIES.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Refusal Date
+              </label>
+              <input
+                type="date"
+                {...register(`refusals.${index}.date`)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Visa Category Refused
+              </label>
+              <input
+                type="text"
+                {...register(`refusals.${index}.visa_category`)}
+                className="input-field"
+                placeholder="e.g., Student Visa, Tourist Visa"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Refusal Reason
+              </label>
+              <textarea
+                {...register(`refusals.${index}.reason`)}
+                rows={3}
+                className="input-field"
+              />
+            </div>
+          </div>
+        ))}
+        {fields.length === 0 && (
+          <p className="text-sm text-gray-500 italic">
+            No refusal history added. Click 'Add Refusal' if applicable.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Step5Documents = ({ FileUploadField }) => (
   <div>
@@ -1114,19 +957,9 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
             "Current Education",
             <BookOpen size={16} />
           )}
-          {renderObject(
-            formData.tenth_education_details,
-            "10th Grade",
-            <GraduationCap size={16} />
-          )}
-          {renderObject(
-            formData.twelveth_education_details,
-            "12th Grade",
-            <GraduationCap size={16} />
-          )}
-          {renderObject(
-            formData.graduation_education_details,
-            "Graduation",
+          {renderArrayOfObjects(
+            formData.academics,
+            "Academic History",
             <GraduationCap size={16} />
           )}
           {renderArrayOfObjects(
@@ -1138,18 +971,9 @@ const Step7Review = ({ getValues, uploadedDocumentsDisplay }) => {
 
         {/* Right Column */}
         <div className="space-y-4">
-          {renderObject(formData.ielts_exam, "IELTS", <Award size={16} />)}
-          {renderObject(formData.toefl_exam, "TOEFL", <Award size={16} />)}
-          {renderObject(formData.pte_exam, "PTE", <Award size={16} />)}
-          {renderObject(
-            formData.duolingo_exam,
-            "Duolingo",
-            <Award size={16} />
-          )}
-          {renderObject(formData.gre_exam, "GRE", <Award size={16} />)}
-          {renderObject(formData.gmat_exam, "GMAT", <Award size={16} />)}
-          {renderObject(
-            formData.refusal_details,
+          {renderArrayOfObjects(formData.exams, "Exams", <Award size={16} />)}
+          {renderArrayOfObjects(
+            formData.refusals,
             "Refusal History",
             <Flag size={16} />
           )}
@@ -1254,78 +1078,24 @@ const DetailEnquiryForm = ({
     Current_Enquiry: selectedEnquiry?.id || "",
     current_education_details: editData?.current_education_details || {
       level: selectedEnquiry?.current_education || "",
-      stream: "",
-      percentage: "",
-      year: "",
-      institute: "",
-      medium: "",
-      board: "",
     },
-    tenth_education_details: editData?.tenth_education_details || {
-      percentage: "",
-      year: "",
-      institute: "",
-      board: "",
-    },
-    twelveth_education_details: editData?.twelveth_education_details || {
-      stream: "",
-      percentage: "",
-      year: "",
-      institute: "",
-      board: "",
-    },
-    graduation_education_details: editData?.graduation_education_details || {
-      degree: "",
-      stream: "",
-      percentage: "",
-      year: "",
-      institute: "",
-      university: "",
-    },
+    academics: editData?.academics || [],
     workExperiences:
       editData?.workExperiences && editData.workExperiences.length > 0
         ? editData.workExperiences
-        : [{ companyName: "", designation: "", startDate: "", endDate: "" }],
-    toefl_exam: editData?.toefl_exam || {
-      listening: "",
-      reading: "",
-      writing: "",
-      speaking: "",
-      overall: "",
-    },
-    ielts_exam: editData?.ielts_exam || {
-      listening: "",
-      reading: "",
-      writing: "",
-      speaking: "",
-      overall: "",
-    },
-    pte_exam: editData?.pte_exam || {
-      listening: "",
-      reading: "",
-      writing: "",
-      speaking: "",
-      overall: "",
-    },
-    duolingo_exam: editData?.duolingo_exam || { overall: "" },
-    gre_exam: editData?.gre_exam || {
-      verbal: "",
-      quantitative: "",
-      analytical: "",
-    },
-    gmat_exam: editData?.gmat_exam || {
-      verbal: "",
-      quantitative: "",
-      overall: "",
-    },
+        : [
+            {
+              companyName: "",
+              designation: "",
+              startDate: "",
+              endDate: "",
+              ongoing: false,
+            },
+          ],
+    exams: editData?.exams || [],
     father_Occupation: editData?.father_Occupation || "",
     father_Annual_Income: editData?.father_Annual_Income || null,
-    refusal_details: editData?.refusal_details || {
-      country: "",
-      date: "",
-      visa_category: "",
-      reason: "",
-    },
+    refusals: editData?.refusals || [],
     ...DOCUMENT_FIELD_KEYS.reduce((acc, key) => {
       acc[key] = editData?.[key] ? uploadedDocumentsDisplay[key] : "";
       return acc;
@@ -1349,18 +1119,10 @@ const DetailEnquiryForm = ({
     trigger,
     getValues,
     reset,
+    watch,
   } = useForm({
     defaultValues,
     mode: "onTouched",
-  });
-
-  const {
-    fields: workExperienceFields,
-    append: appendWorkExperience,
-    remove: removeWorkExperience,
-  } = useFieldArray({
-    control,
-    name: "workExperiences",
   });
 
   useEffect(() => {
@@ -1420,7 +1182,13 @@ const DetailEnquiryForm = ({
         initialFormValues.workExperiences = editData.workExperiences;
       } else {
         initialFormValues.workExperiences = [
-          { companyName: "", designation: "", startDate: "", endDate: "" },
+          {
+            companyName: "",
+            designation: "",
+            startDate: "",
+            endDate: "",
+            ongoing: false,
+          },
         ];
       }
     } else if (selectedEnquiry) {
@@ -1767,18 +1535,25 @@ const DetailEnquiryForm = ({
       </div>
       <div className="px-1 sm:px-0">
         {currentStep === 1 && (
-          <Step1Academics register={register} errors={errors} />
-        )}
-        {currentStep === 2 && <Step2TestScores register={register} />}
-        {currentStep === 3 && (
-          <Step3WorkExperience
+          <Step1Academics
+            control={control}
             register={register}
-            fields={workExperienceFields}
-            append={appendWorkExperience}
-            remove={removeWorkExperience}
+            errors={errors}
           />
         )}
-        {currentStep === 4 && <Step4FamilyAndRefusal register={register} />}
+        {currentStep === 2 && (
+          <Step2TestScores control={control} register={register} />
+        )}
+        {currentStep === 3 && (
+          <Step3WorkExperience
+            control={control}
+            register={register}
+            watch={watch}
+          />
+        )}
+        {currentStep === 4 && (
+          <Step4FamilyAndRefusal control={control} register={register} />
+        )}
         {currentStep === 5 && (
           <Step5Documents FileUploadField={FileUploadFieldComponent} />
         )}
