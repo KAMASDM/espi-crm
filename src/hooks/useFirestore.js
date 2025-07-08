@@ -15,6 +15,7 @@ import {
   applicationStatusService,
   visaDocumentService,
   followUpService,
+  countryService,
 } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 import { USER_ROLES } from "../utils/constants";
@@ -441,4 +442,12 @@ export const useDocument = (collectionName, id) => {
   }, [collectionName, id]);
 
   return { data, loading, error };
+};
+
+export const useCountries = () => {
+  const { data, loading, error } = useSubscription("countries", [
+    "country",
+    "asc",
+  ]);
+  return { data, loading, error, ...countryService };
 };

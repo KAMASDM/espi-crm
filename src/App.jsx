@@ -28,6 +28,7 @@ import StudentDetails from "./components/Students/StudentDetails";
 import ApplicationStatus from "./pages/ApplicationStatus";
 import VisaApplications from "./pages/VisaApplications";
 import VisaDocuments from "./pages/VisaDocuments";
+import Countries from "./pages/Country";
 
 const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
@@ -238,6 +239,21 @@ const AppRoutes = () => {
               ]}
             >
               <Services />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/countries"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                USER_ROLES.SUPERADMIN,
+                USER_ROLES.BRANCH_ADMIN,
+                USER_ROLES.COUNSELLOR,
+                USER_ROLES.PROCESSOR,
+              ]}
+            >
+              <Countries />
             </ProtectedRoute>
           }
         />
