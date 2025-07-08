@@ -678,6 +678,28 @@ export const chatService = {
   },
 };
 
+export const countryService = {
+  create: (data) => {
+    const currentUser = auth.currentUser;
+    return firestoreService.create("countries", {
+      ...data,
+      createdBy: currentUser?.uid,
+    });
+  },
+
+  update: (id, data) => firestoreService.update("countries", id, data),
+
+  delete: (id) => firestoreService.delete("countries", id),
+
+  getAll: (constraints = []) =>
+    firestoreService.getAll("countries", constraints),
+
+  getById: (id) => firestoreService.getById("countries", id),
+
+  subscribe: (callback, constraints = [], onError) =>
+    firestoreService.subscribe("countries", callback, constraints, onError),
+};
+
 export const notificationService = {
   async send(title, body, recipientIds, type = "system", link = "") {
     try {

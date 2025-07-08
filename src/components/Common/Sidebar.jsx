@@ -18,6 +18,7 @@ import {
   ChartBarBig,
   Notebook,
   ChevronDown,
+  Globe,
 } from "lucide-react";
 import { USER_ROLES } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
@@ -143,6 +144,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
             USER_ROLES.COUNSELLOR,
             USER_ROLES.PROCESSOR,
           ],
+        },
+        {
+          name: "Countries",
+          href: "/countries",
+          icon: Globe,
+          roles: [USER_ROLES.SUPERADMIN],
         },
         {
           name: "Application Status",
