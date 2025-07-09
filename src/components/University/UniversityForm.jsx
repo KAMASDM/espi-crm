@@ -1,11 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { Save, X, ChevronDown, Search, DownloadCloud } from "lucide-react";
+import {
+  Save,
+  X,
+  ChevronDown,
+  Search,
+  DownloadCloud,
+  FileText,
+} from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { useAuth } from "../../context/AuthContext";
 import { universityService } from "../../services/firestore";
 import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
 import OpenAI from "openai";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_APP_OPENAI_API_KEY,
@@ -168,9 +181,24 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fetchingInfo, setFetchingInfo] = useState(false);
+  const [brochureFile, setBrochureFile] = useState(null);
+  const [newsletterFile, setNewsletterFile] = useState(null);
+  const [brochureFileName, setBrochureFileName] = useState("");
+  const [newsletterFileName, setNewsletterFileName] = useState("");
 
   const univName = watch("univ_name");
   const countryCode = watch("country");
+
+  useEffect(() => {
+    if (editData?.brochure) {
+      setBrochureFileName(editData.brochure.split("%2F").pop().split("?")[0]);
+    }
+    if (editData?.newsletter) {
+      setNewsletterFileName(
+        editData.newsletter.split("%2F").pop().split("?")[0]
+      );
+    }
+  }, [editData]);
 
   const handleFetchUniversityData = async () => {
     if (!univName || !countryCode) {
@@ -188,7 +216,7 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
         COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
       const currentYear = new Date().getFullYear();
       const prompt = `Provide detailed information about the university "${univName}" in "${countryName}".
-        Include its typical application deadline for the current admission cycle (in yyyy-MM-dd format, using ${currentYear} if an exact date is not available),
+        Include its typical application deadline for the current admission cycle (in YYYY-MM-dd format, using ${currentYear} if an exact date is not available),
         general admission requirements (e.g., minimum GPA, test scores like IELTS/TOEFL if applicable),
         course levels offered by this university - select from these options only: ${COURSE_LEVELS.join(
           ", "
@@ -302,28 +330,110 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
     }
   };
 
+  const uploadFile = async (file, fileType) => {
+    if (!file) return null;
+
+    try {
+      const storage = getStorage();
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(
+        storage,
+        `university-files/${fileType}/${fileName}`
+      );
+
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      await new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          null,
+          (error) => reject(error),
+          () => resolve()
+        );
+      });
+
+      return await getDownloadURL(uploadTask.snapshot.ref);
+    } catch (error) {
+      console.error(`Error uploading ${fileType}:`, error);
+      toast.error(`Failed to upload ${fileType}`);
+      return null;
+    }
+  };
+
+  const handleBrochureChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Brochure file size exceeds 10MB limit");
+        return;
+      }
+      setBrochureFile(file);
+      setBrochureFileName(file.name);
+    }
+  };
+
+  const handleNewsletterChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Newsletter file size exceeds 10MB limit");
+        return;
+      }
+      setNewsletterFile(file);
+      setNewsletterFileName(file.name);
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
       setLoading(true);
+      toast.loading("Saving university data...", { id: "saving-university" });
+
+      const uploads = [];
+      if (brochureFile) {
+        uploads.push(
+          uploadFile(brochureFile, "brochures").then((url) => {
+            data.brochure = url;
+          })
+        );
+      }
+      if (newsletterFile) {
+        uploads.push(
+          uploadFile(newsletterFile, "newsletters").then((url) => {
+            data.newsletter = url;
+          })
+        );
+      }
+
+      await Promise.all(uploads);
 
       const universityData = {
         ...data,
         assigned_users: user.uid,
         createdBy: user.uid,
+        updatedAt: new Date().toISOString(),
       };
 
       if (editData) {
         await universityService.update(editData.id, universityData);
-        toast.success("University updated successfully!");
+        toast.success("University updated successfully!", {
+          id: "saving-university",
+        });
       } else {
+        universityData.createdAt = new Date().toISOString();
         await universityService.create(universityData);
-        toast.success("University created successfully!");
+        toast.success("University created successfully!", {
+          id: "saving-university",
+        });
       }
 
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.log("error", error);
+      console.error("Error saving university:", error);
+      toast.error("Failed to save university. Please try again.", {
+        id: "saving-university",
+      });
     } finally {
       setLoading(false);
     }
@@ -388,6 +498,17 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Campus
+            </label>
+            <input
+              type="text"
+              {...register("campus")}
+              className="input-field"
+              placeholder="e.g., Main Campus, Downtown"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Application Deadline
             </label>
             <input
@@ -444,6 +565,18 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               disabled={fetchingInfo}
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Backlogs Allowed
+            </label>
+            <input
+              type="number"
+              {...register("Backlogs_allowed")}
+              className="input-field"
+              placeholder="Maximum number of backlogs"
+              disabled={fetchingInfo}
+            />
+          </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               University Description
@@ -496,13 +629,13 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Backlogs Allowed
+              Application Form Link
             </label>
             <input
-              type="number"
-              {...register("Backlogs_allowed")}
+              type="url"
+              {...register("Application_form_link")}
               className="input-field"
-              placeholder="Maximum number of backlogs"
+              placeholder="https://university.edu/apply"
               disabled={fetchingInfo}
             />
           </div>
@@ -555,15 +688,77 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Application Form Link
+              Brochure
             </label>
-            <input
-              type="url"
-              {...register("Application_form_link")}
-              className="input-field"
-              placeholder="https://university.edu/apply"
-              disabled={fetchingInfo}
-            />
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+              <div className="space-y-1 text-center">
+                {brochureFileName ? (
+                  <div className="flex items-center space-x-2">
+                    <FileText className="text-green-500" />
+                    <span className="text-sm text-gray-700">
+                      {brochureFileName}
+                    </span>
+                  </div>
+                ) : (
+                  <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                )}
+                <div className="flex text-sm text-gray-600">
+                  <label
+                    htmlFor="brochure-upload"
+                    className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
+                  >
+                    <span>Upload a file</span>
+                    <input
+                      id="brochure-upload"
+                      name="brochure-upload"
+                      type="file"
+                      className="sr-only"
+                      onChange={handleBrochureChange}
+                      accept=".pdf"
+                    />
+                  </label>
+                  <p className="pl-1">or drag and drop</p>
+                </div>
+                <p className="text-xs text-gray-500">PDF up to 10MB</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Newsletter
+            </label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+              <div className="space-y-1 text-center">
+                {newsletterFileName ? (
+                  <div className="flex items-center space-x-2">
+                    <FileText className="text-green-500" />
+                    <span className="text-sm text-gray-700">
+                      {newsletterFileName}
+                    </span>
+                  </div>
+                ) : (
+                  <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                )}
+                <div className="flex text-sm text-gray-600">
+                  <label
+                    htmlFor="newsletter-upload"
+                    className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
+                  >
+                    <span>Upload a file</span>
+                    <input
+                      id="newsletter-upload"
+                      name="newsletter-upload"
+                      type="file"
+                      className="sr-only"
+                      onChange={handleNewsletterChange}
+                      accept=".pdf"
+                    />
+                  </label>
+                  <p className="pl-1">or drag and drop</p>
+                </div>
+                <p className="text-xs text-gray-500">PDF up to 10MB</p>
+              </div>
+            </div>
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
