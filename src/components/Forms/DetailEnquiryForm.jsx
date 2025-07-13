@@ -818,9 +818,9 @@ const Step6ServicesAndStatus = ({ services, register }) => (
               className="mr-2 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
             />
             <span className="text-sm text-gray-700">{serviceName}</span>
-            <span className="ml-auto text-sm text-gray-500">
+            {/* <span className="ml-auto text-sm text-gray-500">
               (₹{servicePrice.toLocaleString()})
-            </span>
+            </span> */}
           </label>
         ))}
       </div>
