@@ -29,6 +29,7 @@ import ApplicationStatus from "./pages/ApplicationStatus";
 import VisaApplications from "./pages/VisaApplications";
 import VisaDocuments from "./pages/VisaDocuments";
 import Countries from "./pages/Country";
+import Enquiry from "./components/Students/Enquiry";
 
 const AppRoutes = () => {
   const { user, userProfile, loading } = useAuth();
@@ -41,6 +42,7 @@ const AppRoutes = () => {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
+         <Route path="/enquiryForm" element={<Enquiry />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     );
@@ -53,6 +55,7 @@ const AppRoutes = () => {
   return (
     <Layout>
       <Routes>
+         <Route path="/enquiryForm" element={<Enquiry />} />
         <Route
           path="/"
           element={
