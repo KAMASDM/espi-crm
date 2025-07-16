@@ -371,7 +371,7 @@ export const FOLLOW_UP_STEPS = [
   "Detail Enquiry",
   "Assessment",
   "Application",
-  "Visa Application",
+  // "Visa Application",
 ];
 
 // Define Permissions for each Role

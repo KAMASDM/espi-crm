@@ -3,9 +3,14 @@ import toast from "react-hot-toast";
 import { Plus, Download, AlertTriangle, X } from "lucide-react";
 import Modal from "../components/Common/Modal";
 import ApplicationForm from "../components/Application/ApplicationForm";
-import { useApplications, useAssessments } from "../hooks/useFirestore";
+import {
+  useApplications,
+  useAssessments,
+  useFollowUps,
+} from "../hooks/useFirestore";
 import ApplicationsTable from "../components/Application/ApplicationsTable";
 import ApplicationDetail from "../components/Application/ApplicationDetail";
+import FollowUpForm from "../components/FollowUp/FollowUpForm";
 
 const Applications = () => {
   const { data: assessments, loading: assessmentsLoading } = useAssessments();
@@ -15,6 +20,7 @@ const Applications = () => {
     delete: deleteApplication,
     updateStatus: updateApplicationStatus,
   } = useApplications();
+  const { data: followUps, loading: followUpsLoading } = useFollowUps();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -23,6 +29,10 @@ const Applications = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [applicationToDeleteId, setApplicationToDeleteId] = useState(null);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [selectedStudentForFollowUp, setSelectedStudentForFollowUp] =
+    useState(null);
+  const [editingFollowUp, setEditingFollowUp] = useState(null);
 
   const isLoading = applicationsLoading || assessmentsLoading;
 
@@ -51,6 +61,18 @@ const Applications = () => {
           "Failed to update application status. Please try again."
       );
     }
+  };
+
+  const openFollowUpModal = (student, followUp = null) => {
+    setSelectedStudentForFollowUp(student);
+    setEditingFollowUp(followUp);
+    setShowFollowUpModal(true);
+  };
+
+  const handleFollowUpSuccess = () => {
+    setShowFollowUpModal(false);
+    setSelectedStudentForFollowUp(null);
+    setEditingFollowUp(null);
   };
 
   const confirmDelete = async () => {
@@ -180,6 +202,9 @@ const Applications = () => {
           onDelete={handleDelete}
           onView={handleView}
           onUpdateStatus={handleStatusUpdate}
+          onOpenFollowUp={openFollowUpModal}
+          followUps={followUps}
+          isFollowUpsLoading={followUpsLoading}
         />
       </div>
       <Modal
@@ -263,6 +288,23 @@ const Applications = () => {
           </div>
         </div>
       </Modal>
+
+      {showFollowUpModal && selectedStudentForFollowUp && (
+        <Modal
+          isOpen={showFollowUpModal}
+          onClose={handleFollowUpSuccess}
+          title={editingFollowUp ? "Edit Follow-Up" : "Add Follow-Up"}
+        >
+          <FollowUpForm
+            studentId={selectedStudentForFollowUp.id}
+            studentName={`${selectedStudentForFollowUp.student_First_Name} ${selectedStudentForFollowUp.student_Last_Name}`}
+            step="Enquiry"
+            editData={editingFollowUp}
+            onSuccess={handleFollowUpSuccess}
+            onClose={handleFollowUpSuccess}
+          />
+        </Modal>
+      )}
     </div>
   );
 };

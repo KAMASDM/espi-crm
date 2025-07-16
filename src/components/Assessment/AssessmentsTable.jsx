@@ -11,10 +11,12 @@ import {
   ExternalLink,
   ClipboardList,
   Loader2,
+  PlusCircle,
 } from "lucide-react";
 import moment from "moment";
 import { Link } from "react-router-dom";
 import { COUNTRIES, ASSESSMENT_STATUS } from "../../utils/constants";
+import FollowUpBadge from "../FollowUp/FollowUpBadge";
 
 const AssessmentsTable = ({
   assessments,
@@ -26,6 +28,8 @@ const AssessmentsTable = ({
   onDelete,
   onView,
   onUpdateStatus,
+  followUps,
+  onOpenFollowUp,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -43,15 +47,35 @@ const AssessmentsTable = ({
     }
   };
 
+  const getStudent = (enquiryId) => {
+    return enquiries.find((enq) => enq.id === enquiryId);
+  };
+
   const getStudentName = (enquiryId) => {
-    const enquiry = enquiries.find((enq) => enq.id === enquiryId);
+    const enquiry = getStudent(enquiryId);
     return enquiry
       ? `${enquiry.student_First_Name} ${enquiry.student_Last_Name}`
       : "Unknown Student";
   };
+
   const getUniversityName = (universityId) => {
     const university = universities.find((uni) => uni.id === universityId);
     return university && university.univ_name;
+  };
+
+  const getStudentFollowUps = (enquiryId) => {
+    if (!followUps || !Array.isArray(followUps)) return [];
+    return followUps.filter((followUp) => followUp.studentId === enquiryId);
+  };
+
+  const getLatestFollowUp = (enquiryId) => {
+    const studentFollowUps = getStudentFollowUps(enquiryId);
+    const sortedFollowUps = studentFollowUps.sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return dateB - dateA;
+    });
+    return sortedFollowUps[0] || null;
   };
 
   const filteredAssessments = assessments
@@ -228,6 +252,7 @@ const AssessmentsTable = ({
                   )}
                 </div>
               </th>
+              <th className="table-header">Follow Up</th>
               <th
                 onClick={() => handleSort("createdAt")}
                 className="table-header cursor-pointer hover:bg-gray-100"
@@ -247,7 +272,7 @@ const AssessmentsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="7" className="table-cell text-center py-8">
+                <td colSpan="8" className="table-cell text-center py-8">
                   <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
                   <p className="text-gray-500">Loading assessments...</p>
                 </td>
@@ -255,7 +280,7 @@ const AssessmentsTable = ({
             ) : filteredAssessments.length === 0 ? (
               <tr>
                 <td
-                  colSpan="7"
+                  colSpan="8"
                   className="table-cell text-center text-gray-500 py-8"
                 >
                   <ClipboardList
@@ -269,147 +294,170 @@ const AssessmentsTable = ({
                 </td>
               </tr>
             ) : (
-              filteredAssessments.map((assessment) => (
-                <tr key={assessment.id} className="hover:bg-gray-50">
-                  <td className="table-cell">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <User className="text-blue-600" size={20} />
+              filteredAssessments.map((assessment) => {
+                const student = getStudent(assessment.enquiry);
+                const latestFollowUp = getLatestFollowUp(assessment.enquiry);
+                
+                return (
+                  <tr key={assessment.id} className="hover:bg-gray-50">
+                    <td className="table-cell">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <User className="text-blue-600" size={20} />
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            <Link
+                              to={`/students/${assessment.enquiry}`}
+                              className="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline"
+                            >
+                              {getStudentName(assessment.enquiry)}
+                            </Link>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {getCountryName(assessment.student_country)}
+                          </div>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          <Link
-                            to={`/students/${assessment.enquiry}`}
-                            className="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline"
-                          >
-                            {getStudentName(assessment.enquiry)}
-                          </Link>
+                    </td>
+                    <td className="table-cell">
+                      <div className="space-y-1">
+                        <div className="flex items-center text-sm font-medium text-gray-900">
+                          <Building2 size={14} className="mr-2 text-gray-400" />
+                          {getUniversityName(assessment.university)}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {getCountryName(assessment.student_country)}
+                          {getCourseName(assessment.course_interested)}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {assessment.level_applying_for}
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="space-y-1">
-                      <div className="flex items-center text-sm font-medium text-gray-900">
-                        <Building2 size={14} className="mr-2 text-gray-400" />
-                        {getUniversityName(assessment.university)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {getCourseName(assessment.course_interested)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {assessment.level_applying_for}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="space-y-1">
-                      {assessment.specialisation && (
-                        <div className="text-sm text-gray-900">
-                          {assessment.specialisation}
-                        </div>
-                      )}
-                      {assessment.duration && (
-                        <div className="text-sm text-gray-500">
-                          Duration: {assessment.duration}
-                        </div>
-                      )}
-                      {assessment.intake_interested && (
-                        <div className="text-sm text-gray-500">
-                          Intake: {assessment.intake_interested}
-                        </div>
-                      )}
-                      {assessment.course_link && (
-                        <div className="text-sm text-blue-600">
-                          <a
-                            href={assessment.course_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center hover:text-blue-800"
-                          >
-                            <ExternalLink size={12} className="mr-1" />
-                            Course Link
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="space-y-1">
-                      {assessment.application_fee && (
-                        <div className="text-sm text-gray-900">
-                          Application Fee: {assessment.application_fee}
-                        </div>
-                      )}
-                      {assessment.tution_fee && (
-                        <div className="text-sm text-gray-500">
-                          Tuition Fee: {assessment.tution_fee}
-                        </div>
-                      )}
-                      {assessment.fee_currency && (
-                        <div className="text-sm text-gray-500">
-                          Currency: {assessment.fee_currency}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <select
-                      value={assessment.ass_status}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleStatusChange(assessment.id, e.target.value);
-                      }}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white"
-                    >
-                      {ASSESSMENT_STATUS.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar size={14} className="mr-2 text-gray-400" />
-                      {assessment.createdAt &&
-                        moment(assessment.createdAt.toDate()).format(
-                          "MMM DD, YYYY"
+                    </td>
+                    <td className="table-cell">
+                      <div className="space-y-1">
+                        {assessment.specialisation && (
+                          <div className="text-sm text-gray-900">
+                            {assessment.specialisation}
+                          </div>
                         )}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => onView(assessment)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View Details"
+                        {assessment.duration && (
+                          <div className="text-sm text-gray-500">
+                            Duration: {assessment.duration}
+                          </div>
+                        )}
+                        {assessment.intake_interested && (
+                          <div className="text-sm text-gray-500">
+                            Intake: {assessment.intake_interested}
+                          </div>
+                        )}
+                        {assessment.course_link && (
+                          <div className="text-sm text-blue-600">
+                            <a
+                              href={assessment.course_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center hover:text-blue-800"
+                            >
+                              <ExternalLink size={12} className="mr-1" />
+                              Course Link
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="table-cell">
+                      <div className="space-y-1">
+                        {assessment.application_fee && (
+                          <div className="text-sm text-gray-900">
+                            Application Fee: {assessment.application_fee}
+                          </div>
+                        )}
+                        {assessment.tution_fee && (
+                          <div className="text-sm text-gray-500">
+                            Tuition Fee: {assessment.tution_fee}
+                          </div>
+                        )}
+                        {assessment.fee_currency && (
+                          <div className="text-sm text-gray-500">
+                            Currency: {assessment.fee_currency}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="table-cell">
+                      <select
+                        value={assessment.ass_status}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleStatusChange(assessment.id, e.target.value);
+                        }}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white"
                       >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        onClick={() => onEdit(assessment)}
-                        className="text-yellow-600 hover:text-yellow-900"
-                        title="Edit Assessment"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => onDelete(assessment.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete Assessment"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        {ASSESSMENT_STATUS.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="table-cell">
+                      {latestFollowUp ? (
+                        <FollowUpBadge
+                          followUp={latestFollowUp}
+                          onClick={() =>
+                            onOpenFollowUp(student, latestFollowUp)
+                          }
+                        />
+                      ) : (
+                        <button
+                          onClick={() => onOpenFollowUp(student)}
+                          className="text-xs flex items-center text-primary-600 hover:text-primary-800"
+                        >
+                          <PlusCircle size={14} className="mr-1" />
+                          Add Follow Up
+                        </button>
+                      )}
+                    </td>
+                    <td className="table-cell">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Calendar size={14} className="mr-2 text-gray-400" />
+                        {assessment.createdAt &&
+                          moment(assessment.createdAt.toDate()).format(
+                            "MMM DD, YYYY"
+                          )}
+                      </div>
+                    </td>
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => onView(assessment)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View Details"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={() => onEdit(assessment)}
+                          className="text-yellow-600 hover:text-yellow-900"
+                          title="Edit Assessment"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => onDelete(assessment.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete Assessment"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
