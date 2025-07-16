@@ -188,6 +188,7 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
 
   const univName = watch("univ_name");
   const countryCode = watch("country");
+  const campus = watch("campus");
 
   useEffect(() => {
     if (editData?.brochure) {
@@ -215,7 +216,13 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
       const countryName =
         COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
       const currentYear = new Date().getFullYear();
-      const prompt = `Provide detailed information about the university "${univName}" in "${countryName}".
+      let prompt = `Provide detailed information about the university "${univName}" in "${countryName}".`;
+
+      if (campus) {
+        prompt += ` Specifically for the "${campus}" campus.`;
+      }
+
+      prompt += `
         Include its typical application deadline for the current admission cycle (in YYYY-MM-dd format, using ${currentYear} if an exact date is not available),
         general admission requirements (e.g., minimum GPA, test scores like IELTS/TOEFL if applicable),
         course levels offered by this university - select from these options only: ${COURSE_LEVELS.join(
