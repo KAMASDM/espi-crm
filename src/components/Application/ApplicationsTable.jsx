@@ -10,11 +10,13 @@ import {
   Download,
   User,
   Loader2,
+  PlusCircle,
 } from "lucide-react";
 import moment from "moment";
 import { saveAs } from "file-saver";
 import { PDFDocument } from "pdf-lib";
 import { useApplicationStatus, useEnquiries } from "../../hooks/useFirestore";
+import FollowUpBadge from "../FollowUp/FollowUpBadge";
 
 const DOCUMENT_KEYS_FOR_COUNT = [
   "sop",
@@ -40,6 +42,8 @@ const ApplicationsTable = ({
   onDelete,
   onView,
   onUpdateStatus,
+  followUps,
+  onOpenFollowUp,
 }) => {
   const { data: enquiries } = useEnquiries();
   const { data: applicationStatuses } = useApplicationStatus();
@@ -222,6 +226,25 @@ const ApplicationsTable = ({
     }
   };
 
+  const getStudentFollowUps = (enquiryId) => {
+    if (!followUps || !Array.isArray(followUps)) return [];
+    return followUps.filter((followUp) => followUp.studentId === enquiryId);
+  };
+
+  const getLatestFollowUp = (enquiryId) => {
+    const studentFollowUps = getStudentFollowUps(enquiryId);
+    const sortedFollowUps = studentFollowUps.sort((a, b) => {
+      const dateA = a.createdAt?.toDate
+        ? a.createdAt.toDate()
+        : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate
+        ? b.createdAt.toDate()
+        : new Date(b.createdAt);
+      return dateB - dateA;
+    });
+    return sortedFollowUps[0] || null;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4">
@@ -290,6 +313,7 @@ const ApplicationsTable = ({
                   )}
                 </div>
               </th>
+              <th className="table-header">Follow Up</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Progress
               </th>
@@ -314,14 +338,14 @@ const ApplicationsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="7" className="table-cell text-center py-8">
+                <td colSpan="8" className="table-cell text-center py-8">
                   <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
                   <p className="text-gray-500">Loading applications...</p>
                 </td>
               </tr>
             ) : filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                   <FileText className="mx-auto mb-2 text-gray-300" size={48} />
                   <p className="font-semibold">No applications found</p>
                   {searchTerm || statusFilter ? (
@@ -449,6 +473,40 @@ const ApplicationsTable = ({
                           {completionPercentage}%
                         </span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {(() => {
+                        const assessment = getAssessment(
+                          application.application
+                        );
+                        if (!assessment) return null;
+
+                        const enquiry = enquiries.find(
+                          (enq) => enq.id === assessment.enquiry
+                        );
+                        if (!enquiry) return null;
+
+                        const latestFollowUp = getLatestFollowUp(
+                          assessment.enquiry
+                        );
+
+                        return latestFollowUp ? (
+                          <FollowUpBadge
+                            followUp={latestFollowUp}
+                            onClick={() =>
+                              onOpenFollowUp(enquiry, latestFollowUp)
+                            }
+                          />
+                        ) : (
+                          <button
+                            onClick={() => onOpenFollowUp(enquiry)}
+                            className="text-xs flex items-center text-primary-600 hover:text-primary-800"
+                          >
+                            <PlusCircle size={14} className="mr-1" />
+                            Add Follow Up
+                          </button>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-500">

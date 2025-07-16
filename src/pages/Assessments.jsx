@@ -10,7 +10,9 @@ import {
   useEnquiries,
   useAssessments,
   useUniversities,
+  useFollowUps,
 } from "../hooks/useFirestore";
+import FollowUpForm from "../components/FollowUp/FollowUpForm";
 
 const Assessments = () => {
   const { data: courses, loading: coursesLoading } = useCourses();
@@ -23,6 +25,7 @@ const Assessments = () => {
     delete: deleteAssessment,
     update,
   } = useAssessments();
+  const { data: followUps, loading: followUpsLoading } = useFollowUps();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -31,12 +34,28 @@ const Assessments = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [assessmentToDeleteId, setAssessmentToDeleteId] = useState(null);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [selectedStudentForFollowUp, setSelectedStudentForFollowUp] =
+    useState(null);
+  const [editingFollowUp, setEditingFollowUp] = useState(null);
 
   const isLoading =
     coursesLoading ||
     enquiriesLoading ||
     universitiesLoading ||
     assessmentsLoading;
+
+  const openFollowUpModal = (student, followUp = null) => {
+    setSelectedStudentForFollowUp(student);
+    setEditingFollowUp(followUp);
+    setShowFollowUpModal(true);
+  };
+
+  const handleFollowUpSuccess = () => {
+    setShowFollowUpModal(false);
+    setSelectedStudentForFollowUp(null);
+    setEditingFollowUp(null);
+  };
 
   const handleEdit = (assessment) => {
     setSelectedAssessment(assessment);
@@ -190,6 +209,9 @@ const Assessments = () => {
           onDelete={handleDelete}
           onView={handleView}
           onUpdateStatus={handleUpdateAssessmentStatus}
+          onOpenFollowUp={openFollowUpModal}
+          followUps={followUps}
+          isFollowUpsLoading={followUpsLoading}
         />
       </div>
       <Modal
@@ -279,6 +301,23 @@ const Assessments = () => {
           </div>
         </div>
       </Modal>
+
+      {showFollowUpModal && selectedStudentForFollowUp && (
+        <Modal
+          isOpen={showFollowUpModal}
+          onClose={handleFollowUpSuccess}
+          title={editingFollowUp ? "Edit Follow-Up" : "Add Follow-Up"}
+        >
+          <FollowUpForm
+            studentId={selectedStudentForFollowUp.id}
+            studentName={`${selectedStudentForFollowUp.student_First_Name} ${selectedStudentForFollowUp.student_Last_Name}`}
+            step="Enquiry"
+            editData={editingFollowUp}
+            onSuccess={handleFollowUpSuccess}
+            onClose={handleFollowUpSuccess}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
