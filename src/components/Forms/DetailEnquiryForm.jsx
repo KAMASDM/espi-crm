@@ -3,10 +3,9 @@ import toast from "react-hot-toast";
 import { useForm, useFieldArray } from "react-hook-form";
 import app from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
-import { useServices } from "../../hooks/useFirestore";
+import { useServices, useCountries } from "../../hooks/useFirestore";
 import { firestoreService } from "../../services/firestore";
 import {
-  COUNTRIES,
   ENQUIRY_STATUS,
   EDUCATION_LEVELS,
   EXAM_TYPES,
@@ -588,7 +587,7 @@ const Step3WorkExperience = ({ control, register, watch }) => {
   );
 };
 
-const Step4FamilyAndRefusal = ({ control, register }) => {
+const Step4FamilyAndRefusal = ({ control, register, countries, countriesLoading }) => {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "refusals",
@@ -663,17 +662,22 @@ const Step4FamilyAndRefusal = ({ control, register }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Country
               </label>
-              <select
-                {...register(`refusals.${index}.country`)}
-                className="input-field"
-              >
-                <option value="">Select Country</option>
-                {COUNTRIES.map((country) => (
-                  <option key={country.code} value={country.code}>
-                    {country.name}
+               <select
+              {...register("student_country")}
+              className="input-field"
+              disabled={countriesLoading}
+            >
+              <option value="">Select Country</option>
+              {countriesLoading ? (
+                <option>Loading...</option>
+              ) : (
+                countries.map((country) => (
+                  <option key={country.id} value={country.code}>
+                    {country.country}
                   </option>
-                ))}
-              </select>
+                ))
+              )}
+            </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1069,6 +1073,7 @@ const DetailEnquiryForm = ({
   const totalSteps = STEPS.length;
   const { user } = useAuth();
   const { data: services } = useServices();
+  const { data: countries, loading: countriesLoading } = useCountries();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [filesToUpload, setFilesToUpload] = useState({});
@@ -1552,7 +1557,7 @@ const DetailEnquiryForm = ({
           />
         )}
         {currentStep === 4 && (
-          <Step4FamilyAndRefusal control={control} register={register} />
+          <Step4FamilyAndRefusal control={control} register={register} countries={countries} countriesLoading={countriesLoading} />
         )}
         {currentStep === 5 && (
           <Step5Documents FileUploadField={FileUploadFieldComponent} />

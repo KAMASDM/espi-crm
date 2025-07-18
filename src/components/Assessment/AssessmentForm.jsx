@@ -12,7 +12,6 @@ import {
 } from "../../services/firestore";
 import {
   INTAKES,
-  COUNTRIES,
   CURRENCIES,
   COURSE_LEVELS,
   ASSESSMENT_STATUS,
@@ -23,6 +22,7 @@ import {
   useDetailEnquiries,
   useEnquiries,
   useUniversities,
+  useCountries
 } from "../../hooks/useFirestore";
 
 const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
@@ -49,6 +49,7 @@ const AssessmentForm = ({
   const { data: enquiries, loading: enquiriesLoading } = useEnquiries();
   const { data: universities, loading: universitiesLoading } =
     useUniversities();
+  const { data: countries, loading: countriesLoading } = useCountries();
 
   const [loading, setLoading] = useState(false);
   const [filteredCourses, setFilteredCourses] = useState([]);
@@ -570,19 +571,22 @@ const AssessmentForm = ({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Country of Interest *
                 </label>
-                <select
-                  {...register("student_country", {
-                    required: "Country is required",
-                  })}
-                  className="input-field"
-                >
-                  <option value="">Select Country</option>
-                  {COUNTRIES.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
+                 <select
+              {...register("student_country")}
+              className="input-field"
+              disabled={countriesLoading}
+            >
+              <option value="">Select Country</option>
+              {countriesLoading ? (
+                <option>Loading...</option>
+              ) : (
+                countries.map((country) => (
+                  <option key={country.id} value={country.code}>
+                    {country.country}
+                  </option>
+                ))
+              )}
+            </select>
                 {errors.student_country && (
                   <p className="text-red-600 text-sm mt-1">
                     {errors.student_country.message}

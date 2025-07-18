@@ -16,7 +16,8 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
-import { COUNTRIES, CURRENCIES } from "../../utils/constants";
+import {  CURRENCIES } from "../../utils/constants";
+import { useCountries } from "../../hooks/useFirestore";
 
 const countryToCurrency = {
   US: "USD",
@@ -49,6 +50,7 @@ const UniversitiesTable = ({
   onView,
   handleVisibility,
 }) => {
+  const { data: countries } = useCountries();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
@@ -91,7 +93,7 @@ const UniversitiesTable = ({
   };
 
   const getCountryName = (countryCode) => {
-    const country = COUNTRIES.find((c) => c.code === countryCode);
+    const country = countries.find((c) => c.countryCode === countryCode);
     return country ? country.name : countryCode;
   };
 
@@ -138,9 +140,9 @@ const UniversitiesTable = ({
               className="pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Countries</option>
-              {COUNTRIES.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.name}
+              {countries.map((country) => (
+                <option key={country.countryCode} value={country.countryCode}>
+                  {country.country}
                 </option>
               ))}
             </select>

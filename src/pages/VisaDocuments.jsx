@@ -5,11 +5,11 @@ import toast from "react-hot-toast";
 import Modal from "../components/Common/Modal";
 import VisaDocumentForm from "../components/VisaDocuments/VisaDocumentForm";
 import VisaDocumentTable from "../components/VisaDocuments/VisaDocumentTable";
-import { useVisaDocuments } from "../hooks/useFirestore";
+import { useVisaDocuments, useCountries } from "../hooks/useFirestore";
 import { visaDocumentService } from "../services/firestore";
-import { COUNTRIES } from "../utils/constants";
 
 const VisaDocument = () => {
+  const { data: countries } = useCountries();
   const { data: documents, loading, error } = useVisaDocuments();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -28,7 +28,7 @@ const VisaDocument = () => {
       setDocToDelete({
         id: countryCode,
         name:
-          COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode,
+          countries.find((c) => c.countryCode === countryCode)?.name || countryCode,
       });
       setShowDeleteModal(true);
     }

@@ -10,7 +10,8 @@ import {
   Loader2,
   PlusCircle,
 } from "lucide-react";
-import { COUNTRIES } from "../../utils/constants";
+import { useCountries } from "../../hooks/useFirestore";
+
 
 const VisaDocumentTable = ({
   documents,
@@ -19,6 +20,8 @@ const VisaDocumentTable = ({
   loading,
   totalCount,
 }) => {
+    const { data: countries } = useCountries();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -26,7 +29,7 @@ const VisaDocumentTable = ({
   });
 
   const filteredDocuments = documents.filter((doc) => {
-    const countryName = COUNTRIES[doc.id] || doc.id;
+    const countryName = countries[doc.id] || doc.id;
     return countryName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -133,8 +136,8 @@ const VisaDocumentTable = ({
                 <tr key={doc.id} className="hover:bg-gray-50">
                   <td className="table-cell">
                     <div className="text-sm font-medium text-gray-900">
-                      {COUNTRIES.find((c) => c.code === doc.countryCode)
-                        ?.name || doc.id}
+                      {countries.find((c) => c.countryCode === doc.countryCode)
+                        ?.country || doc.id}
                     </div>
                   </td>
                   <td className="table-cell">
