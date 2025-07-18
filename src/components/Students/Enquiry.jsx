@@ -15,12 +15,12 @@ import {
   getActiveServices,
 } from "../../hooks/servicesforSaperateEnquiryForm/api";
 import {
-  COUNTRIES,
   EDUCATION_LEVELS,
   INDIAN_STATES,
   INTAKES,
 } from "../../utils/constants";
 import img from "../../assets/espi.png";
+import { useCountries } from "../../hooks/useFirestore";
 
 const Enquiry = () => {
   const {
@@ -35,6 +35,7 @@ const Enquiry = () => {
       enquiry_status: "New",
     },
   });
+  const { data: countries} = useCountries();
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -204,7 +205,7 @@ const Enquiry = () => {
                 name="student_country"
                 register={register}
                 errors={errors}
-                options={COUNTRIES.map((c) => c.name)}
+                options={countries.map((c) => c.name)}
               />
               <SelectField
                 label="State"
@@ -261,21 +262,21 @@ const Enquiry = () => {
                 Countries Interested *
               </label>
               <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
-                {COUNTRIES.map((country) => (
+                {countries.map((country) => (
                   <label
                     key={country.code}
                     className="flex items-center space-x-3"
                   >
                     <input
                       type="checkbox"
-                      value={country.code}
+                      value={country.countryCode}
                       {...register("country_interested", {
                         required: "Please select at least one country",
                       })}
                       className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                     <span className="text-sm text-gray-700">
-                      {country.name}
+                      {country.country}
                     </span>
                   </label>
                 ))}
@@ -319,7 +320,6 @@ const Enquiry = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
         <div className="text-center p-8">
           <img src={img} alt="" className="mx-auto block" height={100} />
           <h2 className="text-4xl font-extrabold text-gray-900 mb-2">
@@ -330,8 +330,7 @@ const Enquiry = () => {
           </p>
         </div>
 
-        {/* Stepper */}
-        <div className="px-8 pb-8 items-center">
+        <div className="px-8 pb-8">
           <div className="flex items-center justify-between mb-8">
             {steps.map((step, index) => {
               const Icon = step.icon;
@@ -340,8 +339,8 @@ const Enquiry = () => {
               const isValid = isStepValid(index);
 
               return (
-                <div key={index} className="flex items-center flex-1">
-                  <div className="flex items-center justify-center">
+                <React.Fragment key={index}>
+                  <div className="flex flex-col items-center text-center w-32">
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 ${
                         isCompleted
@@ -357,7 +356,7 @@ const Enquiry = () => {
                       {isCompleted ? <Check size={16} /> : <Icon size={16} />}
                     </div>
 
-                    <div className="ml-3 hidden sm:flex flex-col justify-center">
+                    <div className="mt-2 hidden sm:block">
                       <p
                         className={`text-sm font-medium ${
                           isActive
@@ -382,20 +381,18 @@ const Enquiry = () => {
                       </p>
                     </div>
                   </div>
-
                   {index < steps.length - 1 && (
                     <div
-                      className={`flex-1 h-0.5 mx-4 ${
+                      className={`flex-1 h-0.5 mx-2 ${
                         isCompleted ? "bg-green-500" : "bg-gray-200"
                       }`}
                     />
                   )}
-                </div>
+                </React.Fragment>
               );
             })}
           </div>
 
-          {/* Form Content */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 ">
             <div className="bg-gray-50 rounded-lg p-6">
               <div className="flex items-center mb-6">
@@ -410,7 +407,6 @@ const Enquiry = () => {
               {renderStepContent()}
             </div>
 
-            {/* Navigation Buttons */}
             <div className="flex justify-between pt-6 border-t border-gray-200">
               <button
                 type="button"

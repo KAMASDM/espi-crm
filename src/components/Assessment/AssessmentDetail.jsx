@@ -1,5 +1,5 @@
 import React from "react";
-import { COUNTRIES } from "../../utils/constants";
+import { useCountries } from "../../hooks/useFirestore";
 import {
   User,
   Mail,
@@ -29,6 +29,7 @@ const AssessmentDetail = ({
   isOpen,
   onClose,
 }) => {
+  const { data: countries } = useCountries();
   const getStudentName = (enquiryId) => {
     const enquiry = enquiries?.find((enq) => enq.id === enquiryId);
     return enquiry
@@ -55,7 +56,7 @@ const AssessmentDetail = ({
 
   const getCountryName = (countryCode) => {
     if (!countryCode) return "N/A";
-    const country = COUNTRIES.find((c) => c.code === countryCode);
+    const country = countries.find((c) => c.currency === countryCode);
     return country ? country.name : countryCode;
   };
 

@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Plus, X, Save, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { COUNTRIES } from "../../utils/constants";
 import {
   doc,
   getDoc,
@@ -12,8 +11,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
+import { useCountries } from "../../hooks/useFirestore";
 
 const VisaDocumentForm = ({ onClose, onSuccess, editData = null }) => {
+  const { data: countries } = useCountries();
+
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: editData || { requirements: [] },
   });
@@ -86,9 +88,9 @@ const VisaDocumentForm = ({ onClose, onSuccess, editData = null }) => {
               disabled={!!editData}
             >
               <option value="">Select Country</option>
-              {COUNTRIES.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.name}
+              {countries.map((country) => (
+                <option key={country.code} value={country.countryCode}>
+                  {country.country}
                 </option>
               ))}
             </select>

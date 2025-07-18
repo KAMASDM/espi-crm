@@ -2,8 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Plus, X, Save, Loader2, Upload, FileText } from "lucide-react";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import { countryService } from "../../services/firestore";
+import { useCountries } from "../../hooks/useFirestore";
 
 const COURSE_LEVELS = [
   "Certificate",
@@ -24,6 +30,7 @@ const CountryForm = ({ onClose, onSuccess, editData = null }) => {
     defaultValues: editData || { courseLevels: [], attachment: "" },
   });
 
+  const { data: existingCountries, loading: countriesLoading } = useCountries();
   const [loading, setLoading] = useState(false);
   const [fileToUpload, setFileToUpload] = useState(null);
   const [fileDisplayName, setFileDisplayName] = useState("");
@@ -47,11 +54,26 @@ const CountryForm = ({ onClose, onSuccess, editData = null }) => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
+      // Prevent duplicate country names
+      const countryName = data.country.trim().toLowerCase();
+      const isDuplicate = existingCountries.some(
+        (c) => c.country.toLowerCase() === countryName && c.id !== editData?.id
+      );
+
+      if (isDuplicate) {
+        toast.error("A country with this name already exists.");
+        setLoading(false);
+        return;
+      }
+
       let attachmentUrl = editData?.attachment || "";
 
       if (fileToUpload) {
         const storage = getStorage();
-        const storageRef = ref(storage, `countries/attachments/${fileToUpload.name}`);
+        const storageRef = ref(
+          storage,
+          `countries/attachments/${fileToUpload.name}`
+        );
         const uploadTask = await uploadBytesResumable(storageRef, fileToUpload);
         attachmentUrl = await getDownloadURL(uploadTask.ref);
       }
@@ -86,7 +108,11 @@ const CountryForm = ({ onClose, onSuccess, editData = null }) => {
             className="input-field"
             placeholder="e.g., United States"
           />
-          {errors.country && <p className="text-red-500 text-sm mt-1">{errors.country.message}</p>}
+          {errors.country && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.country.message}
+            </p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -97,7 +123,26 @@ const CountryForm = ({ onClose, onSuccess, editData = null }) => {
             className="input-field"
             placeholder="e.g., USD"
           />
-          {errors.currency && <p className="text-red-500 text-sm mt-1">{errors.currency.message}</p>}
+          {errors.currency && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.currency.message}
+            </p>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Country Code
+          </label>
+          <input
+            {...register("countryCode", { required: "Country code is required" })}
+            className="input-field"
+            placeholder="e.g., US"
+          />
+          {errors.countryCode && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.countryCode.message}
+            </p>
+          )}
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -126,7 +171,9 @@ const CountryForm = ({ onClose, onSuccess, editData = null }) => {
               {fileDisplayName ? (
                 <div className="flex items-center space-x-2">
                   <FileText className="text-green-500" />
-                  <span className="text-sm text-gray-700">{fileDisplayName}</span>
+                  <span className="text-sm text-gray-700">
+                    {fileDisplayName}
+                  </span>
                 </div>
               ) : (
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
@@ -137,11 +184,19 @@ const CountryForm = ({ onClose, onSuccess, editData = null }) => {
                   className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
                 >
                   <span>Upload a file</span>
-                  <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} />
+                  <input
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    className="sr-only"
+                    onChange={handleFileChange}
+                  />
                 </label>
                 <p className="pl-1">or drag and drop</p>
               </div>
-              <p className="text-xs text-gray-500">PDF, PNG, JPG, GIF up to 10MB</p>
+              <p className="text-xs text-gray-500">
+                PDF, PNG, JPG, GIF up to 10MB
+              </p>
             </div>
           </div>
         </div>
@@ -152,18 +207,22 @@ const CountryForm = ({ onClose, onSuccess, editData = null }) => {
           type="button"
           onClick={onClose}
           className="btn-secondary"
-          disabled={loading}
+          disabled={loading || countriesLoading}
         >
           <X size={16} className="inline mr-1" />
           Cancel
         </button>
-        <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? (
+        <button
+          type="submit"
+          className="btn-primary"
+          disabled={loading || countriesLoading}
+        >
+          {loading || countriesLoading ? (
             <Loader2 size={16} className="inline mr-1 animate-spin" />
           ) : (
             <Save size={16} className="inline mr-1" />
           )}
-          {loading ? "Saving..." : "Save Country"}
+          {loading || countriesLoading ? "Saving..." : "Save Country"}
         </button>
       </div>
     </form>

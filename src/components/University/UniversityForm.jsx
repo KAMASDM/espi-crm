@@ -11,7 +11,8 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { useAuth } from "../../context/AuthContext";
 import { universityService } from "../../services/firestore";
-import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
+import { COURSE_LEVELS } from "../../utils/constants";
+import { useCountries } from "../../hooks/useFirestore";
 import OpenAI from "openai";
 import {
   getStorage,
@@ -42,6 +43,11 @@ const SearchableSelect = ({
   const inputRef = useRef(null);
 
   useEffect(() => {
+    if (!Array.isArray(options)) {
+      setFilteredOptions([]);
+      return;
+    }
+
     const filtered = options.filter((option) => {
       const displayValue =
         typeof option === "string" ? option : option[displayKey];
@@ -178,6 +184,7 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
       levels: [],
     },
   });
+  const { data: countries } = useCountries();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fetchingInfo, setFetchingInfo] = useState(false);
@@ -214,7 +221,7 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
 
     try {
       const countryName =
-        COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
+        countries.find((c) => c.code === countryCode)?.name || countryCode;
       const currentYear = new Date().getFullYear();
       let prompt = `Provide detailed information about the university "${univName}" in "${countryName}".`;
 
@@ -400,14 +407,14 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
       if (brochureFile) {
         uploads.push(
           uploadFile(brochureFile, "brochures").then((url) => {
-            data.brochure = url;
+            if (url) data.brochure = url;
           })
         );
       }
       if (newsletterFile) {
         uploads.push(
           uploadFile(newsletterFile, "newsletters").then((url) => {
-            data.newsletter = url;
+            if (url) data.newsletter = url;
           })
         );
       }
@@ -427,7 +434,6 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
           id: "saving-university",
         });
       } else {
-        universityData.createdAt = new Date().toISOString();
         await universityService.create(universityData);
         toast.success("University created successfully!", {
           id: "saving-university",
@@ -491,7 +497,7 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               rules={{ required: "Country is required" }}
               render={({ field }) => (
                 <SearchableSelect
-                  options={COUNTRIES}
+                  options={countries}
                   value={field.value}
                   onChange={field.onChange}
                   placeholder="Select Country"

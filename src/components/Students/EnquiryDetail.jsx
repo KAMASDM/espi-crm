@@ -24,12 +24,7 @@ import StatusBadge from "./DetailComponents/StatusBadge";
 import ModernSection from "./DetailComponents/ModernSection";
 import ExperienceTimeline from "./DetailComponents/ExperienceTimeline";
 import DocumentLibrarySection from "./DetailComponents/DocumentLibrarySection";
-
-const COUNTRIES = [
-  { code: "US", name: "United States" },
-  { code: "UK", name: "United Kingdom" },
-  { code: "CA", name: "Canada" },
-];
+import { useCountries } from "../../hooks/useFirestore";
 
 const formatDate = (date) => {
   if (!date) return "";
@@ -38,8 +33,10 @@ const formatDate = (date) => {
 };
 
 const EnquiryDetail = ({ detailEnquiry }) => {
+  const { data: countries } = useCountries();
+
   const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name;
+    countries.find((c) => c.countryCode === countryCode)?.name;
 
   if (!detailEnquiry) {
     return (

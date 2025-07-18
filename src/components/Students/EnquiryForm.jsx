@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import emailjs from "@emailjs/browser";
 import {
   INTAKES,
-  COUNTRIES,
   USER_ROLES,
   INDIAN_STATES,
   ENQUIRY_STATUS,
@@ -19,7 +18,11 @@ import {
   notificationService,
 } from "../../services/firestore";
 import { useAuth } from "../../context/AuthContext";
-import { useServices, useUniversities } from "../../hooks/useFirestore";
+import {
+  useServices,
+  useUniversities,
+  useCountries,
+} from "../../hooks/useFirestore";
 
 const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
@@ -43,6 +46,7 @@ const EnquiryForm = ({
   const { user, userProfile } = useAuth();
   const { data: services } = useServices();
   const { data: universities } = useUniversities();
+  const { data: countries, loading: countriesLoading } = useCountries();
   const [users, setUsers] = useState(allUsers);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -540,12 +544,21 @@ const EnquiryForm = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Country
             </label>
-            <select {...register("student_country")} className="input-field">
-              {COUNTRIES.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.name}
-                </option>
-              ))}
+            <select
+              {...register("student_country")}
+              className="input-field"
+              disabled={countriesLoading}
+            >
+              <option value="">Select Country</option>
+              {countriesLoading ? (
+                <option>Loading...</option>
+              ) : (
+                countries.map((country) => (
+                  <option key={country.id} value={country.code}>
+                    {country.country}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
@@ -635,19 +648,23 @@ const EnquiryForm = ({
               Countries Interested *
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border border-gray-300 rounded-lg">
-              {COUNTRIES.map((country) => (
-                <label key={country.code} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value={country.code}
-                    {...register("country_interested", {
-                      required: "Please select at least one country",
-                    })}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">{country.name}</span>
-                </label>
-              ))}
+              {countriesLoading ? (
+                <p>Loading...</p>
+              ) : (
+                countries.map((country) => (
+                  <label key={country.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      value={country.code}
+                      {...register("country_interested", {
+                        required: "Please select at least one country",
+                      })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">{country.country}</span>
+                  </label>
+                ))
+              )}
             </div>
             {errors.country_interested && (
               <p className="text-red-600 text-sm mt-1">
@@ -698,9 +715,6 @@ const EnquiryForm = ({
                       />
                       <span className="text-sm">{serviceName}</span>
                     </div>
-                    {/* <span className="text-sm text-gray-500">
-                      (₹{servicePrice.toLocaleString()})
-                    </span> */}
                   </label>
                 ))}
             </div>

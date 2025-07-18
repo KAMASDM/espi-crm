@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { applicationStatusService } from "../../services/firestore";
+import {
+  applicationStatusService,
+} from "../../services/firestore";
 import toast from "react-hot-toast";
-import { COUNTRIES } from "../../utils/constants";
+import { useCountries } from "../../hooks/useFirestore";
 
 const ApplicationStatusForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -13,7 +15,7 @@ const ApplicationStatusForm = ({ onClose, onSuccess, editData = null }) => {
   } = useForm({
     defaultValues: editData || { isActive: true },
   });
-
+  const { data: countries, loading: countriesLoading } = useCountries();
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data) => {
@@ -48,12 +50,21 @@ const ApplicationStatusForm = ({ onClose, onSuccess, editData = null }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Country *
             </label>
-            <select {...register("country")} className="input-field">
-              {COUNTRIES.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.name}
-                </option>
-              ))}
+            <select
+              {...register("student_country")}
+              className="input-field"
+              disabled={countriesLoading}
+            >
+              <option value="">Select Country</option>
+              {countriesLoading ? (
+                <option>Loading...</option>
+              ) : (
+                countries.map((country) => (
+                  <option key={country.id} value={country.code}>
+                    {country.country}
+                  </option>
+                ))
+              )}
             </select>
           </div>
           <div>

@@ -14,7 +14,8 @@ import {
   Loader2,
 } from "lucide-react";
 import moment from "moment";
-import { COUNTRIES, COURSE_LEVELS } from "../../utils/constants";
+import { COURSE_LEVELS } from "../../utils/constants";
+import { useCountries } from "../../hooks/useFirestore";
 
 const CoursesTable = ({
   courses,
@@ -25,10 +26,12 @@ const CoursesTable = ({
   onView,
   handleVisibility,
 }) => {
+  const { data: countries, loading: countriesLoading } = useCountries();
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
+  console.log("countryFilter:", countryFilter);
   const [sortField, setSortField] = useState("course_name");
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -70,7 +73,7 @@ const CoursesTable = ({
   };
 
   const getCountryName = (countryCode) => {
-    const country = COUNTRIES.find((c) => c.code === countryCode);
+    const country = countries.find((c) => c.currency === countryCode);
     return country ? country.name : countryCode;
   };
 
@@ -143,9 +146,9 @@ const CoursesTable = ({
             className="pl-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Countries</option>
-            {COUNTRIES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.name}
+            {countries.map((country) => (
+              <option key={country.id} value={country.currency}>
+                {country.country}
               </option>
             ))}
           </select>

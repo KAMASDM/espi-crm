@@ -1,5 +1,4 @@
 import React from "react";
-import { COUNTRIES } from "../../utils/constants";
 import {
   BookOpen,
   School,
@@ -23,13 +22,15 @@ import {
   MinusCircle,
   Edit,
 } from "lucide-react";
+import { useCountries } from "../../hooks/useFirestore";
 
 const CourseDetail = ({ course, universities, isOpen, onClose, onEdit }) => {
+  const { data: countries, loading: countriesLoading } = useCountries();
   const getUniversityName = (universityId) =>
     universities?.find((uni) => uni.id === universityId)?.univ_name || "N/A";
 
   const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
+    countries.find((c) => c.currency === countryCode)?.name || countryCode;
 
   const getCountryCodeForUniversity = (universityId) =>
     universities?.find((uni) => uni.id === universityId)?.country;

@@ -12,8 +12,8 @@ import {
 import Modal from "../components/Common/Modal";
 import { useAuth } from "../context/AuthContext";
 import { downloadAsCSV } from "../utils/helpers";
-import { useUniversities } from "../hooks/useFirestore";
-import { COUNTRIES, COURSE_LEVELS } from "../utils/constants";
+import { useUniversities, useCountries } from "../hooks/useFirestore";
+import { COURSE_LEVELS } from "../utils/constants";
 import UniversityForm from "../components/University/UniversityForm";
 import UniversitiesTable from "../components/University/UniversitiesTable";
 import UniversityDetail from "../components/University/UniversityDetail";
@@ -26,6 +26,8 @@ const Universities = () => {
     create,
     delete: deleteUniversity,
   } = useUniversities();
+  const { data: countries } = useCountries();
+
   const { user, userProfile } = useAuth();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -88,7 +90,8 @@ const Universities = () => {
         UniversityName: uni.univ_name,
         CountryCode: uni.country,
         CountryName:
-          COUNTRIES.find((c) => c.code === uni.country)?.name || uni.country,
+          countries.find((c) => c.CountryCode === uni.country)?.name ||
+          uni.country,
         Email: uni.univ_email,
         Phone: uni.univ_phone,
         Website: uni.univ_website,
@@ -166,7 +169,7 @@ const Universities = () => {
       return;
     }
 
-    const validCountryCodes = COUNTRIES.map((c) => c.code);
+    const validCountryCodes = countries.map((c) => c.countryCode);
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];

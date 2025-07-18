@@ -1,5 +1,5 @@
 import React from "react";
-import { COUNTRIES, CURRENCIES } from "../../utils/constants";
+import { CURRENCIES } from "../../utils/constants";
 import {
   MapPin,
   Phone,
@@ -18,6 +18,7 @@ import {
   ThumbsDown,
   Edit,
 } from "lucide-react";
+import { useCountries } from "../../hooks/useFirestore";
 
 const countryToCurrency = {
   US: "USD",
@@ -32,6 +33,7 @@ const countryToCurrency = {
 };
 
 const UniversityDetail = ({ university, isOpen, onClose, onEdit }) => {
+  const { data: countries } = useCountries();
   const getCurrencySymbolForCountry = (countryCode) => {
     const targetCurrencyCode = countryToCurrency[countryCode];
     if (targetCurrencyCode) {
@@ -46,7 +48,7 @@ const UniversityDetail = ({ university, isOpen, onClose, onEdit }) => {
   const appFeeSymbol = getCurrencySymbolForCountry(university?.country);
 
   const getCountryName = (countryCode) =>
-    COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
+    countries.find((c) => c.countryCode === countryCode)?.name || countryCode;
 
   const getDeadlineInfo = (deadline) => {
     if (!deadline)
