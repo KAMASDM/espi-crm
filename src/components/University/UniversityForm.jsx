@@ -1,13 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import {
-  Save,
-  X,
-  ChevronDown,
-  Search,
-  DownloadCloud,
-  FileText,
-} from "lucide-react";
+import { Save, X, DownloadCloud, FileText } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { useAuth } from "../../context/AuthContext";
 import { universityService } from "../../services/firestore";
@@ -25,149 +18,6 @@ const openai = new OpenAI({
   apiKey: import.meta.env.VITE_APP_OPENAI_API_KEY,
   dangerouslyAllowBrowser: true,
 });
-
-const SearchableSelect = ({
-  options,
-  value,
-  onChange,
-  placeholder,
-  displayKey = "name",
-  valueKey = "code",
-  error,
-  required = false,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredOptions, setFilteredOptions] = useState(options);
-  const dropdownRef = useRef(null);
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    if (!Array.isArray(options)) {
-      setFilteredOptions([]);
-      return;
-    }
-
-    const filtered = options.filter((option) => {
-      const displayValue =
-        typeof option === "string" ? option : option[displayKey];
-      return displayValue.toLowerCase().includes(searchTerm.toLowerCase());
-    });
-    setFilteredOptions(filtered);
-  }, [searchTerm, options, displayKey]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const getDisplayValue = () => {
-    if (!value) return "";
-    const option = options.find((opt) => {
-      const optValue = typeof opt === "string" ? opt : opt[valueKey];
-      return optValue === value;
-    });
-    return option
-      ? typeof option === "string"
-        ? option
-        : option[displayKey]
-      : "";
-  };
-
-  const handleSelect = (option) => {
-    const optValue = typeof option === "string" ? option : option[valueKey];
-    onChange(optValue);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
-
-  const handleInputClick = () => {
-    setIsOpen(!isOpen);
-    if (!isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  };
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <div className="relative">
-        <div
-          className={`input-field cursor-pointer flex items-center justify-between ${
-            error ? "border-red-500" : ""
-          }`}
-          onClick={handleInputClick}
-        >
-          <span className={`flex-1 ${!value ? "text-gray-500" : ""}`}>
-            {getDisplayValue() || placeholder}
-          </span>
-          <ChevronDown
-            size={16}
-            className={`transform transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </div>
-        {required && (
-          <span className="absolute -top-2 -right-2 text-red-500">*</span>
-        )}
-      </div>
-
-      {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
-          <div className="p-2 border-b border-gray-200">
-            <div className="relative">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              />
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search..."
-                className="w-full pl-9 pr-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          <div className="max-h-48 overflow-y-auto">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option, index) => {
-                const displayValue =
-                  typeof option === "string" ? option : option[displayKey];
-                const optValue =
-                  typeof option === "string" ? option : option[valueKey];
-                return (
-                  <div
-                    key={index}
-                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                      value === optValue ? "bg-blue-50 text-blue-600" : ""
-                    }`}
-                    onClick={() => handleSelect(option)}
-                  >
-                    {displayValue}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="px-3 py-2 text-gray-500 text-center">
-                No options found
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {error && <p className="text-red-600 text-sm mt-1">{error.message}</p>}
-    </div>
-  );
-};
 
 const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
   const {
@@ -496,18 +346,24 @@ const UniversityForm = ({ onClose, onSuccess, editData = null }) => {
               control={control}
               rules={{ required: "Country is required" }}
               render={({ field }) => (
-                <SearchableSelect
-                  options={countries}
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select Country"
-                  displayKey="name"
-                  valueKey="code"
-                  error={errors.country}
-                  required={true}
-                />
+                <select {...field} className="input-field">
+                  <option value="">Select a Country</option>
+                  {countries?.map((country) => (
+                    <option
+                      key={country.code || country.id}
+                      value={country.code}
+                    >
+                      {country.name || country.country}
+                    </option>
+                  ))}
+                </select>
               )}
             />
+            {errors.country && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.country.message}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
