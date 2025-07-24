@@ -56,6 +56,7 @@ const EnquiryForm = ({
 
   const selectedBranchId = watch("branchId");
   const selectedCountries = watch("country_interested");
+  const enquirySource = watch("Source_Enquiry");
 
   useEffect(() => {
     const fetchReferenceData = async () => {
@@ -94,7 +95,15 @@ const EnquiryForm = ({
       setValue("assignedUserId", userProfile.uid);
     } else if (editData) {
       Object.keys(editData).forEach((key) => {
-        setValue(key, editData[key]);
+        // Ensure date values are correctly formatted for the input
+        if (key === "student_dob" && editData[key]) {
+          const date = new Date(editData[key]);
+          if (!isNaN(date)) {
+            setValue(key, date.toISOString().split("T")[0]);
+          }
+        } else {
+          setValue(key, editData[key]);
+        }
       });
     }
   }, [userProfile, editData, setValue]);
@@ -455,6 +464,22 @@ const EnquiryForm = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date of Birth
+            </label>
+            <input
+              type="date"
+              {...register("student_dob")}
+              className="input-field"
+            />
+            {errors.student_dob && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.student_dob.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Passport Number
             </label>
             <input
@@ -477,6 +502,51 @@ const EnquiryForm = ({
               ))}
             </select>
           </div>
+
+          {enquirySource === "Referral" && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Referral Name *
+                </label>
+                <input
+                  type="text"
+                  {...register("referral_name", {
+                    required: "Referral name is required",
+                  })}
+                  className="input-field"
+                  placeholder="Enter referrer's full name"
+                />
+                {errors.referral_name && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.referral_name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Referral Mobile Number *
+                </label>
+                <input
+                  type="tel"
+                  {...register("referral_mobile", {
+                    required: "Referral mobile number is required",
+                    pattern: {
+                      value: /^[0-9]{10}$/,
+                      message: "Please enter a valid 10-digit phone number",
+                    },
+                  })}
+                  className="input-field"
+                  placeholder="Enter 10-digit mobile number"
+                />
+                {errors.referral_mobile && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.referral_mobile.message}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -655,7 +725,7 @@ const EnquiryForm = ({
                   <label key={country.id} className="flex items-center">
                     <input
                       type="checkbox"
-                      value={country.code}
+                      value={country.countryCode}
                       {...register("country_interested", {
                         required: "Please select at least one country",
                       })}

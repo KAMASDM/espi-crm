@@ -44,7 +44,12 @@ const Enquiry = () => {
     {
       title: "Personal Information",
       icon: User,
-      fields: ["student_First_Name", "student_Last_Name", "student_passport"],
+      fields: [
+        "student_First_Name",
+        "student_Last_Name",
+        "student_dob",
+        "student_passport",
+      ],
     },
     {
       title: "Contact Details",
@@ -163,6 +168,13 @@ const Enquiry = () => {
                 register={register}
                 errors={errors}
                 required
+              />
+              <InputField
+                label="Date of Birth"
+                name="student_dob"
+                type="date"
+                register={register}
+                errors={errors}
               />
               <InputField
                 label="Passport Number"
